@@ -1,0 +1,41 @@
+variable "aws_project" {
+  description = "The AWS project name."
+  type        = string
+  default     = "coding-workshop"
+}
+
+variable "aws_bucket" {
+  description = "The AWS S3 bucket name for terraform state storage."
+  type        = string
+  default     = "coding-workshop-tfstate-abcd1234"
+}
+
+variable "aws_app_code" {
+  description = "The AWS application unique code."
+  type        = string
+  default     = "abcd1234"
+}
+
+variable "aws_vpc_id" {
+  description = "The AWS VPC identifier."
+  type        = string
+  default     = null
+}
+
+variable "aws_vpce_sts" {
+  description = "Enable VPC Endpoint for AWS STS service."
+  type        = bool
+  default     = false
+}
+
+variable "aws_vpce_secretsmanager" {
+  description = "Enable VPC Endpoint for AWS Secrets Manager service."
+  type        = bool
+  default     = false
+}
+
+variable "aws_db_host" {
+  description = "MongoDB host for LocalStack. Defaults to 'host.docker.internal' (on Linux, set to '172.17.0.1')."
+  type        = string
+  default     = null
+}

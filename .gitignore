@@ -211,7 +211,7 @@ yarn-error.log*
 # Environment variables
 .env
 .env.*
-!/.env.sample
+!.env.sample
 
 # Logs
 logs
@@ -252,3 +252,6 @@ tfplan
 
 # Config files (might contain sensitive info)
 *.config
+
+# Snyk Security Extension - AI Rules (auto-generated)
+.github/instructions/snyk_rules.instructions.md
