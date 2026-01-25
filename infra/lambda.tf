@@ -24,7 +24,7 @@ module "lambda" {
   }]
 
   vpc_security_group_ids = [aws_security_group.this.id]
-  vpc_subnet_ids         = slice(data.aws_subnets.this.ids, 0, 3)
+  vpc_subnet_ids         = local.public_subnet_ids
   attach_network_policy  = true
 
   create_package     = true

@@ -80,7 +80,7 @@ if [ -z "$AWS_ACCOUNT_ID" ]; then
 fi
 
 # Derive participant-specific AWS resource names
-AWS_IAM_ROLE="arn:aws:iam::${AWS_ACCOUNT_ID}:role/${AWS_PROFILE}-${PARTICIPANT_ID}"
+AWS_IAM_ROLE="arn:aws:iam::${AWS_ACCOUNT_ID}:role/${AWS_PROFILE}-assume-${PARTICIPANT_ID}"
 AWS_S3_BUCKET="${AWS_PROFILE}-tfstate-${PARTICIPANT_ID}"
 
 echo "  ✓ AWS profile configured"

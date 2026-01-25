@@ -6,14 +6,11 @@ resource "random_id" "this" {
   }
 }
 
-resource "random_password" "this" {
-  length      = 16
-  upper       = true
-  lower       = true
-  numeric     = true
-  special     = true
-  min_upper   = 1
-  min_lower   = 1
-  min_numeric = 1
-  min_special = 1
+resource "random_pet" "this" {
+  length    = 3
+  separator = "-"
+
+  keepers = {
+    seed_input = try(var.aws_app_code, terraform.workspace)
+  }
 }

@@ -6,18 +6,14 @@ This folder contains React frontend application for tracking team members, team 
 
 ## Prerequisites
 
-* React - JavaScript library for building user interfaces
-* React Router - Client-side routing for React
-* Material UI - Comprehensive UI component library
+- React - JavaScript library for building user interfaces
+- React Router - Client-side routing for React
+- Material UI - Comprehensive UI component library
 
 ## Structure
 
 ```
 coding-workshop/
-├── backend/               # Python backend
-├── bin/                   # Shell scripts
-├── data/                  # Sample CSV data
-├── docs/                  # Documentation
 ├── frontend/              # React frontend
 │   ├── public/              # Public assets
 │   ├── src/                 # Source code
@@ -27,34 +23,34 @@ coding-workshop/
 │   │   └── App.js             # Main app
 │   ├── package.json         # App metadata with dependencies
 │   └── README.md            # Frontend guide
-└── infra/                 # Terraform infrastructure
+├── ...
 ```
 
 ## Usage
 
 ### Local Development
 
-Start local environment:
+To run your application locally:
 
 ```sh
 ./bin/start-dev.sh
 ```
 
-Open the browser and navigate to `http://localhost:3000` (hot-reloading is enabled by default).
+To view your application, open the browser and navigate to `http://localhost:3000`.
 
 ### Cloud Deployment
 
-Deploy backend infrastructure to AWS:
+To deploy your frontend to AWS:
 
 ```sh
 ./bin/deploy-frontend.sh
 ```
 
-Open the browser and navigate to CloudFront URL (the frontend is served via CloudFront with S3 as the origin).
+To view your application, open the browser and navigate to CloudFront URL.
 
 ## Clean Up
 
-To remove all frontend resources:
+To remove all deployed resources (including frontend):
 
 ```sh
 ./bin/clean-up.sh

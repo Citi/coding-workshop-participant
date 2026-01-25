@@ -8,19 +8,21 @@ This directory contains all the deployment scripts for the Team Management Tool.
 
 ### Local Development
 
+To run your application locally:
+
 ```sh
 ./bin/start-dev.sh
 ```
 
 ### Cloud Deployment
 
-Deploy the backend to AWS:
+To deploy your backend to AWS:
 
 ```sh
 ./bin/deploy-backend.sh
 ```
 
-Deploy the frontend to AWS:
+To deploy your frontend to AWS:
 
 ```sh
 ./bin/deploy-frontend.sh

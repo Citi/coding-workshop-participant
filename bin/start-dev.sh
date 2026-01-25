@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Script: Comprehensive Local Development Environment Startup
 # Purpose: Validate and start all components (MongoDB, LocalStack, Backend, Frontend)
-# Usage: ./start-dev2.sh
+# Usage: ./start-dev.sh
 
 set -e
 

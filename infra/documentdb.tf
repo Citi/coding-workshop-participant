@@ -1,7 +1,7 @@
 resource "aws_docdb_subnet_group" "this" {
   count      = data.aws_caller_identity.this.id != "000000000000" ? 1 : 0
   name       = format("%s-subnet-group-%s", var.aws_project, local.app_id)
-  subnet_ids = slice(data.aws_subnets.this.ids, 0, 3)
+  subnet_ids = local.public_subnet_ids
 
   tags = {
     awsApplication = local.app_arn
@@ -15,7 +15,7 @@ resource "aws_docdb_cluster" "this" {
   engine                          = "docdb"
   engine_version                  = "5.0.0"
   master_username                 = "superadmin"
-  master_password                 = random_password.this.result
+  master_password                 = random_pet.this.id
   backup_retention_period         = 7
   preferred_backup_window         = "07:00-09:00"
   skip_final_snapshot             = true

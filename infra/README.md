@@ -14,11 +14,7 @@ This folder contains Terraform configurations for managing infrastructure as cod
 
 ```
 coding-workshop/
-├── backend/               # Python backend
-├── bin/                   # Shell scripts
-├── data/                  # Sample CSV data
-├── docs/                  # Documentation
-├── frontend/              # React frontend
+├── ...
 └── infra/                 # Terraform infrastructure
     ├── cloudfront.tf        # CloudFront distribution
     ├── data.tf              # Data sources
@@ -39,13 +35,13 @@ coding-workshop/
 
 ### Local Development
 
-Start local environment:
+To run your application locally:
 
 ```sh
 localstack start -d
 ```
 
-Deploy infrastructure locally:
+To deploy infrastructure locally:
 
 ```sh
 cd infra
@@ -64,13 +60,13 @@ tflocal output
 
 ### Cloud Deployment
 
-Setup participant environment:
+To setup participant environment:
 
 ```sh
 ./bin/setup-participant.sh
 ```
 
-Deploy infrastructure to AWS:
+To deploy your infrastructure to AWS:
 
 ```sh
 cd infra

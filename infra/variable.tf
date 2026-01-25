@@ -22,18 +22,6 @@ variable "aws_vpc_id" {
   default     = null
 }
 
-variable "aws_vpce_sts" {
-  description = "Enable VPC Endpoint for AWS STS service."
-  type        = bool
-  default     = false
-}
-
-variable "aws_vpce_secretsmanager" {
-  description = "Enable VPC Endpoint for AWS Secrets Manager service."
-  type        = bool
-  default     = false
-}
-
 variable "aws_db_host" {
   description = "MongoDB host for LocalStack. Defaults to 'host.docker.internal' (on Linux, set to '172.17.0.1')."
   type        = string

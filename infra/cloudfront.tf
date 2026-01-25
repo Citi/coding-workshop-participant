@@ -132,7 +132,7 @@ resource "aws_s3_bucket_policy" "this" {
         Sid    = "AllowCloudFrontServicePrincipal"
         Effect = "Allow"
         Principal = {
-          Service = data.aws_service_principal.this.name
+          Service = data.aws_service_principal.cloudfront.name
         }
         Action   = "s3:GetObject"
         Resource = format("%s/*", aws_s3_bucket.this.arn)

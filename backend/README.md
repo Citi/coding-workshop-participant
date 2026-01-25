@@ -6,10 +6,10 @@ This folder contains Python backend services for CRUD operations on Individuals,
 
 ## Prerequisites
 
-* Python - Backend language
-* Boto3 - AWS SDK for Python
-* AWS Lambda - Serverless compute
-* AWS DocumentDB - MongoDB-compatible database
+- Python - Backend language
+- Boto3 - AWS SDK for Python
+- AWS Lambda - Serverless compute
+- AWS DocumentDB - MongoDB-compatible database
 
 ## Structure
 
@@ -28,40 +28,28 @@ coding-workshop/
 │   ├── team/                # CRUD service for teams
 │   │   └── ...                # Similar to the previous service
 │   └── README.md            # Backend guide
-├── bin/                   # Shell scripts
-├── data/                  # Sample CSV data
-├── docs/                  # Documentation
-├── frontend/              # React frontend
-└── infra/                 # Terraform infrastructure
+├── ...
 ```
 
 ## Usage
 
 ### Local Development
 
-Start local environment:
+To run your application locally:
 
 ```sh
 ./bin/start-dev.sh
 ```
 
-Make changes and test it:
-
-```sh
-# Example: Get all individuals
-curl -X GET http://localhost:3001/api/individuals \
-     -H "Content-Type: application/json"
-```
-
 ### Cloud Deployment
 
-Deploy backend infrastructure to AWS:
+To deploy your backend to AWS:
 
 ```sh
 ./bin/deploy-backend.sh
 ```
 
-Test newly deployed code:
+To test your newly deployed code:
 
 ```sh
 # Example: Get all individuals
@@ -71,7 +59,7 @@ curl -X GET https://{API_BASE_URL}/api/individuals \
 
 ## Clean Up
 
-To remove all backend resources:
+To remove all deployed resources (including backend):
 
 ```sh
 ./bin/clean-up.sh
