@@ -33,4 +33,6 @@ if [ -f "$ENVIRONMENT_CONFIG" ]; then
 fi
 
 # Clean up infrastructure
-cd $INFRA_DIR && terraform destroy -auto-approve
+cd $INFRA_DIR
+terraform init -reconfigure -backend-config="bucket=$PARTICIPANT_PROJECT-tfstate-$PARTICIPANT_ID"
+terraform destroy -auto-approve
