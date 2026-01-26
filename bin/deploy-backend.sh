@@ -21,10 +21,7 @@ PROJECT_ROOT="$(cd "$SCRIPT_DIR/.." > /dev/null 2>&1 || exit 1; pwd -P)"
 
 # Define configuration file paths
 ENVIRONMENT_CONFIG="$PROJECT_ROOT/ENVIRONMENT.config"
-BACKEND_CONFIG="$PROJECT_ROOT/BACKEND.config"
 INFRA_DIR="$PROJECT_ROOT/infra"
-
-# Determine deployment environment (aws or local)
 ENVIRONMENT=${1:-"aws"}
 
 # Select terraform command (terraform or tflocal)
@@ -43,16 +40,16 @@ cd "$INFRA_DIR"
 # AWS Deployment Configuration
 if [ "$ENVIRONMENT" = "aws" ]; then
     echo "Using AWS deployment (terraform)..."
+    # Set temporary AWS credentials
+    if [ ! -f "$ENVIRONMENT_CONFIG" ]; then
+        $SCRIPT_DIR/setup-participant.sh
+    fi
+
     # Load participant-specific configuration if available
     if [ -f "$ENVIRONMENT_CONFIG" ]; then
         echo "Loading participant environment configuration..."
-        source "$ENVIRONMENT_CONFIG"
-        echo "  Participant ID: $PARTICIPANT_ID"
-        echo "  AWS Profile: $AWS_PROFILE"
+        source $ENVIRONMENT_CONFIG
     fi
-
-    # Set temporary AWS credentials
-    $SCRIPT_DIR/setup-participant.sh
 else
     # Local development configuration
     if command -v tflocal > /dev/null 2>&1; then
@@ -70,9 +67,9 @@ else
 fi
 
 # Initialize Terraform with backend configuration
-if [ -f "$BACKEND_CONFIG" ]; then
-    echo "Using backend configuration from backend.config..."
-    $TF_CMD init -reconfigure -backend-config="$BACKEND_CONFIG"
+if [ -n "$PARTICIPANT_ID" ]; then
+    echo "Using custom backend configuration..."
+    $TF_CMD init -reconfigure -backend-config="bucket=$PARTICIPANT_PROJECT-tfstate-$PARTICIPANT_ID"
 else
     echo "WARNING: No backend.config found. Using default backend configuration."
     echo "For multi-participant workshops, run: ./bin/setup-participant.sh"

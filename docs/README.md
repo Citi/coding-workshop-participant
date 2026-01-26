@@ -8,37 +8,25 @@ This folder contains a comprehensive set of documentation to guide you through b
 
 By completing this workshop, you will:
 
-* [X] Create responsive React applications with Material UI components
-* [X] Understand serverless architecture with AWS
-* [X] Build RESTful APIs with Python
-* [X] Implement CRUD services with AWS Lambda
-* [X] Experience NoSQL databases with MongoDB / DocumentDB
-* [X] Write comprehensive tests
-* [X] Deploy applications to AWS Serverless
-* [X] Follow software engineering best practices
-* [X] Deliver a production-ready application
+- [x] Create responsive React applications with Material UI components
+- [x] Understand serverless architecture with AWS
+- [x] Build RESTful APIs with Python
+- [x] Implement CRUD services with AWS Lambda
+- [x] Experience NoSQL databases with MongoDB / DocumentDB
+- [x] Write comprehensive tests
+- [x] Deploy applications to AWS Serverless
+- [x] Follow software engineering best practices
+- [x] Deliver a production-ready application
 
 ## Prerequisites
 
 Before starting, ensure you have:
 
-* Git (v2+)
-* Node.js (v16+) with npm
-* Python (v3.9+) with pip
-* AWS CLI (v2+)
-* Terraform (v1+)
-* LocalStack (v4+)
-* Code Editor (VSCode recommended)
-* AWS Account with appropriate permissions
-
-Workshop organizer(s) pre-installed everything on AWS WorkSpaces. Ensure you have:
-
-* Access to pre-installed WorkSpaces instance (e.g., Participant ID, Participant Code, Registration Code)
-  * Connect through [WorkSpaces WebUI](https://webclient.amazonworkspaces.com/), or
-  * Install and use [WorkSpaces Client](https://clients.amazonworkspaces.com/) on your personal computer / laptop
-* Access to pre-installed AWS Serverless environment (e.g., Participant ID, Participant Code, Participant URL)
-
-> NOTE: If you are missing any prerequisites or need help, ask your workshop organizer(s).
+- A Personal GitHub Account
+- Access to pre-installed WorkSpaces instance. This includes knowing your Participant ID, Participant Code, and Registration Code. Your workshop organizer will provide these to you if you don't have them.
+  - Connect through [WorkSpaces WebUI](https://webclient.amazonworkspaces.com/), or
+  - Install and use [WorkSpaces Client](https://clients.amazonworkspaces.com/) on your personal computer / laptop
+- Access to pre-installed AWS Serverless environment (e.g., Participant ID, Participant Code, Participant URL)
 
 ## Structure
 

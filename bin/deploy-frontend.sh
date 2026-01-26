@@ -22,10 +22,9 @@ SCRIPT_DIR="$(cd "$(dirname "$0")" > /dev/null 2>&1 || exit 1; pwd -P)"
 PROJECT_ROOT="$(cd "$SCRIPT_DIR/.." > /dev/null 2>&1 || exit 1; pwd -P)"
 
 # Define project directories
+ENVIRONMENT_CONFIG="$PROJECT_ROOT/ENVIRONMENT.config"
 FRONTEND_DIR="$PROJECT_ROOT/frontend"
 INFRA_DIR="$PROJECT_ROOT/infra"
-
-# Determine deployment environment (aws or local)
 ENVIRONMENT=${1:-"aws"}
 
 # Select terraform command (terraform or tflocal)
@@ -40,15 +39,16 @@ echo "Environment: $ENVIRONMENT"
 
 # AWS Deployment Configuration
 if [ "$ENVIRONMENT" = "aws" ]; then
-    # Load participant-specific configuration if available
-    ENVIRONMENT_CONFIG="$PROJECT_ROOT/ENVIRONMENT.config"
-    if [ -f "$ENVIRONMENT_CONFIG" ]; then
-        echo "Loading participant environment configuration..."
-        source "$ENVIRONMENT_CONFIG"
+    # Set temporary AWS credentials
+    if [ ! -f "$ENVIRONMENT_CONFIG" ]; then
+        $SCRIPT_DIR/setup-participant.sh
     fi
 
-    # Set temporary AWS credentials
-    $SCRIPT_DIR/setup-participant.sh
+    # Load participant-specific configuration if available
+    if [ -f "$ENVIRONMENT_CONFIG" ]; then
+        echo "Loading participant environment configuration..."
+        source $ENVIRONMENT_CONFIG
+    fi
 else
     # Local development configuration
     if command -v tflocal > /dev/null 2>&1; then

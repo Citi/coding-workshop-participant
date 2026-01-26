@@ -7,15 +7,14 @@ module "lambda" {
   package_type    = "Zip"
   architectures   = ["x86_64"]
   handler         = "function.handler"
-  runtime         = "python3.14"
+  runtime         = "python3.11"
   memory_size     = 128
   timeout         = 300
   tracing_mode    = "PassThrough"
+  build_in_docker = false
   store_on_s3     = data.aws_caller_identity.this.id != "000000000000"
   s3_bucket       = data.aws_caller_identity.this.id != "000000000000" ? var.aws_bucket : null
   s3_prefix       = data.aws_caller_identity.this.id != "000000000000" ? format("lambda/%s/%s/", local.app_id, each.value.name) : null
-  build_in_docker = data.aws_caller_identity.this.id != "000000000000"
-  docker_image    = data.aws_caller_identity.this.id != "000000000000" ? "public.ecr.aws/lambda/python:3.14" : null
 
   source_path = [{
     path             = each.value.path
