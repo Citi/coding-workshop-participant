@@ -6,6 +6,30 @@
 
 set -e
 
+# Usage helper
+if [ "$1" = "-h" ] || [ "$1" = "--help" ]; then
+    echo "Usage: $0 [aws|local]"
+    echo "Deploy backend infrastructure for the coding workshop"
+    echo ""
+    echo "Arguments:"
+    echo "  aws             Deploy to AWS (default)"
+    echo "  local           Deploy to LocalStack for development"
+    echo ""
+    echo "Options:"
+    echo "  -h, --help      Show this help message"
+    echo ""
+    echo "Requirements:"
+    echo "  - terraform installed"
+    echo "  - tflocal installed (for local development)"
+    echo "  - ENVIRONMENT.config file (auto-created for AWS)"
+    echo ""
+    echo "Examples:"
+    echo "  $0              # Deploy to AWS"
+    echo "  $0 aws          # Deploy to AWS"
+    echo "  $0 local        # Deploy to LocalStack"
+    exit 0
+fi
+
 echo "=========================================="
 echo "Coding Workshop - Backend Deployment"
 echo "=========================================="

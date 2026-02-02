@@ -5,12 +5,12 @@ locals {
     for rt in data.aws_route_table.this : rt.id
     if length([for route in rt.routes : route if startswith(route.gateway_id, "igw-")]) > 0
   ]
-  public_subnet_ids = distinct(flatten([
+  public_subnet_ids = sort(distinct(flatten([
     for rt_id in local.public_route_table_ids : [
       for assoc in data.aws_route_table.this[rt_id].associations : assoc.subnet_id if assoc.subnet_id != ""
     ]
-  ]))
-  private_subnet_ids = tolist(setsubtract(data.aws_subnets.this.ids, local.public_subnet_ids))
+  ])))
+  private_subnet_ids = sort(tolist(setsubtract(data.aws_subnets.this.ids, local.public_subnet_ids)))
   origin_id          = format("s3-origin-%s-%s", var.aws_project, local.app_id)
   function_dirs = [
     for file in fileset("${path.module}/../backend", "*/function.py") :

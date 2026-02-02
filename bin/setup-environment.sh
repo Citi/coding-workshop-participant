@@ -14,7 +14,7 @@
 #   - Cloud Tools: Terraform CLI, AWS CLI v2
 #   - LocalStack: LocalStack CLI, tflocal, awslocal
 #   - Database: MongoDB, MongoDB Compass
-#   - Runtimes: Node.js 22, Python 3.11
+#   - Runtimes: Node.js 22, Python 3
 #   - Utilities: jq (JSON processor)
 #   - Optional: dnsmasq (for LocalStack DNS, use -d flag)
 #
@@ -89,7 +89,7 @@ Installed tools:
   - tflocal, awslocal
   - MongoDB + MongoDB Compass
   - Node.js 22
-  - Python 3.11
+  - Python 3
   - jq (JSON processor)
 
 Services configured to start on boot:
@@ -1105,35 +1105,39 @@ install_nodejs() {
     fi
 }
 
-install_python314() {
-    print_section "Python 3.11"
+install_python() {
+    local version="$1"
+    local display_name="Python $version"
+    local binary_name="python$version"
+
+    print_section "$display_name"
 
     if is_dry_run; then
-        print_dry_run_header "PYTHON" "Python 3.11"
-        if command -v python3.11 &> /dev/null; then
-            print_dry_run_status "Already installed: $(python3.11 --version 2>/dev/null)"
+        print_dry_run_header "PYTHON" "$display_name"
+        if command -v "$binary_name" &> /dev/null; then
+            print_dry_run_status "Already installed: $("$binary_name" --version 2>/dev/null)"
         else
             print_dry_run_missing "Not installed"
             print_dry_run_action "Would add PPA: ppa:deadsnakes/ppa"
-            print_dry_run_action "Would install: python3.11, python3.11-venv, python3.11-dev"
+            print_dry_run_action "Would install: $binary_name, $binary_name-venv, $binary_name-dev"
         fi
         return
     fi
 
-    print_info "Installing Python 3.11..."
+    print_info "Installing $display_name..."
 
     # Idempotency check
-    if command -v python3.11 &> /dev/null; then
-        print_info "Python 3.11 already installed: $(python3.11 --version)"
+    if command -v "$binary_name" &> /dev/null; then
+        print_info "$display_name already installed: $("$binary_name" --version)"
         return
     fi
 
     # Add deadsnakes PPA
     if sudo add-apt-repository -y ppa:deadsnakes/ppa; then
-        if sudo apt update && sudo apt install -y python3.11 python3.11-venv python3.11-dev; then
-            print_status "Python 3.11 installed: $(python3.11 --version)"
+        if sudo apt update && sudo apt install -y "$binary_name" "$binary_name-venv" "$binary_name-dev"; then
+            print_status "$display_name installed: $("$binary_name" --version)"
         else
-            add_failure "Failed to install Python 3.11"
+            add_failure "Failed to install $display_name"
         fi
     else
         add_failure "Failed to add deadsnakes PPA"
@@ -1292,6 +1296,9 @@ run_verification() {
     verify_tool "Node.js" "node --version"
     verify_tool "npm" "npm --version"
     verify_tool "Python 3.11" "python3.11 --version"
+    verify_tool "Python 3.12" "python3.12 --version"
+    verify_tool "Python 3.13" "python3.13 --version"
+    verify_tool "Python 3.14" "python3.14 --version"
 
     # Utilities
     verify_tool "jq" "jq --version"
@@ -1418,6 +1425,9 @@ echo ""
 echo "Tool Versions:"
 command -v node &>/dev/null && echo "  Node.js: $(node --version)"
 command -v python3.11 &>/dev/null && echo "  Python: $(python3.11 --version 2>&1)"
+command -v python3.12 &>/dev/null && echo "  Python: $(python3.12 --version 2>&1)"
+command -v python3.13 &>/dev/null && echo "  Python: $(python3.13 --version 2>&1)"
+command -v python3.14 &>/dev/null && echo "  Python: $(python3.14 --version 2>&1)"
 command -v docker &>/dev/null && echo "  Docker: $(docker --version)"
 command -v terraform &>/dev/null && echo "  Terraform: $(terraform version | head -n1)"
 command -v aws &>/dev/null && echo "  AWS CLI: $(aws --version 2>&1)"
@@ -1574,7 +1584,10 @@ main() {
     configure_mongodb_bind
     install_mongodb_compass
     install_nodejs
-    install_python314
+    install_python "3.11"
+    install_python "3.12"
+    install_python "3.13"
+    install_python "3.14"
     configure_dnsmasq
 
     # Verification and summary

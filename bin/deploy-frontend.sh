@@ -6,6 +6,31 @@
 
 set -e
 
+# Usage helper
+if [ "$1" = "-h" ] || [ "$1" = "--help" ]; then
+    echo "Usage: $0 [aws|local]"
+    echo "Deploy frontend application for the coding workshop"
+    echo ""
+    echo "Arguments:"
+    echo "  aws             Build and deploy to AWS S3/CloudFront (default)"
+    echo "  local           Skip build (use start-dev.sh for local development)"
+    echo ""
+    echo "Options:"
+    echo "  -h, --help      Show this help message"
+    echo ""
+    echo "Requirements:"
+    echo "  - aws cli installed"
+    echo "  - npm installed"
+    echo "  - terraform/tflocal installed"
+    echo "  - Backend infrastructure deployed first"
+    echo ""
+    echo "Examples:"
+    echo "  $0              # Deploy to AWS"
+    echo "  $0 aws          # Deploy to AWS"
+    echo "  $0 local        # Local development mode"
+    exit 0
+fi
+
 echo "=========================================="
 echo "Coding Workshop - Frontend Deployment"
 echo "=========================================="

@@ -13,7 +13,7 @@ This folder contains Terraform configurations for managing infrastructure as cod
 ## Structure
 
 ```
-coding-workshop/
+coding-workshop-participant/
 ├── ...
 └── infra/                 # Terraform infrastructure
     ├── cloudfront.tf        # CloudFront distribution

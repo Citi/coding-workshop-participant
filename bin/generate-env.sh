@@ -5,6 +5,27 @@
 
 set -e
 
+# Usage helper
+if [ "$1" = "-h" ] || [ "$1" = "--help" ]; then
+    echo "Usage: $0"
+    echo "Generate .env.local file for React frontend with API configuration"
+    echo ""
+    echo "Description:"
+    echo "  Retrieves API configuration from Terraform outputs and"
+    echo "  generates .env.local file for React development"
+    echo ""
+    echo "Options:"
+    echo "  -h, --help      Show this help message"
+    echo ""
+    echo "Requirements:"
+    echo "  - terraform or tflocal installed"
+    echo "  - Backend infrastructure deployed"
+    echo ""
+    echo "Output:"
+    echo "  Creates frontend/.env.local with API configuration"
+    exit 0
+fi
+
 echo "=========================================="
 echo "Coding Workshop - Generate Environment"
 echo "=========================================="

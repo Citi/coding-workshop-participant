@@ -5,6 +5,29 @@
 
 set -e
 
+# Usage helper
+if [ "$1" = "-h" ] || [ "$1" = "--help" ]; then
+    echo "Usage: $0"
+    echo "Configure AWS credentials and Terraform backend for workshop participant"
+    echo ""
+    echo "Description:"
+    echo "  Loads participant configuration, retrieves temporary AWS"
+    echo "  credentials from workshop API, and creates environment"
+    echo "  configuration for deployment scripts"
+    echo ""
+    echo "Options:"
+    echo "  -h, --help      Show this help message"
+    echo ""
+    echo "Requirements:"
+    echo "  - aws cli installed"
+    echo "  - curl and jq installed"
+    echo "  - PARTICIPANT.config file (copy from .sample)"
+    echo ""
+    echo "Output:"
+    echo "  Creates ENVIRONMENT.config with AWS credentials"
+    exit 0
+fi
+
 echo "=========================================="
 echo "Coding Workshop - Participant Setup"
 echo "=========================================="

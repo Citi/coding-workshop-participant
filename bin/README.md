@@ -65,7 +65,7 @@ Builds and deploys the React frontend to AWS.
 
 **What it does**:
 
-* LocalStack: Displays message to use `npm start` (skips S3 deployment)
+* LocalStack: Displays message to use `npm run dev` (skips S3 deployment)
 * AWS:
   * Loads participant environment credentials
   * Runs `npm run build` to create production build
@@ -78,7 +78,7 @@ Builds and deploys the React frontend to AWS.
 * LocalStack: Don't use this - use `./bin/start-dev.sh` for hot-reload instead
 * AWS only: After making changes to React components
 
-**Why skip LocalStack S3?** The dev server (`npm start`) provides instant hot-reload (1-2 seconds) vs full build+deploy (~30-60 seconds).
+**Why skip LocalStack S3?** The dev server (`npm run dev`) provides instant hot-reload (1-2 seconds) vs full build+deploy (~30-60 seconds).
 
 **Usage**:
 

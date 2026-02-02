@@ -13,7 +13,7 @@ This folder contains React frontend application for tracking team members, team 
 ## Structure
 
 ```
-coding-workshop/
+coding-workshop-participant/
 ├── frontend/              # React frontend
 │   ├── public/              # Public assets
 │   ├── src/                 # Source code

@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 #
 # Setup Workshop Environment
 #
@@ -10,28 +10,45 @@
 
 set -e
 
-# Colors
-RED='\033[0;31m'
-GREEN='\033[0;32m'
-YELLOW='\033[1;33m'
-BLUE='\033[0;34m'
-NC='\033[0m'
-
-SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
-PROJECT_ROOT="$( cd "$SCRIPT_DIR/.." && pwd )"
+# Usage helper
+if [ "$1" = "-h" ] || [ "$1" = "--help" ]; then
+    echo "Usage: $0"
+    echo "Start MongoDB and initialize workshop database"
+    echo ""
+    echo "Description:"
+    echo "  1. Starts MongoDB with proper binding (0.0.0.0:27017)"
+    echo "  2. Initializes database collections"
+    echo "  3. Imports sample data from CSV files"
+    echo "  4. Verifies setup completion"
+    echo ""
+    echo "Options:"
+    echo "  -h, --help      Show this help message"
+    echo ""
+    echo "Environment Variables:"
+    echo "  APP_ID          Workshop app ID (default: abcd1234)"
+    echo ""
+    echo "Requirements:"
+    echo "  - mongod installed"
+    echo "  - mongosh installed"
+    echo "  - python3 installed"
+    exit 0
+fi
 
 echo "============================================================"
 echo "Workshop Environment Setup"
 echo "============================================================"
 echo ""
 
+SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+PROJECT_ROOT="$( cd "$SCRIPT_DIR/.." && pwd )"
+
 # ============================================================
 # STEP 1: Start MongoDB
 # ============================================================
-echo -e "${BLUE}[1/3] Starting MongoDB...${NC}"
+echo -e "[1/3] Starting MongoDB..."
 
 if ! command -v mongod &> /dev/null; then
-    echo -e "${RED}Error: MongoDB is not installed${NC}"
+    echo -e "Error: MongoDB is not installed"
     echo "Install: brew install mongodb-community"
     exit 1
 fi
@@ -39,14 +56,14 @@ fi
 # Check if already running correctly
 if pgrep -x "mongod" > /dev/null; then
     if lsof -iTCP:27017 -sTCP:LISTEN &> /dev/null || ss -ltn | grep -q ':27017'; then
-        echo -e "${GREEN}  ✓ MongoDB already running (bound to 0.0.0.0)${NC}"
+        echo -e "  ✓ MongoDB already running (bound to 0.0.0.0)"
     else
-        echo -e "${YELLOW}  ⚠ MongoDB running but misconfigured, restarting...${NC}"
+        echo -e "  ⚠ MongoDB running but misconfigured, restarting..."
         PID=$(pgrep -x "mongod" || true)
         if [ -n "$PID" ]; then
             OWNER=$(ps -o user= -p "$PID" | tr -d ' ')
             if [ "$OWNER" != "$(whoami)" ]; then
-                echo -e "${YELLOW}    ⚠ mongod is running as ${OWNER}. Attempting restart with system tools or sudo...${NC}"
+                echo -e "    ⚠ mongod is running as ${OWNER}. Attempting restart with system tools or sudo..."
                 if command -v systemctl &> /dev/null && systemctl list-units --type=service --all | grep -q mongod; then
                     sudo systemctl restart mongod || true
                 else
@@ -64,7 +81,7 @@ if pgrep -x "mongod" > /dev/null; then
 
         mongod --dbpath "$DATA_DIR" --bind_ip 0.0.0.0 --port 27017 --fork --logpath "$LOG_DIR/mongo.log"
         sleep 2
-        echo -e "${GREEN}  ✓ MongoDB restarted${NC}"
+        echo -e "  ✓ MongoDB restarted"
     fi
 else
     DATA_DIR="/usr/local/var/mongodb"
@@ -73,17 +90,17 @@ else
 
     mongod --dbpath "$DATA_DIR" --bind_ip 0.0.0.0 --port 27017 --fork --logpath "$LOG_DIR/mongo.log"
     sleep 2
-    echo -e "${GREEN}  ✓ MongoDB started${NC}"
+    echo -e "  ✓ MongoDB started"
 fi
 echo ""
 
 # ============================================================
 # STEP 2: Initialize Database
 # ============================================================
-echo -e "${BLUE}[2/3] Initializing Database...${NC}"
+echo -e "[2/3] Initializing Database..."
 
 if ! command -v mongosh &> /dev/null; then
-    echo -e "${RED}Error: mongosh is not installed${NC}"
+    echo -e "Error: mongosh is not installed"
     echo "Install: brew install mongosh"
     exit 1
 fi
@@ -93,7 +110,7 @@ DB_NAME="workshop-${APP_ID}"
 
 # Create collections
 mongosh "$DB_NAME" --quiet --file "$PROJECT_ROOT/data/init-mongodb.js" > /dev/null 2>&1 || true
-echo -e "${GREEN}  ✓ Collections created${NC}"
+echo -e "  ✓ Collections created"
 
 # Import data (capture full output for diagnostics)
 IMPORT_LOG="$(mktemp)"
@@ -103,9 +120,9 @@ cd "$PROJECT_ROOT"
 python3 data/import-data.py --database "$DB_NAME" > "$IMPORT_LOG" 2>&1 || true
 
 # Show a short summary of the import (and keep full log in case of problems)
-echo -e "${BLUE}  Import log (tail):${NC}"
+echo -e "  Import log (tail):"
 tail -n 20 "$IMPORT_LOG" | sed 's/^/    /'
-echo -e "${GREEN}  ✓ Sample data import attempted (see log above)${NC}"
+echo -e "  ✓ Sample data import attempted (see log above)"
 echo ""
 
 # Compute expected number of individuals from CSV
@@ -119,27 +136,27 @@ fi
 # ============================================================
 # STEP 3: Verify
 # ============================================================
-echo -e "${BLUE}[3/3] Verifying Setup...${NC}"
+echo -e "[3/3] Verifying Setup..."
 
 DOC_COUNT=$(mongosh "$DB_NAME" --quiet --eval "db.individuals.countDocuments({})" 2>/dev/null || echo "0")
 if [ "$DOC_COUNT" -gt 0 ]; then
-    echo -e "${GREEN}  ✓ Database (${DB_NAME}) has data ($DOC_COUNT individuals)${NC}"
+    echo -e "  ✓ Database (${DB_NAME}) has data ($DOC_COUNT individuals)"
     if [ "$EXPECTED_COUNT" -gt 0 ] && [ "$DOC_COUNT" -ne "$EXPECTED_COUNT" ]; then
-        echo -e "${YELLOW}    ⚠ Expected ${EXPECTED_COUNT} rows from CSV but found ${DOC_COUNT}${NC}"
+        echo -e "    ⚠ Expected ${EXPECTED_COUNT} rows from CSV but found ${DOC_COUNT}"
     fi
 else
-    echo -e "${RED}  ✗ No data in target database (${DB_NAME})${NC}"
-    echo -e "${BLUE}  Scanning other workshop-* databases for data...${NC}"
+    echo -e "  ✗ No data in target database (${DB_NAME})"
+    echo -e "  Scanning other workshop-* databases for data..."
     mongosh --quiet --eval 'db.getMongo().getDBNames().forEach(function(name){ try{ var c=db.getSiblingDB(name).individuals.countDocuments({}); if(c>0) print(name+":"+c);}catch(e){} })' > /tmp/_db_scan 2>/dev/null || true
     if [ -s /tmp/_db_scan ]; then
-        echo -e "${YELLOW}  ⚠ Found individuals in other DB(s):${NC}"
+        echo -e "  ⚠ Found individuals in other DB(s):"
         sed 's/^/    /' /tmp/_db_scan
-        echo -e "${YELLOW}  Suggestion: set APP_ID to match the DB prefix (e.g. APP_ID=<id> ./bin/start-mongodb.sh) or re-run the import with --database \"${DB_NAME}\"${NC}"
+        echo -e "  Suggestion: set APP_ID to match the DB prefix (e.g. APP_ID=<id> ./bin/start-mongodb.sh) or re-run the import with --database \"${DB_NAME}\""
     else
-        echo -e "${RED}  ✗ No individuals found in any workshop-* database${NC}"
-        echo -e "${BLUE}  Import log (tail) for debugging:${NC}"
+        echo -e "  ✗ No individuals found in any workshop-* database"
+        echo -e "  Import log (tail) for debugging:"
         tail -n 200 "$IMPORT_LOG" | sed 's/^/    /'
-        echo -e "${BLUE}  Suggestion: inspect the import command and re-run: python3 data/import-data.py --database \"${DB_NAME}\"${NC}"
+        echo -e "  Suggestion: inspect the import command and re-run: python3 data/import-data.py --database \"${DB_NAME}\""
         exit 1
     fi
 fi
@@ -147,18 +164,18 @@ fi
 # Check MongoDB accessibility via mongosh ping
 PING_OK=$(mongosh --quiet --eval 'db.adminCommand({ping:1}).ok' 2>/dev/null || echo "0")
 if [ "$PING_OK" = "1" ]; then
-    echo -e "${GREEN}  ✓ MongoDB reachable (mongosh ping OK)${NC}"
+    echo -e "  ✓ MongoDB reachable (mongosh ping OK)"
 else
-    echo -e "${RED}  ✗ MongoDB not reachable via mongosh ping${NC}"
+    echo -e "  ✗ MongoDB not reachable via mongosh ping"
     exit 1
 fi
 
 echo ""
 echo "============================================================"
-echo -e "${GREEN}✓ Setup Complete!${NC}"
+echo -e "✓ Setup Complete!"
 echo "============================================================"
 echo ""
 echo "Next steps:"
 echo "  1. Deploy infrastructure: ./bin/deploy-backend"
-echo "  2. Start frontend: cd frontend && npm start"
+echo "  2. Start frontend: cd frontend && npm run dev"
 echo ""

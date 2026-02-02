@@ -5,6 +5,24 @@
 
 set -e
 
+# Usage helper
+if [ "$1" = "-h" ] || [ "$1" = "--help" ]; then
+    echo "Usage: $0"
+    echo "Destroy workshop infrastructure using Terraform"
+    echo ""
+    echo "Description:"
+    echo "  Loads participant configuration and destroys all"
+    echo "  Terraform-managed infrastructure"
+    echo ""
+    echo "Options:"
+    echo "  -h, --help      Show this help message"
+    echo ""
+    echo "Requirements:"
+    echo "  - terraform installed"
+    echo "  - ENVIRONMENT.config file (auto-created if missing)"
+    exit 0
+fi
+
 echo "=========================================="
 echo "Coding Workshop - Clean Up Deployment"
 echo "=========================================="

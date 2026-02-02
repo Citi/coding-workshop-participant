@@ -63,7 +63,8 @@ module "lambda" {
 
   tags = {
     awsApplication = local.app_arn
-    identifier     = local.app_id
+    participant    = local.app_id
+    event          = random_id.this.hex
   }
 }
 
@@ -74,7 +75,8 @@ resource "aws_sqs_queue" "this" {
 
   tags = {
     awsApplication = local.app_arn
-    identifier     = local.app_id
+    participant    = local.app_id
+    event          = random_id.this.hex
   }
 }
 

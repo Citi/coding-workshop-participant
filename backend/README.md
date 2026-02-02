@@ -16,7 +16,7 @@ This folder contains Python backend services for CRUD operations on Individuals,
 The backend is organized into Lambda functions, one for each CRUD service:
 
 ```
-coding-workshop/
+coding-workshop-participant/
 ├── backend/               # Python backend
 │   ├── achievement/         # CRUD service for achievements
 │   │   ├── function.py        # Contains the Python service with business logic

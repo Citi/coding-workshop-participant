@@ -5,7 +5,8 @@ resource "aws_docdb_subnet_group" "this" {
 
   tags = {
     awsApplication = local.app_arn
-    identifier     = local.app_id
+    participant    = local.app_id
+    event          = random_id.this.hex
   }
 }
 
@@ -31,7 +32,8 @@ resource "aws_docdb_cluster" "this" {
 
   tags = {
     awsApplication = local.app_arn
-    identifier     = local.app_id
+    participant    = local.app_id
+    event          = random_id.this.hex
   }
 }
 
@@ -45,7 +47,8 @@ resource "aws_docdb_cluster_instance" "this" {
 
   tags = {
     awsApplication = local.app_arn
-    identifier     = local.app_id
+    participant    = local.app_id
+    event          = random_id.this.hex
   }
 }
 
@@ -56,7 +59,8 @@ resource "aws_secretsmanager_secret" "data" {
 
   tags = {
     awsApplication = local.app_arn
-    identifier     = local.app_id
+    participant    = local.app_id
+    event          = random_id.this.hex
   }
 }
 

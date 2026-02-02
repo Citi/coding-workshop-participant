@@ -34,6 +34,7 @@ resource "aws_security_group" "this" {
 
   tags = {
     awsApplication = local.app_arn
-    identifier     = local.app_id
+    participant    = local.app_id
+    event          = random_id.this.hex
   }
 }
