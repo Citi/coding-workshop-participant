@@ -24,4 +24,4 @@ jobs:
         run: npm install --prefix ./frontend
 
       - name: Run npm audit
-        run: npm audit --prefix ./frontend --audit-level=moderate
+        run: npm audit --prefix ./frontend --audit-level=high

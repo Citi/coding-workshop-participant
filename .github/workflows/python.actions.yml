@@ -18,7 +18,7 @@ jobs:
       - name: Install Python
         uses: actions/setup-python@master
         with:
-          python-version: '3.14'
+          python-version: '3.11'
 
       - name: Install Bandit
         run: pip3 install bandit
