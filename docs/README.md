@@ -22,64 +22,12 @@ By completing this workshop, you will:
 
 Before starting, ensure you have:
 
-- A Personal GitHub Account
-- Access to pre-installed WorkSpaces instance. This includes knowing your Participant ID, Participant Code, and Registration Code. Your workshop organizer will provide these to you if you don't have them.
+- Access to your GitHub account
+- Email from your workshop organizer(s) with details such as Registration Code, Participant ID, Participant Code, and Participant URL
+- Access to pre-installed WorkSpaces instance (you will need Registration Code, Participant ID and Participant Code)
   - Connect through [WorkSpaces WebUI](https://webclient.amazonworkspaces.com/), or
   - Install and use [WorkSpaces Client](https://clients.amazonworkspaces.com/) on your personal computer / laptop
-- Access to pre-installed AWS Serverless environment (e.g., Participant ID, Participant Code, Participant URL)
-
-## Structure
-
-```
-coding-workshop/
-├── backend/                 # Python backend
-│   ├── achievement/           # CRUD service for achievements
-│   ├── individual/            # CRUD service for individuals
-│   ├── metadata/              # CRUD service for metadata
-│   ├── team/                  # CRUD service for teams
-│   └── README.md              # Backend guide
-├── bin/                     # Shell scripts
-│   ├── clean-up.sh            # Clean up deployment script
-│   ├── deploy-backend.sh      # Backend infrastructure deployment script
-│   ├── deploy-frontend.sh     # Frontend application deployment script
-│   ├── generate-env.sh        # Generate frontend environment script
-│   ├── proxy-server.js        # CORS-enabled proxy server script
-│   ├── setup-environment.sh   # Setup environment script
-│   ├── setup-participant.sh   # Setup participant script
-│   ├── start-dev.sh           # Local environment startup script
-│   └── README.md              # Shell scripts guide
-├── data/                    # Sample CSV data
-│   ├── achievement.csv        # Data sample for achievements
-│   ├── individual.csv         # Data sample for individuals
-│   ├── metadata.csv           # Data sample for metadata
-│   ├── team.csv               # Data sample for teams
-│   └── README.md              # Data guide
-├── docs/                    # Documentation
-│   ├── README.md              # Main guide (YOU ARE HERE)
-│   ├── evaluation.md          # Evaluation guide
-│   ├── implementation.md      # Implementation guide
-│   ├── testing.md             # Testing guide
-│   └── validation.md          # Validation guide
-├── frontend/                # React frontend
-│   ├── public/                # Public assets
-│   ├── src/                   # Source code
-│   ├── package.json           # Application metadata
-│   └── README.md              # Frontend guide
-└── infra/                   # Terraform infrastructure
-    ├── cloudfront.tf          # CloudFront distribution
-    ├── data.tf                # Data sources
-    ├── documentdb.tf          # DocumentDB serverless cluster
-    ├── lambda.tf              # Lambda functions
-    ├── locals.tf              # Local values
-    ├── main.tf                # Main resources
-    ├── output.tf              # Output values
-    ├── policy.tftpl           # IAM policy template
-    ├── provider.tf            # Provider configurations
-    ├── s3.tf                  # S3 bucket
-    ├── sgr.tf                 # Security group rules
-    ├── variable.tf            # Input variables
-    └── README.md              # Infrastructure guide
-```
+- Access to pre-installed AWS Serverless environment (you will need Participant URL, Participant ID and Participant Code)
 
 ## Next Steps
 

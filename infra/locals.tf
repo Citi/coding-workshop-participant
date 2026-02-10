@@ -11,7 +11,7 @@ locals {
     ]
   ])))
   private_subnet_ids = sort(tolist(setsubtract(data.aws_subnets.this.ids, local.public_subnet_ids)))
-  origin_id          = format("s3-origin-%s-%s", var.aws_project, local.app_id)
+  origin_id          = format("%s-s3-origin-%s", var.aws_project, local.app_id)
   function_dirs = [
     for file in fileset("${path.module}/../backend", "*/function.py") :
     dirname(file) if !startswith(dirname(file), "_") && !startswith(dirname(file), ".")

@@ -39,7 +39,7 @@ modern technologies. The application will have the following features:
 * Search and filter functionality
 * Responsive design for mobile and desktop usage
 
-## Technologies Used
+## Technology Stack
 
 The following technologies will be used to build the application:
 
@@ -75,7 +75,7 @@ See the [LICENSE](./LICENSE) resource for more details.
 ## Roadmap
 
 See the
-[open issues](https://github.com/eistrati/coding-workshop/issues)
+[open issues](https://github.com/eistrati/coding-workshop-participant/issues)
 for a list of proposed roadmap features (and known issues).
 
 ## Security

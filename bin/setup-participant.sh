@@ -103,6 +103,7 @@ if [ -z "$AWS_ACCOUNT_ID" ]; then
     echo "Please ensure your AWS credentials are configured:"
     echo "  export AWS_ACCESS_KEY_ID=your-key"
     echo "  export AWS_SECRET_ACCESS_KEY=your-secret"
+    echo "  export AWS_SESSION_TOKEN=your-session-token"
     echo ""
     echo "Then run this script again."
     exit 1
