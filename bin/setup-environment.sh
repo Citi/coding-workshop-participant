@@ -1452,6 +1452,9 @@ HEALTH_EOF
         if ! grep -q 'export PATH="$HOME/.local/bin:$PATH"' "$ACTUAL_HOME/.bashrc"; then
             echo 'export PATH="$HOME/.local/bin:$PATH"' >> "$ACTUAL_HOME/.bashrc"
         fi
+        if ! grep -q 'export PATH="$HOME/coding-workshop-participant/frontend/node_modules/.bin:$PATH"' "$ACTUAL_HOME/.bashrc"; then
+            echo 'export PATH="$HOME/coding-workshop-participant/frontend/node_modules/.bin:$PATH"' >> "$ACTUAL_HOME/.bashrc"
+        fi
     fi
 
     print_status "Health check script created: $script_path"
