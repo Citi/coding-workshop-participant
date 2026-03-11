@@ -138,16 +138,26 @@ npm run build
 # Prepare S3 upload
 echo "Uploading to S3..."
 
-# Remove sample environment file
-rm -f build/.env.sample
+# Detect build output directory (Vite uses dist/, CRA uses build/)
+if [ -d "dist" ]; then
+    BUILD_DIR="dist"
+elif [ -d "build" ]; then
+    BUILD_DIR="build"
+else
+    echo "ERROR: No build output found (expected dist/ or build/)"
+    exit 1
+fi
+echo "Build directory: $BUILD_DIR"
 
-# Use local environment file if available
-if [ ! -f build/.env ]; then
-    mv -f build/.env.local build/.env
+# Remove sample environment file
+rm -f $BUILD_DIR/.env.sample
+
+if [ ! -f .env ] && [ -f $BUILD_DIR/.env.local ]; then
+    mv -f $BUILD_DIR/.env.local $BUILD_DIR/.env
 fi
 
 # Upload built frontend to S3 (with deletion of old files)
-aws s3 sync build/ s3://$BUCKET_NAME/ --delete $AWS_ENDPOINT
+aws s3 sync $BUILD_DIR/ s3://$BUCKET_NAME/ --delete $AWS_ENDPOINT
 
 # Invalidate CloudFront cache for AWS deployments
 if [ "$ENVIRONMENT" = "aws" ]; then
