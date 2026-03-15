@@ -1,6 +1,6 @@
 # Coding Workshop - Validation Guide
 
-> [Main Guide](./README.md) | **Validation Guide** | [Evaluation Guide](./evaluation.md) | [Implementation Guide](./implementation.md) | [Testing Guide](./testing.md)
+> [Main Guide](./README.md) | **Validation Guide** | [Evaluation Guide](./evaluation.md) | [Testing Guide](./testing.md) | [Implementation Guide](./implementation.md)
 
 ## Overview
 
@@ -162,7 +162,7 @@ Now continue reading the other docs we have prepared for you and familiarize you
     <li><a href="./README.md">Main Guide</a></li>
     <li aria-current="page">Validation Guide</li>
     <li><a href="./evaluation.md">Evaluation Guide</a></li>
-    <li><a href="./implementation.md">Implementation Guide</a></li>
     <li><a href="./testing.md">Testing Guide</a></li>
+    <li><a href="./implementation.md">Implementation Guide</a></li>
   </ol>
 </nav>

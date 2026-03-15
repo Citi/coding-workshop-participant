@@ -1,6 +1,6 @@
 # Coding Workshop - Testing Guide
 
-> [Main Guide](./README.md) | [Validation Guide](./validation.md) | [Evaluation Guide](./evaluation.md) | [Implementation Guide](./implementation.md) | **Testing Guide**
+> [Main Guide](./README.md) | [Validation Guide](./validation.md) | [Evaluation Guide](./evaluation.md) | **Testing Guide** | [Implementation Guide](./implementation.md)
 
 ## Overview
 
@@ -39,7 +39,7 @@ covering backend testing, frontend testing, and performance testing.
     <li><a href="./README.md">Main Guide</a></li>
     <li><a href="./validation.md">Validation Guide</a></li>
     <li><a href="./evaluation.md">Evaluation Guide</a></li>
-    <li><a href="./implementation.md">Implementation Guide</a></li>
     <li aria-current="page">Testing Guide</li>
+    <li><a href="./implementation.md">Implementation Guide</a></li>
   </ol>
 </nav>

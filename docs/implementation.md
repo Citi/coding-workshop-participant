@@ -1,6 +1,6 @@
 # Coding Workshop - Implementation Guide
 
-> [Main Guide](./README.md) | [Validation Guide](./validation.md) | [Evaluation Guide](./evaluation.md) | **Implementation Guide** | [Testing Guide](./testing.md)
+> [Main Guide](./README.md) | [Validation Guide](./validation.md) | [Evaluation Guide](./evaluation.md) | [Testing Guide](./testing.md) | **Implementation Guide**
 
 ## Overview
 
@@ -287,7 +287,7 @@ The frontend should provide an intuitive interface for managing all entities.
     <li><a href="./README.md">Main Guide</a></li>
     <li><a href="./validation.md">Validation Guide</a></li>
     <li><a href="./evaluation.md">Evaluation Guide</a></li>
-    <li aria-current="page">Implementation Guide</li>
     <li><a href="./testing.md">Testing Guide</a></li>
+    <li aria-current="page">Implementation Guide</li>
   </ol>
 </nav>

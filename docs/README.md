@@ -1,6 +1,6 @@
 # Coding Workshop - Main Guide
 
-> **Main Guide** | [Validation Guide](./validation.md) | [Evaluation Guide](./evaluation.md) | [Implementation Guide](./implementation.md) | [Testing Guide](./testing.md)
+> **Main Guide** | [Validation Guide](./validation.md) | [Evaluation Guide](./evaluation.md) | [Testing Guide](./testing.md) | [Implementation Guide](./implementation.md)
 
 This folder contains a comprehensive set of documentation to guide you through building a complete web application that meets all specifications and requirements. The goal is to evaluate your effectiveness in delivering a fully working application. Your implementation will be assessed against expected deliverables and milestones.
 
@@ -33,8 +33,8 @@ Before starting, ensure you have:
 
 1. Follow the [Validation Guide](./validation.md) to make sure your development environment includes all prerequisites and requirements.
 2. Review the [Evaluation Guide](./evaluation.md) to understand how your implementation will be assessed and evaluated.
-3. Check the [Implementation Guide](./implementation.md) to get directions and guidelines on implementation expectations.
-4. Explore the [Testing Guide](./testing.md) to make sure your implementation doesn't miss important aspects of development lifecycle.
+3. Explore the [Testing Guide](./testing.md) to make sure your implementation doesn't miss important aspects of development lifecycle.
+4. Check the [Implementation Guide](./implementation.md) to get directions and guidelines on implementation expectations.
 
 ## Navigation Links
 
@@ -43,7 +43,7 @@ Before starting, ensure you have:
     <li aria-current="page">Main Guide</li>
     <li><a href="./validation.md">Validation Guide</a></li>
     <li><a href="./evaluation.md">Evaluation Guide</a></li>
-    <li><a href="./implementation.md">Implementation Guide</a></li>
     <li><a href="./testing.md">Testing Guide</a></li>
+    <li><a href="./implementation.md">Implementation Guide</a></li>
   </ol>
 </nav>
