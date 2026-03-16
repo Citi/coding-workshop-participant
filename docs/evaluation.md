@@ -51,40 +51,13 @@ This workshop is designed to evaluate your effectiveness in delivering a fully w
 
 ## Outcome
 
-### Excellent
-- All requirements implemented correctly
-- Design followed precisely
-- Code is clean and well-organized
-- Comprehensive testing
-- Excellent user experience
-
-### Good
-- All requirements implemented
-- Design mostly followed
-- Code is generally clean
-- Good testing coverage
-- Good user experience
-
-### Satisfactory
-- Most requirements implemented
-- Design partially followed
-- Code has some issues
-- Basic testing
-- Acceptable user experience
-
-### Needs Improvement
-- Some requirements missing
-- Design not fully followed
-- Code quality issues
-- Limited testing
-- User experience issues
-
-### Incomplete
-- Major requirements missing
-- Design not followed
-- Significant code quality issues
-- Minimal testing
-- Poor user experience
+Excellent | Good | Satisfactory | Incomplete
+----------|------|--------------|-----------
+All requirements implemented correctly | All requirements implemented | Most requirements implemented | Some requirements missing
+Design followed precisely | Design mostly followed | Design partially followed | Design not followed
+Code is clean and well-organized | Code is generally clean | Code has some issues | Code quality issues
+Comprehensive testing | Good testing coverage | Basic testing | Limited testing
+Excellent user experience | Good user experience | Acceptable user experience | User experience issues
 
 ## Navigation Links
 

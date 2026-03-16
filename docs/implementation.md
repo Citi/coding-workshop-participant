@@ -5,63 +5,9 @@
 ## Overview
 
 This guide provides directions and guidelines on implementation expectations
-but you are free to exercise your creativity to showcase your technical
-decisions and skill where you see fit.
-
-### Business Problem
-
-Our company ACME Inc. is going through a massive organizational transformation
-to become a more data-driven organization. Information about teams structure
-and performance is currently scattered across multiple systems, making it
-difficult to get a comprehensive view of team dynamics and achievements.
-
-We are struggling to answer simple questions like:
-
-* Who are the members of each team?
-* Where are the teams located?
-* What are the key achievements of each team on a monthly basis?
-* How many teams have team leader not co-located with team members?
-* How many teams have team leader as a non-direct staff?
-* How many teams have non-direct staff to employees ratio above 20%?
-* How many teams are reporting to an organization leader?
-
-### Technical Solution
-
-As part of this transformation, we are looking to build a centralized team
-management tool that will allow us to track team members, team locations,
-monthly team achievements, as well as individual-level and team-level metadata.
-Initial focus is to provide a self-service capability without any integrations
-with other tools such as Employee Directory, Project Tracking, or Performance
-Management.
-
-The technical solution involves developing a stand-alone web application using
-modern technologies. The application will have the following features:
-
-* User authentication and authorization
-* Role-based access control
-* CRUD operations for individuals, teams, achievements and metadata
-* Search and filter functionality
-* Responsive design for mobile and desktop usage
-
-### Technology Stack
-
-The following technologies will be used to build the application:
-
-* Frontend: HTML, CSS, React.js with React Responsive and Material UI Components
-* Backend: Python
-* Database: MongoDB / DocumentDB
-* Infrastructure: Terraform
-* Version Control: Git, GitHub
-* Deployment Mode: Shell Scripts
-* Deployment Target: AWS Serverless (e.g., S3, CloudFront, Lambda, DocumentDB)
-
-### Expected Outcomes
-
-By the end of the workshop, participants will have developed a functional
-web application that meets the requirements outlined above. The application
-will be deployed to a cloud environment and accessible via a web browser.
-Participants will also gain hands-on experience with modern web development
-technologies and best practices.
+but you are free to exercise your creativity to showcase your technical skills
+combined with soft skills such as curiosity, observability, and ability to
+drive / deliver value.
 
 ## Implementation Expectations
 

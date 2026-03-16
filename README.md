@@ -4,7 +4,16 @@ The goal of this coding workshop is to enable and assess the hands-on skills
 of participants through development of a practical technical solution that
 solves a theoretical business problem.
 
-## Business Problem
+## Getting Started
+
+Navigate to [Coding Workshop - Main Guide](./docs/README.md) to get started.
+
+## Requirements Example
+
+Coding Workshop organizer(s) will provide instructions to follow by email. Here
+below is a real example of requirements and expectations for participant(s):
+
+### Business Problem
 
 Our company ACME Inc. is going through a massive organizational transformation
 to become a more data-driven organization. Information about teams structure
@@ -21,7 +30,7 @@ We are struggling to answer simple questions like:
 * How many teams have non-direct staff to employees ratio above 20%?
 * How many teams are reporting to an organization leader?
 
-## Technical Solution
+### Technical Solution
 
 As part of this transformation, we are looking to build a centralized team
 management tool that will allow us to track team members, team locations,
@@ -39,7 +48,7 @@ modern technologies. The application will have the following features:
 * Search and filter functionality
 * Responsive design for mobile and desktop usage
 
-## Technology Stack
+### Technology Stack
 
 The following technologies will be used to build the application:
 
@@ -51,17 +60,13 @@ The following technologies will be used to build the application:
 * Deployment Mode: Shell Scripts
 * Deployment Target: AWS Serverless (e.g., S3, CloudFront, Lambda, DocumentDB)
 
-## Expected Outcomes
+### Expected Outcomes
 
 By the end of the workshop, participants will have developed a functional
 web application that meets the requirements outlined above. The application
 will be deployed to a cloud environment and accessible via a web browser.
 Participants will also gain hands-on experience with modern web development
 technologies and best practices.
-
-## Getting Started
-
-Navigate to [Coding Workshop - Main Guide](./docs/README.md) to get started.
 
 ## Contributing
 
