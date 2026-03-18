@@ -4,23 +4,23 @@
 
 ## Overview
 
-This validation guide will take you through the steps required to configure your WorkSpace and ensure all the requirements are set for you to begin working on your submission for this coding workshop.
+This validation guide will take you through the steps required to configure your virtual desktop infrastructure (VDI) and ensure all the requirements are set for you to begin working on your submission for this coding workshop.
 
-### About AWS WorkSpaces
+### About VDI
 
-This is a virtual desktop computer you will be able to use for the duration of this workshop. You can treat it as a personal computer that will disappear in a few days, but continue to be mindful of your personal data while you use it.
+The VDI is a virtual desktop computer built and packaged with software to use during the duration of this workshop. You can treat it as a personal computer that will disappear in a few days, but continue to be mindful of your personal data while you use it.
 
-Details such as your credentials for online accounts (e.g. GitHub, Google, etc.) will be stored for the length of the workshop and completely erased when we close your WorkSpace following the conclusion of the workshop.
+Details such as your credentials for online accounts (e.g. GitHub, Google, etc.) will be stored for the length of the workshop and completely erased shortly after the conclusion of the workshop.
 
-If you are using the Client App for WorkSpaces, you will be able to share clipboard between your personal computer and your WorkSpace. Meaning, if you can copy commands in this doc from your web browser in your personal computer and paste them in your virtual desktop with `Ctrl+V` or `Ctrl+Shift+V` if you are pasting in the terminal. It also works the other way around.
+If you are using the [WorkSpaces Client](https://clients.amazonworkspaces.com/), you will be able to share clipboard between your personal computer and your VDI. Meaning, if you can copy commands in this doc from your web browser in your personal computer and paste them in your virtual desktop with `Ctrl+V` or `Ctrl+Shift+V` if you are pasting in the terminal. It also works the other way around.
 
 ### Troubleshooting
 
 If you believe any of the instructions below do not work as we intended, please bring it up with the workshop organizer(s). They will be happy to guide you through some steps to fix your dev environment.
 
-## Setting Up Your WorkSpace
+## Setting Up Your VDI
 
-Login to your WorkSpace desktop and open a new Terminal from the applications menu (9-dot icon at the bottom of your desktop) and clone this repo with
+Login to your VDI desktop and open a new Terminal from the applications menu (9-dot icon at the bottom of your desktop) and clone this repo with
 
 ```sh
 git clone https://github.com/eistrati/coding-workshop-participant
@@ -32,7 +32,7 @@ Then run `cd coding-workshop-participant` to enter the project's directory. Then
 ./bin/setup-environment.sh && source ~/.bashrc
 ```
 
-**Note:** The script will ask you for your `sudo` password. This is the same password you used to login to the WorkSpace. The terminal will not show any characters to protect your password, thus, just press `Enter` after typing your password or after pasting it if you copied it from somewhere.
+**Note:** The script will ask you for your `sudo` password. This is the same password you used to login to the VDI. The terminal will not show any characters to protect your password, thus, just press `Enter` after typing your password or after pasting it if you copied it from somewhere.
 
 This will install tools to help you code during this work shop, such as:
 
@@ -65,12 +65,6 @@ coding-workshop-participant/
 │   ├── setup-participant.sh   # Setup participant script
 │   ├── start-dev.sh           # Local environment startup script
 │   └── README.md              # Shell scripts guide
-├── data/                    # Sample CSV data
-│   ├── achievements.csv       # Data sample for achievements
-│   ├── individuals.csv        # Data sample for individuals
-│   ├── metadata.csv           # Data sample for metadata
-│   ├── teams.csv              # Data sample for teams
-│   └── README.md              # Data guide
 ├── docs/                    # Documentation
 │   ├── README.md              # Main guide
 │   ├── evaluation.md          # Evaluation guide

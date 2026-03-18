@@ -53,8 +53,12 @@ const server = http.createServer((req, res) => {
   const pathParts = parsedUrl.pathname.split('/').filter(Boolean);
 
   if (pathParts[0] !== 'api' || pathParts.length < 2) {
-    res.writeHead(404, { 'Content-Type': 'application/json' });
-    res.end(JSON.stringify({ error: 'Not found. Use /api/{endpoint_name}' }));
+    res.writeHead(200, { 'Content-Type': 'application/json' });
+    res.end(JSON.stringify({
+      message: 'Development CORS Proxy Server',
+      usage: 'GET /api/{endpoint_name}',
+      endpoints: Object.keys(endpoints).map(name => `http://localhost:${PORT}/api/${name}`)
+    }, null, 2));
     return;
   }
 
