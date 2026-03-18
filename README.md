@@ -10,7 +10,7 @@ Navigate to [Coding Workshop - Main Guide](./docs/README.md) to get started.
 
 ## Coding Workshop Example
 
-Coding Workshop organizer(s) will provide instructions to follow by email. Here
+Coding workshop organizer(s) will provide instructions to follow by email. Here
 below is a real example of requirements and expectations for participant(s):
 
 ### Requirements: Business Problem

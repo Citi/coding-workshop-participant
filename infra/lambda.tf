@@ -22,7 +22,7 @@ module "lambda" {
     patterns         = ["!__pycache__/.*", "!\\..*"]
   }]
 
-  vpc_security_group_ids = [aws_security_group.this.id]
+  vpc_security_group_ids = data.aws_security_groups.this.ids
   vpc_subnet_ids         = local.public_subnet_ids
   attach_network_policy  = true
 

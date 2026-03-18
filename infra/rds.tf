@@ -1,6 +1,6 @@
 resource "aws_db_subnet_group" "this" {
   count      = data.aws_caller_identity.this.id != "000000000000" ? 1 : 0
-  name       = format("%s-subnet-group-%s", var.aws_project, local.app_id)
+  name       = format("%s-rds-subnet-group-%s", var.aws_project, local.app_id)
   subnet_ids = local.public_subnet_ids
 
   tags = {
@@ -15,16 +15,16 @@ resource "aws_rds_cluster" "this" {
   cluster_identifier              = format("%s-rds-%s", var.aws_project, local.app_id)
   engine                          = "aurora-postgresql"
   engine_mode                     = "provisioned"
-  engine_version                  = "15.4"
+  engine_version                  = "17.7"
   master_username                 = "superadmin"
   master_password                 = random_pet.this.id
-  database_name                   = var.aws_project
+  database_name                   = replace(var.aws_project, "-", "")
   backup_retention_period         = 7
   preferred_backup_window         = "07:00-09:00"
   skip_final_snapshot             = true
   storage_encrypted               = true
   db_subnet_group_name            = element(aws_docdb_subnet_group.this.*.name, count.index)
-  vpc_security_group_ids          = [aws_security_group.this.id]
+  vpc_security_group_ids          = data.aws_security_groups.this.ids
   enabled_cloudwatch_logs_exports = ["postgresql"]
 
   serverlessv2_scaling_configuration {

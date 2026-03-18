@@ -108,6 +108,20 @@ Proper validation ensures data integrity and provides helpful feedback to users.
 
 Data should persist reliably and maintain consistency.
 
+**Database Environment Variables:**
+
+The following environment variables are automatically injected into each Lambda function by the infrastructure. You do not need to create an `.env` file or look up these values manually.
+
+| Variable | Local | AWS | Description |
+|----------|-------|-----|-------------|
+| `MONGO_HOST` | `host.docker.internal` | DocumentDB cluster endpoint | Database hostname |
+| `MONGO_PORT` | `27017` | `27017` | Database port |
+| `MONGO_NAME` | `codingworkshop` | `codingworkshop` | Database name |
+| `MONGO_USER` | *(empty)* | `superadmin` | Database username |
+| `MONGO_PASS` | *(empty)* | Database password | Database password |
+
+When `MONGO_USER` and `MONGO_PASS` are set (AWS), your connection string must include `?tls=true&tlsAllowInvalidCertificates=true&retryWrites=false` as DocumentDB requires TLS and does not support retryable writes.
+
 **Expected Capabilities:**
 
 - [ ] Created records persist in the database

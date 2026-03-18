@@ -48,6 +48,17 @@ data "aws_route_table" "this" {
   route_table_id = each.value
 }
 
+data "aws_security_groups" "this" {
+  filter {
+    name   = "vpc-id"
+    values = [data.aws_vpc.this.id]
+  }
+  filter {
+    name   = "group-name"
+    values = [format("*%s*", local.app_id)]
+  }
+}
+
 data "aws_service_principal" "cloudfront" {
   service_name = "cloudfront"
   region       = data.aws_region.this.region
