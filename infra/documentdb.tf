@@ -14,7 +14,7 @@ resource "aws_docdb_cluster" "this" {
   count                           = data.aws_caller_identity.this.id != "000000000000" ? 1 : 0
   cluster_identifier              = format("%s-docdb-%s", var.aws_project, local.app_id)
   engine                          = "docdb"
-  engine_version                  = "8.0.0"
+  engine_version                  = "5.0.0"
   master_username                 = "superadmin"
   master_password                 = random_pet.this.id
   backup_retention_period         = 7

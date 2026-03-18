@@ -9,7 +9,16 @@ This folder contains Python backend services for CRUD operations on Individuals,
 - Python - Backend language
 - Boto3 - AWS SDK for Python
 - AWS Lambda - Serverless compute
-- AWS DocumentDB - MongoDB-compatible database
+- Amazon DocumentDB - MongoDB-compatible database
+- The following environment variables are automatically injected into each Lambda function by the infrastructure. You do not need to create an `.env` file or look up these values manually.
+
+| Variable | Local | AWS | Description |
+|----------|-------|-----|-------------|
+| `MONGO_HOST` | `host.docker.internal` | DocumentDB cluster endpoint | Database hostname |
+| `MONGO_PORT` | `27017` | `27017` | Database port |
+| `MONGO_NAME` | `codingworkshop` | `codingworkshop` | Database name |
+| `MONGO_USER` | *(empty)* | `superadmin` | Database username |
+| `MONGO_PASS` | *(empty)* | Database password | Database password |
 
 ## Structure
 

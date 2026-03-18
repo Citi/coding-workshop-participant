@@ -160,12 +160,23 @@ echo ""
 # ============================================================
 echo -e "[2/4] Checking LocalStack..."
 
+# Use free tier only
+export ACTIVATE_PRO=0
+
 # Check if localstack is installed
 if ! command -v localstack &> /dev/null; then
     echo -e "ERROR: LocalStack is not installed"
     echo "Install: pip install localstack"
     exit 1
 fi
+
+# Check if Docker is running
+if ! docker info > /dev/null 2>&1; then
+    echo -e "  ✗ ERROR: Docker is not running"
+    echo "  Please start Docker Desktop and try again"
+    exit 1
+fi
+echo -e "  ✓ Docker is running"
 
 # Check if LocalStack is running
 LOCALSTACK_OK=false
