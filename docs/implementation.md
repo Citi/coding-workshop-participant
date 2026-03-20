@@ -116,11 +116,12 @@ Predefined environment variables are injected into each backend service automati
 |----------|-------------|-------|-------|
 | `MONGO_HOST` | Mongo database hostname | `host.docker.internal` | AWS DocumentDB endpoint |
 | `MONGO_PORT` | Mongo database port | `27017` | `27017` |
-| `MONGO_NAME` | Mongo database default name | `codingworkshop` | `codingworkshop` |
-| `MONGO_USER` | Mongo database username | *(empty)* | AWS DocumentDB username |
-| `MONGO_PASS` | Mongo database password | *(empty)* | AWS DocumentDB password |
+| `MONGO_NAME` | Mongo database name | *(not injected)* | *(not injected)* |
+| `MONGO_USER` | Mongo database username | *(empty — no auth locally)* | AWS DocumentDB username |
+| `MONGO_PASS` | Mongo database password | *(empty — no auth locally)* | AWS DocumentDB password |
+| `IS_LOCAL` | Indicates local vs cloud environment | `true` | `false` |
 
-When `MONGO_USER` and `MONGO_PASS` are set, your connection string must include `?tls=true&tlsAllowInvalidCertificates=true&retryWrites=false` as DocumentDB requires TLS and does not support retryable writes.
+Use `IS_LOCAL` to branch your connection logic — locally MongoDB runs without TLS even when credentials are present, while AWS DocumentDB requires TLS. When `IS_LOCAL` is `false`, append `?tls=true&tlsAllowInvalidCertificates=true&retryWrites=false` to your connection string.
 
 **Expected Capabilities:**
 

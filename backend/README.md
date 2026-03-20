@@ -17,9 +17,12 @@ Predefined environment variables are injected into each backend service automati
 |----------|-------------|-------|-------|
 | `MONGO_HOST` | Mongo database hostname | `host.docker.internal` | AWS DocumentDB endpoint |
 | `MONGO_PORT` | Mongo database port | `27017` | `27017` |
-| `MONGO_NAME` | Mongo database default name | `codingworkshop` | `codingworkshop` |
-| `MONGO_USER` | Mongo database username | *(empty)* | AWS DocumentDB username |
-| `MONGO_PASS` | Mongo database password | *(empty)* | AWS DocumentDB password |
+| `MONGO_NAME` | Mongo database name | *(not injected)* | *(not injected)* |
+| `MONGO_USER` | Mongo database username | *(empty — no auth locally)* | AWS DocumentDB username |
+| `MONGO_PASS` | Mongo database password | *(empty — no auth locally)* | AWS DocumentDB password |
+| `IS_LOCAL` | Indicates local vs cloud environment | `true` | `false` |
+
+> **Connection behavior:** When `IS_LOCAL` is `true`, the connection uses no TLS even if credentials are present (local MongoDB requires auth but not TLS). When `IS_LOCAL` is `false`, TLS is required for DocumentDB.
 
 ## Structure
 

@@ -323,29 +323,29 @@ echo -e "  Generating frontend environment configuration..."
     echo -e "  ⚠ Could not generate .env.local"
 }
 
-# Check if proxy server is running
-PROXY_OK=false
-if curl -s http://localhost:3001/health > /dev/null 2>&1 || lsof -iTCP:3001 -sTCP:LISTEN > /dev/null 2>&1; then
-    PROXY_OK=true
-    echo -e "  ✓ Proxy server is already running on port 3001"
+# Restart proxy so it picks up the newly generated .env.local
+if [ -f /tmp/proxy-server.pid ]; then
+    kill "$(cat /tmp/proxy-server.pid)" 2>/dev/null
+    rm -f /tmp/proxy-server.pid
+elif lsof -iTCP:3001 -sTCP:LISTEN > /dev/null 2>&1; then
+    lsof -ti:3001 | xargs kill 2>/dev/null
+fi
+
+echo -e "  Starting CORS proxy server..."
+nohup node "$SCRIPT_DIR/proxy-server.js" > /tmp/proxy-server.log 2>&1 &
+PROXY_PID=$!
+
+# Wait for proxy to start
+sleep 2
+
+# Verify proxy started
+if kill -0 $PROXY_PID 2>/dev/null; then
+    echo -e "  ✓ Proxy server started (PID: $PROXY_PID)"
+    echo $PROXY_PID > /tmp/proxy-server.pid
 else
-    echo -e "  Starting CORS proxy server..."
-    node "$SCRIPT_DIR/proxy-server.js" > /tmp/proxy-server.log 2>&1 &
-    PROXY_PID=$!
-
-    # Wait for proxy to start
-    sleep 2
-
-    # Verify proxy started
-    if kill -0 $PROXY_PID 2>/dev/null; then
-        echo -e "  ✓ Proxy server started (PID: $PROXY_PID)"
-        # Store PID for cleanup
-        echo $PROXY_PID > /tmp/proxy-server.pid
-    else
-        echo -e "  ✗ Proxy server failed to start"
-        cat /tmp/proxy-server.log | sed 's/^/    /'
-        exit 1
-    fi
+    echo -e "  ✗ Proxy server failed to start"
+    cat /tmp/proxy-server.log | sed 's/^/    /'
+    exit 1
 fi
 
 # Check if React dev server is already running

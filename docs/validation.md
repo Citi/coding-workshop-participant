@@ -87,7 +87,6 @@ coding-workshop-participant/
     ├── policy.tftpl           # IAM policy template
     ├── provider.tf            # Provider configurations
     ├── s3.tf                  # S3 bucket
-    ├── sgr.tf                 # Security group rules
     ├── variable.tf            # Input variables
     └── README.md              # Infrastructure guide
 ```

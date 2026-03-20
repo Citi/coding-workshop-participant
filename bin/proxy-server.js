@@ -23,7 +23,7 @@ let endpoints = {};
 
 try {
   const envContent = fs.readFileSync(envFile, 'utf8');
-  const match = envContent.match(/REACT_APP_API_ENDPOINTS='(.+)'/);
+  const match = envContent.match(/VITE_API_ENDPOINTS='(.+)'/) || envContent.match(/REACT_APP_API_ENDPOINTS='(.+)'/);
   if (match) {
     endpoints = JSON.parse(match[1]);
     console.log('Loaded endpoints:', Object.keys(endpoints));

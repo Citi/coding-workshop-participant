@@ -26,7 +26,6 @@ coding-workshop-participant/
     ├── policy.tftpl         # IAM policy template
     ├── provider.tf          # Provider configurations
     ├── s3.tf                # S3 bucket
-    ├── sgr.tf               # Security group rules
     ├── variable.tf          # Input variables
     └── README.md            # Infrastructure guide
 ```
@@ -85,12 +84,12 @@ terraform output
 
 ### Outputs
 
-| Output | Local Value | AWS Value | Description |
-|--------|-------------|-----------|-------------|
-| `api_base_url` | `""` (empty) | `https://***.cloudfront.net` | Backend URL |
-| `api_endpoints` | `{"individual": "http://***.lambda-url..."}` | `{"individual": "/api/individual"}` | Backend Endpoints |
-| `lambda_urls` | `{"individual": "http://***.lambda-url..."}` | `{"individual": "https://***.lambda-url..."}` | Lambda URLs |
-| `website_url` | `http://***.s3-website...` | `https://***.cloudfront.net` | Frontend URL |
+| Output | Description | Local | Cloud |
+|--------|-------------|-------|-------|
+| `api_base_url` | API Base URL | `""` (empty) | `https://***.cloudfront.net` |
+| `api_endpoints` | API Endpoints | `{"individual": "http://***.lambda-url..."}` | `{"individual": "/api/individual"}` |
+| `lambda_urls` | Backend / Lambda URLs | `{"individual": "http://***.lambda-url..."}` | `{"individual": "https://***.lambda-url..."}` |
+| `website_url` | Frontend / CloudFront URL | `http://***.s3-website...` | `https://***.cloudfront.net` |
 
 ## Clean Up
 
