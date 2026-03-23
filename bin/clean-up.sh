@@ -52,7 +52,7 @@ fi
 
 # Backup everything under PROJECT_ROOT
 cd $PROJECT_ROOT
-zip -r ../backup.zip . -x "node_modules/*" ".venv/*" "__pycache__/*" "*.zip"
+zip -r ../backup.zip . -x "**/.terraform*" "**/node_modules*" "**/.venv*" "**/__pycache__*" "*.zip"
 aws s3 mv ../backup.zip s3://$AWS_S3_BUCKET/$PARTICIPANT_ID/
 
 # Clean up infrastructure
