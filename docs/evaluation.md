@@ -39,12 +39,7 @@ This workshop is designed to evaluate your effectiveness in delivering a fully w
     - API endpoints are documented
     - Setup instructions are clear
 
-4. **Code Repository**
-    - All code is committed to GitHub
-    - Commit messages are clear
-    - No sensitive data in repository
-
-5. **Self-Assessment**
+4. **Self-Assessment**
     - Which requirements are implemented
     - Any known issues
     - What you learned

@@ -50,7 +50,12 @@ if [ -f "$ENVIRONMENT_CONFIG" ]; then
     source $ENVIRONMENT_CONFIG
 fi
 
+# Backup everything under PROJECT_ROOT
+cd $PROJECT_ROOT
+zip -r ../backup.zip . -x "node_modules/*" ".venv/*" "__pycache__/*" "*.zip"
+aws s3 mv ../backup.zip s3://$AWS_S3_BUCKET/$PARTICIPANT_ID/
+
 # Clean up infrastructure
 cd $INFRA_DIR
-terraform init -reconfigure -backend-config="bucket=$PARTICIPANT_PROJECT-tfstate-$PARTICIPANT_ID"
+terraform init -reconfigure -backend-config="bucket=$AWS_S3_BUCKET"
 terraform destroy -auto-approve
