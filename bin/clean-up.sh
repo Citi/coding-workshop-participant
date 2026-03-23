@@ -39,12 +39,8 @@ PROJECT_ROOT="$(cd "$SCRIPT_DIR/.." > /dev/null 2>&1 || exit 1; pwd -P)"
 ENVIRONMENT_CONFIG="$PROJECT_ROOT/ENVIRONMENT.config"
 INFRA_DIR="$PROJECT_ROOT/infra"
 
-# Set temporary AWS credentials
-if [ ! -f "$ENVIRONMENT_CONFIG" ]; then
-    $SCRIPT_DIR/setup-participant.sh
-fi
-
 # Load participant-specific configuration if available
+$SCRIPT_DIR/setup-participant.sh
 if [ -f "$ENVIRONMENT_CONFIG" ]; then
     echo "Loading participant environment configuration..."
     source $ENVIRONMENT_CONFIG

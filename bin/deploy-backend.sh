@@ -64,12 +64,9 @@ cd "$INFRA_DIR"
 # AWS Deployment Configuration
 if [ "$ENVIRONMENT" = "aws" ]; then
     echo "Using AWS deployment (terraform)..."
-    # Set temporary AWS credentials
-    if [ ! -f "$ENVIRONMENT_CONFIG" ]; then
-        $SCRIPT_DIR/setup-participant.sh
-    fi
 
     # Load participant-specific configuration if available
+    $SCRIPT_DIR/setup-participant.sh
     if [ -f "$ENVIRONMENT_CONFIG" ]; then
         echo "Loading participant environment configuration..."
         source $ENVIRONMENT_CONFIG
