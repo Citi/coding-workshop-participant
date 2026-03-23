@@ -161,6 +161,47 @@ The frontend should provide an intuitive interface for managing all entities.
 - [ ] Implement responsive design for various screen sizes
 - [ ] Provide clear navigation between sections
 
+## 9. Authentication, Authorization & Role-Based Access Control (RBAC)
+
+Secure access is essential to protect data and ensure users only perform permitted actions. This section outlines the minimum expectations for authentication and authorization.
+
+### Authentication
+
+**Expected Capabilities:**
+
+- [ ] Secure user login (e.g., JWT or OAuth)
+- [ ] Password hashing
+- [ ] Token-based access to all backend endpoints
+- [ ] Token expiration and refresh handling
+- [ ] Middleware enforcing authentication before CRUD operations
+- [ ] Clear errors for invalid or expired credentials
+
+### Authorization & RBAC
+
+**Expected Capabilities:**
+
+- [ ] Define user roles (e.g., Admin, Manager, Contributor, Viewer)
+- [ ] Restrict endpoints based on role permissions
+- [ ] Prevent unauthorized create/update/delete actions
+- [ ] Enforce read-only access for limited roles
+- [ ] Prevent privilege escalation
+- [ ] Return consistent “access denied” responses
+
+### Example Role Permissions
+
+| Role          | Access Level                                      |
+|---------------|---------------------------------------------------|
+| **Admin**     | Full access; manage users and roles               |
+| **Manager**   | Manage teams, achievements, and individuals       |
+| **Contributor** | Create/update but not delete                    |
+| **Viewer**    | Read-only                                         |
+
+### Key Principles
+
+- Authentication first, authorization second
+- Centralize permission checks
+- Hide or disable UI actions the user cannot perform
+
 ## API Endpoints Reference
 
 ### Individuals Endpoints
