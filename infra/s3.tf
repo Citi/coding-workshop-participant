@@ -16,11 +16,7 @@ resource "aws_s3_bucket" "this" {
     prevent_destroy = false
   }
 
-  tags = {
-    awsApplication = local.app_arn
-    participant    = local.app_id
-    event          = random_id.this.hex
-  }
+  tags = local.app_tags
 }
 
 resource "aws_s3_bucket_ownership_controls" "this" {

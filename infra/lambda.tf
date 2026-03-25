@@ -61,11 +61,7 @@ module "lambda" {
     key => trimspace(value) if try(trimspace(value), "") != ""
   }
 
-  tags = {
-    awsApplication = local.app_arn
-    participant    = local.app_id
-    event          = random_id.this.hex
-  }
+  tags = local.app_tags
 }
 
 resource "aws_sqs_queue" "this" {
@@ -73,11 +69,7 @@ resource "aws_sqs_queue" "this" {
   name                    = format("%s-%s-dlq-%s", var.aws_project, each.value.name, local.app_id)
   sqs_managed_sse_enabled = true
 
-  tags = {
-    awsApplication = local.app_arn
-    participant    = local.app_id
-    event          = random_id.this.hex
-  }
+  tags = local.app_tags
 }
 
 resource "null_resource" "hot_reload" {

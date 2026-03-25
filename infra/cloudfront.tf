@@ -116,11 +116,7 @@ resource "aws_cloudfront_distribution" "this" {
     cloudfront_default_certificate = true
   }
 
-  tags = {
-    awsApplication = local.app_arn
-    participant    = local.app_id
-    event          = random_id.this.hex
-  }
+  tags = local.app_tags
 }
 
 resource "aws_s3_bucket_policy" "this" {

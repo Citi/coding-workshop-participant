@@ -3,11 +3,7 @@ resource "aws_db_subnet_group" "this" {
   name       = format("%s-rds-subnet-group-%s", var.aws_project, local.app_id)
   subnet_ids = local.public_subnet_ids
 
-  tags = {
-    awsApplication = local.app_arn
-    participant    = local.app_id
-    event          = random_id.this.hex
-  }
+  tags = local.app_tags
 }
 
 resource "aws_rds_cluster" "this" {
@@ -32,11 +28,7 @@ resource "aws_rds_cluster" "this" {
     min_capacity = 0.0
   }
 
-  tags = {
-    awsApplication = local.app_arn
-    participant    = local.app_id
-    event          = random_id.this.hex
-  }
+  tags = local.app_tags
 }
 
 resource "aws_rds_cluster_instance" "this" {
@@ -48,11 +40,7 @@ resource "aws_rds_cluster_instance" "this" {
   instance_class             = "db.serverless"
   auto_minor_version_upgrade = true
 
-  tags = {
-    awsApplication = local.app_arn
-    participant    = local.app_id
-    event          = random_id.this.hex
-  }
+  tags = local.app_tags
 }
 
 # resource "aws_secretsmanager_secret" "rds" {
@@ -60,11 +48,7 @@ resource "aws_rds_cluster_instance" "this" {
 #   name                    = format("%s-rds-%s", var.aws_project, local.app_id)
 #   recovery_window_in_days = 0
 
-#   tags = {
-#     awsApplication = local.app_arn
-#     participant    = local.app_id
-#     event          = random_id.this.hex
-#   }
+#   tags = local.app_tags
 # }
 
 # resource "aws_secretsmanager_secret_version" "rds" {

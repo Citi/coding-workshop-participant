@@ -173,7 +173,7 @@ fi
 
 # Check if Docker is running
 if ! docker info > /dev/null 2>&1; then
-    echo -e "  ✗ ERROR: Docker is not running"
+    echo -e "ERROR: Docker is not running"
     echo "  Please start Docker Desktop and try again"
     exit 1
 fi
@@ -185,6 +185,13 @@ if curl -s http://localhost:4566/_localstack/health > /dev/null 2>&1; then
     LOCALSTACK_OK=true
     echo -e "  ✓ LocalStack is running"
 else
+    # Check if LocalStack docker container is already running
+    if docker ps | grep -q localstack-main; then
+        echo -e "  ⚠ Stopping existing LocalStack container..."
+        docker stop localstack-main
+        sleep 2
+    fi
+
     echo -e "  ⚠ LocalStack not running, starting it..."
     localstack start -d
 
@@ -326,7 +333,7 @@ echo -e "  Generating frontend environment configuration..."
 
 # Restart proxy so it picks up the newly generated .env.local
 if [ -f /tmp/proxy-server.pid ]; then
-    kill "$(cat /tmp/proxy-server.pid)" 2>/dev/null
+    kill "$(cat /tmp/proxy-server.pid)" || echo "WARN: no process found"
     rm -f /tmp/proxy-server.pid
 elif lsof -iTCP:3001 -sTCP:LISTEN > /dev/null 2>&1; then
     lsof -ti:3001 | xargs kill 2>/dev/null
