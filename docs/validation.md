@@ -26,7 +26,28 @@ Login to your VDI desktop and open a new Terminal from the applications menu (9-
 git clone https://github.com/eistrati/coding-workshop-participant
 ```
 
-Then run `cd coding-workshop-participant` to enter the project's directory. Then run the setup-environment script to install the tools required for this workshop automatically with:
+Change the active path to the project's directory.
+
+```sh
+cd coding-workshop-participant
+```
+
+Setup your Participant ID and Participant Code as environment variables.
+
+```sh
+export PARTICIPANT_ID=your-id
+export PARTICIPANT_CODE=your-code
+```
+
+Change `your-id` with your Participant ID and `your-code` with your Participant Code that you received over email from workshop organizer(s).
+
+Now in the terminal run:
+
+```sh
+./bin/setup-participant.sh
+```
+
+Then run the setup-environment script to install the tools required for this workshop automatically with:
 
 ```sh
 ./bin/setup-environment.sh && source ~/.bashrc
@@ -111,23 +132,6 @@ Go to File -> Settings -> Version Control -> GitHub and add your account. You ca
 Next open the project by going to File -> Open. You should find the project in your Home directory. Once open you will be ready to proceed to the next section.
 
 ### With Open Project
-
-Open a new terminal within your IDE and run the command
-
-```sh
-export PARTICIPANT_ID=your-id
-export PARTICIPANT_CODE=your-code
-```
-
-Change `your-id` with your Participant ID, `your-code` with your Participant Code, then save the file.
-
-Now in the terminal run
-
-```sh
-./bin/setup-participant.sh
-```
-
-to configure your AWS credentials.
 
 Next, we will prepare our Python environment so the dependencies you use for this project don't clash with any dependencies used by Ubuntu to the OS. To do this, just run
 
