@@ -66,9 +66,14 @@ if [ "$ENVIRONMENT" = "aws" ]; then
     echo "Using AWS deployment (terraform)..."
 
     # Load participant-specific configuration if available
-    $SCRIPT_DIR/setup-participant.sh
     if [ -f "$ENVIRONMENT_CONFIG" ]; then
         echo "Loading participant environment configuration..."
+        source $ENVIRONMENT_CONFIG
+    fi
+
+    # Create default configuration if it doesn't exist
+    if [ -z "$PARTICIPANT_ID" ]; then
+        $SCRIPT_DIR/setup-participant.sh
         source $ENVIRONMENT_CONFIG
     fi
 else
@@ -90,7 +95,7 @@ fi
 # Initialize Terraform with backend configuration
 if [ -n "$PARTICIPANT_ID" ]; then
     echo "Using custom backend configuration..."
-    $TF_CMD init -reconfigure -backend-config="bucket=$PARTICIPANT_PROJECT-tfstate-$PARTICIPANT_ID"
+    $TF_CMD init -reconfigure -backend-config="bucket=$PROJECT_NAME-tfstate-$PARTICIPANT_ID"
 else
     echo "WARNING: No backend.config found. Using default backend configuration."
     echo "For multi-participant workshops, run: ./bin/setup-participant.sh"

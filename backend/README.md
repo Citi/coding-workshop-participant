@@ -15,12 +15,12 @@ Predefined environment variables are injected into each backend service automati
 
 | Variable | Description | Local | Cloud |
 |----------|-------------|-------|-------|
+| `IS_LOCAL` | Indicates local vs cloud environment | `true` | `false` |
 | `MONGO_HOST` | Mongo database hostname | `host.docker.internal` | AWS DocumentDB endpoint |
 | `MONGO_PORT` | Mongo database port | `27017` | `27017` |
 | `MONGO_NAME` | Mongo database name | *(not injected)* | *(not injected)* |
 | `MONGO_USER` | Mongo database username | *(empty — no auth locally)* | AWS DocumentDB username |
 | `MONGO_PASS` | Mongo database password | *(empty — no auth locally)* | AWS DocumentDB password |
-| `IS_LOCAL` | Indicates local vs cloud environment | `true` | `false` |
 
 > **Connection behavior:** When `IS_LOCAL` is `true`, the connection uses no TLS even if credentials are present (local MongoDB requires auth but not TLS). When `IS_LOCAL` is `false`, TLS is required for DocumentDB.
 
@@ -31,14 +31,14 @@ The backend is organized into Lambda functions, one for each CRUD service:
 ```
 coding-workshop-participant/
 ├── backend/               # Python backend
-│   ├── achievement/         # CRUD service for achievements
+│   ├── achievements/        # CRUD service for achievements
 │   │   ├── function.py        # Contains the Python service with business logic
 │   │   └── requirements.txt   # Contains the Python required dependencies
-│   ├── individual/          # CRUD service for individuals
+│   ├── individuals/         # CRUD service for individuals
 │   │   └── ...                # Similar to the previous service
 │   ├── metadata/            # CRUD service for metadata
 │   │   └── ...                # Similar to the previous service
-│   ├── team/                # CRUD service for teams
+│   ├── teams/               # CRUD service for teams
 │   │   └── ...                # Similar to the previous service
 │   └── README.md            # Backend guide
 ├── ...
@@ -54,6 +54,22 @@ To run your application locally:
 ./bin/start-dev.sh
 ```
 
+To test your code changes:
+
+```sh
+# Example: Get all teams
+curl -X GET https://localhost:3001/api/teams \
+     -H "Content-Type: application/json"
+```
+
+To tail logs in real-time:
+
+```sh
+# Example: Get logs for teams service
+awslocal logs tail /aws/lambda/coding-workshop-teams-abcd1234 \
+         --follow --format short --color on
+```
+
 ### Cloud Deployment
 
 To deploy your backend to AWS:
@@ -65,9 +81,17 @@ To deploy your backend to AWS:
 To test your newly deployed code:
 
 ```sh
-# Example: Get all individuals
-curl -X GET https://{API_BASE_URL}/api/individuals \
+# Example: Get all teams
+curl -X GET https://{API_BASE_URL}/api/teams \
      -H "Content-Type: application/json"
+```
+
+To tail logs in real-time:
+
+```sh
+# Example: Get logs for teams service
+aws logs tail /aws/lambda/coding-workshop-teams-abcd1234 \
+    --follow --format short --color on
 ```
 
 ## Clean Up

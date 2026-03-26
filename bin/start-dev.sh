@@ -333,7 +333,7 @@ echo -e "  Generating frontend environment configuration..."
 
 # Restart proxy so it picks up the newly generated .env.local
 if [ -f /tmp/proxy-server.pid ]; then
-    kill "$(cat /tmp/proxy-server.pid)" || echo "WARN: no process found"
+    kill "$(cat /tmp/proxy-server.pid)" || echo "WARNING: no process found"
     rm -f /tmp/proxy-server.pid
 elif lsof -iTCP:3001 -sTCP:LISTEN > /dev/null 2>&1; then
     lsof -ti:3001 | xargs kill 2>/dev/null

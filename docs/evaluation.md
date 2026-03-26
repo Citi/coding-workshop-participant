@@ -44,7 +44,7 @@ This workshop is designed to evaluate your effectiveness in delivering a fully w
     - Any known issues
     - What you learned
 
-## Outcome
+## Outcomes
 
 Excellent | Good | Satisfactory | Incomplete
 ----------|------|--------------|-----------

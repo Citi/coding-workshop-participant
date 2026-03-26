@@ -40,16 +40,21 @@ ENVIRONMENT_CONFIG="$PROJECT_ROOT/ENVIRONMENT.config"
 INFRA_DIR="$PROJECT_ROOT/infra"
 
 # Load participant-specific configuration if available
-$SCRIPT_DIR/setup-participant.sh
 if [ -f "$ENVIRONMENT_CONFIG" ]; then
     echo "Loading participant environment configuration..."
+    source $ENVIRONMENT_CONFIG
+fi
+
+# Create default configuration if it doesn't exist
+if [ -z "$PARTICIPANT_ID" ]; then
+    $SCRIPT_DIR/setup-participant.sh
     source $ENVIRONMENT_CONFIG
 fi
 
 # Backup everything under PROJECT_ROOT
 cd $PROJECT_ROOT
 zip -r ../backup.zip . -x "**/.terraform*" "**/node_modules*" "**/.venv*" "**/__pycache__*" "*.zip"
-aws s3 mv ../backup.zip s3://$AWS_S3_BUCKET/$PARTICIPANT_ID/
+aws s3 mv ../backup.zip s3://$AWS_S3_BUCKET/backup/backup-$PARTICIPANT_ID.zip
 
 # Clean up infrastructure
 cd $INFRA_DIR

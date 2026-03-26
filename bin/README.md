@@ -184,13 +184,11 @@ Everything else (AWS Account ID, S3 bucket name, IAM role) is **automatically de
 # 1. First, set your AWS access keys
 echo 'export AWS_ACCESS_KEY_ID=your-key' >> ~/.bashrc
 echo 'export AWS_SECRET_ACCESS_KEY=your-secret' >> ~/.bashrc
+echo 'export PARTICIPANT_ID=your-id' >> ~/.bashrc
+echo 'export PARTICIPANT_CODE=your-code' >> ~/.bashrc
 source ~/.bashrc
 
-# 2. Copy and fill in your participant credentials
-cp PARTICIPANT.config.sample PARTICIPANT.config
-# Edit: Fill in PARTICIPANT_ID, PARTICIPANT_CODE and PARTICIPANT_URL provided by workshop organizer(s)
-
-# 3. Run setup script
+# 2. Run setup script
 ./bin/setup-participant.sh
 ```
 

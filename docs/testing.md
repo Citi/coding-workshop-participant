@@ -32,6 +32,44 @@ covering backend testing, frontend testing, and performance testing.
 * Error Handling: 90%+ coverage for validation and error cases
 * Critical User Paths: 100% E2E test coverage
 
+### Examples: How To Test
+
+#### Local Development
+
+To test your backend changes locally:
+
+```sh
+# Example: Get all teams
+curl -X GET https://localhost:3001/api/teams \
+     -H "Content-Type: application/json"
+```
+
+To tail backend logs in real-time:
+
+```sh
+# Example: Get logs for teams service
+awslocal logs tail /aws/lambda/coding-workshop-teams-abcd1234 \
+         --follow --format short --color on
+```
+
+#### Cloud Deployment
+
+To test your backend changes in the cloud:
+
+```sh
+# Example: Get all teams
+curl -X GET https://{API_BASE_URL}/api/teams \
+     -H "Content-Type: application/json"
+```
+
+To tail backend logs in real-time:
+
+```sh
+# Example: Get logs for teams service
+aws logs tail /aws/lambda/coding-workshop-teams-abcd1234 \
+    --follow --format short --color on
+```
+
 ## Navigation Links
 
 <nav aria-label="breadcrumb">

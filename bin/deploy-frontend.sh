@@ -65,9 +65,14 @@ echo "Environment: $ENVIRONMENT"
 # AWS Deployment Configuration
 if [ "$ENVIRONMENT" = "aws" ]; then
     # Load participant-specific configuration if available
-    $SCRIPT_DIR/setup-participant.sh
     if [ -f "$ENVIRONMENT_CONFIG" ]; then
         echo "Loading participant environment configuration..."
+        source $ENVIRONMENT_CONFIG
+    fi
+
+    # Create default configuration if it doesn't exist
+    if [ -z "$PARTICIPANT_ID" ]; then
+        $SCRIPT_DIR/setup-participant.sh
         source $ENVIRONMENT_CONFIG
     fi
 else

@@ -50,13 +50,17 @@ modern technologies. The application will have the following features:
 
 ### Requirements: Technology Stack
 
-The following technologies will be used to build the application:
+The following technologies are required to build the application:
 
 * Frontend: HTML, CSS, React.js with React Responsive and Material UI Components
 * Backend: Python
 * Database: MongoDB / DocumentDB
-* Infrastructure: Terraform
+
+The following technologies are good to know, as they are used to manage and
+deploy code:
+
 * Version Control: Git, GitHub
+* Infrastructure: Terraform
 * Deployment Mode: Shell Scripts
 * Deployment Target: AWS Serverless (e.g., S3, CloudFront, Lambda, DocumentDB)
 

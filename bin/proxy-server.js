@@ -63,7 +63,7 @@ const server = http.createServer((req, res) => {
   }
 
   const endpointName = pathParts[1];
-  const targetUrl = endpoints[endpointName];
+  const targetUrl = endpoints[endpointName] + (parsedUrl.search || '');
 
   if (!targetUrl) {
     res.writeHead(404, { 'Content-Type': 'application/json' });
@@ -100,7 +100,7 @@ const server = http.createServer((req, res) => {
       'accept': headers.accept || 'application/json',
       'content-type': headers['content-type'] || 'application/json',
       'user-agent': headers['user-agent'] || 'proxy-server',
-      host: target.host
+      'host': target.host
     }
   };
 
@@ -129,15 +129,16 @@ const server = http.createServer((req, res) => {
 server.listen(PORT, () => {
   console.log('');
   console.log('==================================================');
-  console.log('Development CORS Proxy Server');
-  console.log('==================================================');
   console.log(`Listening on: http://localhost:${PORT}`);
+  console.log('==================================================');
   console.log('');
   console.log('Available endpoints:');
   for (const [name, targetUrl] of Object.entries(endpoints)) {
     console.log(`  /api/${name} -> ${targetUrl}`);
   }
   console.log('');
-  console.log('Update frontend to use: http://localhost:' + PORT);
   console.log('==================================================');
+  console.log(`Update frontend to use: http://localhost:${PORT}`);
+  console.log('==================================================');
+  console.log('');
 });

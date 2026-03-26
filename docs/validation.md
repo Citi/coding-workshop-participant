@@ -115,10 +115,11 @@ Next open the project by going to File -> Open. You should find the project in y
 Open a new terminal within your IDE and run the command
 
 ```sh
-cp PARTICIPANT.config.sample PARTICIPANT.config
+export PARTICIPANT_ID=your-id
+export PARTICIPANT_CODE=your-code
 ```
 
-Then open the newly created `PARTICIPANT.config` file and add your participant ID, Code, and URL where appropriate, then save the file.
+Change `your-id` with your Participant ID, `your-code` with your Participant Code, then save the file.
 
 Now in the terminal run
 
