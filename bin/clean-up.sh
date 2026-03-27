@@ -41,7 +41,7 @@ INFRA_DIR="$PROJECT_ROOT/infra"
 
 # Load participant-specific configuration if available
 if [ -f "$ENVIRONMENT_CONFIG" ]; then
-    echo "Loading participant environment configuration..."
+    echo "INFO: Loading participant environment configuration..."
     source $ENVIRONMENT_CONFIG
 fi
 
@@ -51,9 +51,14 @@ if [ -z "$PARTICIPANT_ID" ]; then
     source $ENVIRONMENT_CONFIG
 fi
 
+if [ -z "$AWS_S3_BUCKET" ]; then
+    echo "ERROR: AWS_S3_BUCKET not defined in ENVIRONMENT.config"
+    exit 1
+fi
+
 # Backup everything under PROJECT_ROOT
 cd $PROJECT_ROOT
-zip -r ../backup.zip . -x "**/.terraform*" "**/node_modules*" "**/.venv*" "**/__pycache__*" "*.zip"
+zip -r ../backup.zip . -x ".git*" "node_modules*" "**/node_modules*" ".venv*" "**/.venv*" "*py*cache*" "**/*py*cache*" "**/builds*" "**/.terraform*" "*.zip"
 aws s3 mv ../backup.zip s3://$AWS_S3_BUCKET/backup/backup-$PARTICIPANT_ID.zip
 
 # Clean up infrastructure
