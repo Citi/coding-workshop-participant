@@ -38,6 +38,7 @@ PROJECT_ROOT="$(cd "$SCRIPT_DIR/.." > /dev/null 2>&1 || exit 1; pwd -P)"
 # Define configuration file paths
 ENVIRONMENT_CONFIG="$PROJECT_ROOT/ENVIRONMENT.config"
 INFRA_DIR="$PROJECT_ROOT/infra"
+BACKUP_FILE="../backup.zip"
 
 # Load participant-specific configuration if available
 if [ -f "$ENVIRONMENT_CONFIG" ]; then
@@ -51,15 +52,13 @@ if [ -z "$PARTICIPANT_ID" ]; then
     source $ENVIRONMENT_CONFIG
 fi
 
-if [ -z "$AWS_S3_BUCKET" ]; then
-    echo "ERROR: AWS_S3_BUCKET not defined in ENVIRONMENT.config"
-    exit 1
-fi
-
 # Backup everything under PROJECT_ROOT
-cd $PROJECT_ROOT
-zip -r ../backup.zip . -x ".git*" "node_modules*" "**/node_modules*" ".venv*" "**/.venv*" "*py*cache*" "**/*py*cache*" "**/builds*" "**/.terraform*" "*.zip"
-aws s3 mv ../backup.zip s3://$AWS_S3_BUCKET/backup/backup-$PARTICIPANT_ID.zip
+if [ -n "$AWS_S3_BUCKET" ]; then
+    cd $PROJECT_ROOT
+    rm -rf $BACKUP_FILE
+    zip -r $BACKUP_FILE . -x ".git*" "node_modules*" "**/node_modules*" ".venv*" "**/.venv*" "*py*cache*" "**/*py*cache*" "**/.terraform*" "**/builds*" "*.zip"
+    aws s3 mv $BACKUP_FILE s3://$AWS_S3_BUCKET/backup/backup-$PARTICIPANT_ID.zip
+fi
 
 # Clean up infrastructure
 cd $INFRA_DIR
