@@ -70,8 +70,12 @@ if [ "$ENVIRONMENT" = "aws" ]; then
     fi
 
     # Load participant-specific configuration if available
-    echo "INFO: Loading participant environment configuration..."
-    source $ENVIRONMENT_CONFIG
+    if [ -f "$ENVIRONMENT_CONFIG" ]; then
+        echo "INFO: Loading participant environment configuration..."
+        source $ENVIRONMENT_CONFIG
+    else
+        echo "WARNING: $ENVIRONMENT_CONFIG is missing"
+    fi
 else
     # Local development configuration
     if command -v tflocal > /dev/null 2>&1; then
