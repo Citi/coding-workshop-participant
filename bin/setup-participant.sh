@@ -39,7 +39,7 @@ jq --version > /dev/null 2>&1 || { echo "ERROR: 'jq' is missing. Aborting..."; e
 
 # Resolve script directory and project root paths
 SCRIPT_DIR="$(cd "$(dirname "$0")" > /dev/null 2>&1 || exit 1; pwd -P)"
-PROJECT_ROOT="$(cd "$SCRIPT_DIR/.." > /dev/null 2>&1 || exit 1; pwd -P)"
+PROJECT_ROOT="$(cd $SCRIPT_DIR/.. > /dev/null 2>&1 || exit 1; pwd -P)"
 PROJECT_NAME="coding-workshop"
 DOMAIN_NAME="codingworkshop.net"
 if [ -z "$EVENT_ID" ]; then EVENT_ID="abcd1234"; fi

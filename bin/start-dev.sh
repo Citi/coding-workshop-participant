@@ -35,7 +35,7 @@ echo ""
 
 # Resolve script directory and project root paths
 SCRIPT_DIR="$(cd "$(dirname "$0")" > /dev/null 2>&1 || exit 1; pwd -P)"
-PROJECT_ROOT="$(cd "$SCRIPT_DIR/.." > /dev/null 2>&1 || exit 1; pwd -P)"
+PROJECT_ROOT="$(cd $SCRIPT_DIR/.. > /dev/null 2>&1 || exit 1; pwd -P)"
 
 # Define project directories
 INFRA_DIR="$PROJECT_ROOT/infra"
