@@ -40,17 +40,14 @@ ENVIRONMENT_CONFIG="$PROJECT_ROOT/ENVIRONMENT.config"
 INFRA_DIR="$PROJECT_ROOT/infra"
 BACKUP_FILE="../backup.zip"
 
-# Load participant-specific configuration if available
-if [ -f "$ENVIRONMENT_CONFIG" ]; then
-    echo "INFO: Loading participant environment configuration..."
-    source $ENVIRONMENT_CONFIG
+# Setup participant if config is missing
+if [ ! -f "$ENVIRONMENT_CONFIG" ]; then
+    $SCRIPT_DIR/setup-participant.sh
 fi
 
-# Create default configuration if it doesn't exist
-if [ -z "$PARTICIPANT_ID" ]; then
-    $SCRIPT_DIR/setup-participant.sh
-    source $ENVIRONMENT_CONFIG
-fi
+# Load participant-specific configuration if available
+echo "INFO: Loading participant environment configuration..."
+source $ENVIRONMENT_CONFIG
 
 # Backup everything under PROJECT_ROOT
 if [ -n "$AWS_S3_BUCKET" ]; then

@@ -64,17 +64,14 @@ echo "Environment: $ENVIRONMENT"
 
 # AWS Deployment Configuration
 if [ "$ENVIRONMENT" = "aws" ]; then
-    # Load participant-specific configuration if available
-    if [ -f "$ENVIRONMENT_CONFIG" ]; then
-        echo "Loading participant environment configuration..."
-        source $ENVIRONMENT_CONFIG
+    # Setup participant if config is missing
+    if [ ! -f "$ENVIRONMENT_CONFIG" ]; then
+        $SCRIPT_DIR/setup-participant.sh
     fi
 
-    # Create default configuration if it doesn't exist
-    if [ -z "$PARTICIPANT_ID" ]; then
-        $SCRIPT_DIR/setup-participant.sh
-        source $ENVIRONMENT_CONFIG
-    fi
+    # Load participant-specific configuration if available
+    echo "INFO: Loading participant environment configuration..."
+    source $ENVIRONMENT_CONFIG
 else
     # Local development configuration
     if command -v tflocal > /dev/null 2>&1; then
