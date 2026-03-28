@@ -60,7 +60,6 @@ This will install tools to help you code during this work shop, such as:
 - Visual Studio Code
 - PyCharm
 - IntelliJ
-- MongoDB Compass
 
 Among other utilities to help you deploy your code to AWS (e.g. awscli, terraform).
 
@@ -147,7 +146,7 @@ Now we will start your local development environment by running:
 ./bin/start-dev.sh
 ```
 
-This will ensure all of your dependencies are running, such as MongoDB for your data storage, it will start your backend service, and front end service.
+This will ensure all of your dependencies are running, including the backend services and the front end service.
 
 If everything goes well, you are now ready to begin coding.
 
