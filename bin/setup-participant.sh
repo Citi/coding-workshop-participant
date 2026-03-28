@@ -55,6 +55,7 @@ while IFS='=' read -r key value; do
 done < <(echo "$CURRENT_RECORD" | tr ' ' '\n' | grep '=')
 
 # If Participant URL not found via DNS, check for local config
+echo "INFO: PARTICIPANT_URL=$PARTICIPANT_URL"
 if [ -z "$PARTICIPANT_URL" ] && [ -f "$PROJECT_ROOT/ENVIRONMENT.config" ]; then
     source $PROJECT_ROOT/ENVIRONMENT.config
 fi
