@@ -66,9 +66,7 @@ if [ "$ENVIRONMENT" = "aws" ]; then
     echo "Using AWS deployment (terraform)..."
 
     # Setup participant if config is missing
-    if [ ! -f "$ENVIRONMENT_CONFIG" ]; then
-        $SCRIPT_DIR/setup-participant.sh
-    fi
+    $SCRIPT_DIR/setup-participant.sh
 
     # Load participant-specific configuration if available
     if [ -f "$ENVIRONMENT_CONFIG" ]; then
