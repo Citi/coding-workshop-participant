@@ -39,36 +39,48 @@ covering backend testing, frontend testing, and performance testing.
 To test your backend changes locally:
 
 ```sh
-# Example: Get all teams
-curl -X GET https://localhost:3001/api/teams \
+# Example: Get all records for {{service-name}}
+curl -X GET https://localhost:3001/api/{{service-name}} \
      -H "Content-Type: application/json"
 ```
+
+Replace `{{service-name}}` with corresponding service name
+(e.g. `teams` or `individuals`).
 
 To tail backend logs in real-time:
 
 ```sh
-# Example: Get logs for teams service
-awslocal logs tail /aws/lambda/coding-workshop-teams-abcd1234 \
+# Example: Get logs for {{service-name}}
+awslocal logs tail /aws/lambda/{{function-name}} \
          --follow --format short --color on
 ```
+
+Replace `{{function-name}}` with corresponding service name
+(e.g. `coding-workshop-teams-abcd1234`).
 
 #### Cloud Deployment
 
 To test your backend changes in the cloud:
 
 ```sh
-# Example: Get all teams
-curl -X GET https://{API_BASE_URL}/api/teams \
+# Example: Get all records for {{service-name}}
+curl -X GET https://{API_BASE_URL}/api/{{service-name}} \
      -H "Content-Type: application/json"
 ```
+
+Replace `{{service-name}}` with corresponding service name
+(e.g. `teams` or `individuals`).
 
 To tail backend logs in real-time:
 
 ```sh
-# Example: Get logs for teams service
-aws logs tail /aws/lambda/coding-workshop-teams-abcd1234 \
+# Example: Get logs for {{service-name}}
+aws logs tail /aws/lambda/{{function-name}} \
     --follow --format short --color on
 ```
+
+Replace `{{function-name}}` with corresponding service name
+(e.g. `coding-workshop-teams-abcd1234`).
 
 ## Navigation Links
 

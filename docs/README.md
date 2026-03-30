@@ -12,7 +12,7 @@ By completing this workshop, you will:
 - [x] Understand serverless architecture with AWS
 - [x] Build RESTful APIs with Python
 - [x] Implement CRUD services with AWS Lambda
-- [x] Experience NoSQL databases with MongoDB / DocumentDB
+- [x] Experience NoSQL databases with MongoDB
 - [x] Write comprehensive tests
 - [x] Deploy applications to AWS Serverless
 - [x] Follow software engineering best practices

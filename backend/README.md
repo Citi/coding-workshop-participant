@@ -13,14 +13,14 @@ This folder contains Python backend services for CRUD operations on Individuals,
 
 Predefined environment variables are injected into each backend service automatically, simplifying the need to manage them manually:
 
-| Variable | Description | Local | Cloud |
-|----------|-------------|-------|-------|
-| `IS_LOCAL` | Indicates local vs cloud environment | `true` | `false` |
+| Variable     | Description             | Local                  | Cloud                   |
+| ------------ | ----------------------- | ---------------------- | ----------------------- |
+| `IS_LOCAL`   | Is it local or cloud?   | `true`                 | `false`                 |
 | `MONGO_HOST` | Mongo database hostname | `host.docker.internal` | AWS DocumentDB endpoint |
-| `MONGO_PORT` | Mongo database port | `27017` | `27017` |
-| `MONGO_NAME` | Mongo database name | *(not injected)* | *(not injected)* |
-| `MONGO_USER` | Mongo database username | *(empty — no auth locally)* | AWS DocumentDB username |
-| `MONGO_PASS` | Mongo database password | *(empty — no auth locally)* | AWS DocumentDB password |
+| `MONGO_PORT` | Mongo database port     | `27017`                | `27017`                 |
+| `MONGO_NAME` | Mongo database name     | *(empty)*              | AWS DocumentDB database |
+| `MONGO_USER` | Mongo database username | *(empty)*              | AWS DocumentDB username |
+| `MONGO_PASS` | Mongo database password | *(empty)*              | AWS DocumentDB password |
 
 > **Connection behavior:** When `IS_LOCAL` is `true`, the connection uses no TLS even if credentials are present (local MongoDB requires auth but not TLS). When `IS_LOCAL` is `false`, TLS is required for DocumentDB.
 
@@ -57,18 +57,24 @@ To run your application locally:
 To test your code changes:
 
 ```sh
-# Example: Get all teams
-curl -X GET https://localhost:3001/api/teams \
+# Example: Get all records for {{service-name}}
+curl -X GET https://localhost:3001/api/{{service-name}} \
      -H "Content-Type: application/json"
 ```
+
+Replace `{{service-name}}` with corresponding service name
+(e.g. `teams` or `individuals`).
 
 To tail logs in real-time:
 
 ```sh
-# Example: Get logs for teams service
-awslocal logs tail /aws/lambda/coding-workshop-teams-abcd1234 \
+# Example: Get logs for {{service-name}}
+awslocal logs tail /aws/lambda/{{function-name}} \
          --follow --format short --color on
 ```
+
+Replace `{{function-name}}` with corresponding service name
+(e.g. `coding-workshop-teams-abcd1234`).
 
 ### Cloud Deployment
 
@@ -81,18 +87,24 @@ To deploy your backend to AWS:
 To test your newly deployed code:
 
 ```sh
-# Example: Get all teams
-curl -X GET https://{API_BASE_URL}/api/teams \
+# Example: Get all records for {{service-name}}
+curl -X GET https://{API_BASE_URL}/api/{{service-name}} \
      -H "Content-Type: application/json"
 ```
+
+Replace `{{service-name}}` with corresponding service name
+(e.g. `teams` or `individuals`).
 
 To tail logs in real-time:
 
 ```sh
-# Example: Get logs for teams service
-aws logs tail /aws/lambda/coding-workshop-teams-abcd1234 \
+# Example: Get logs for {{service-name}}
+aws logs tail /aws/lambda/{{function-name}} \
     --follow --format short --color on
 ```
+
+Replace `{{function-name}}` with corresponding service name
+(e.g. `coding-workshop-teams-abcd1234`).
 
 ## Clean Up
 

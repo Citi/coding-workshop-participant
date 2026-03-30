@@ -59,7 +59,7 @@ Predefined environment variables are injected into each backend service automati
 | `IS_LOCAL`   | Is it local or cloud?   | `true`                 | `false`                 |
 | `MONGO_HOST` | Mongo database hostname | `host.docker.internal` | AWS DocumentDB endpoint |
 | `MONGO_PORT` | Mongo database port     | `27017`                | `27017`                 |
-| `MONGO_NAME` | Mongo database name     | *(empty)*              | *(empty)*               |
+| `MONGO_NAME` | Mongo database name     | *(empty)*              | AWS DocumentDB database |
 | `MONGO_USER` | Mongo database username | *(empty)*              | AWS DocumentDB username |
 | `MONGO_PASS` | Mongo database password | *(empty)*              | AWS DocumentDB password |
 

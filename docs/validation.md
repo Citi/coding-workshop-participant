@@ -35,8 +35,9 @@ cd coding-workshop-participant
 Setup your Participant ID and Participant Code as environment variables.
 
 ```sh
-export PARTICIPANT_ID=your-id
-export PARTICIPANT_CODE=your-code
+echo "PARTICIPANT_ID=your-id" >> ~/.bashrc
+echo "PARTICIPANT_CODE=your-id" >> ~/.bashrc
+source ~/.bashrc
 ```
 
 Change `your-id` with your Participant ID and `your-code` with your Participant Code that you received over email from workshop organizer(s).
@@ -50,7 +51,7 @@ Now in the terminal run:
 Then run the setup-environment script to install the tools required for this workshop automatically with:
 
 ```sh
-./bin/setup-environment.sh && source ~/.bashrc
+./bin/setup-environment.sh
 ```
 
 **Note:** The script will ask you for your `sudo` password. This is the same password you used to login to the VDI. The terminal will not show any characters to protect your password, thus, just press `Enter` after typing your password or after pasting it if you copied it from somewhere.
@@ -69,7 +70,7 @@ As such, please allow some time for the script to finish installing everything b
 
 ```
 coding-workshop-participant/
-├── backend/                 # Python backend
+├── backend/                 # Backend services
 │   ├── achievements/          # CRUD service for achievements
 │   ├── individuals/           # CRUD service for individuals
 │   ├── metadata/              # CRUD service for metadata
@@ -91,7 +92,7 @@ coding-workshop-participant/
 │   ├── implementation.md      # Implementation guide
 │   ├── testing.md             # Testing guide
 │   └── validation.md          # Validation guide (YOU ARE HERE)
-├── frontend/                # React frontend
+├── frontend/                # Frontend user interfaces
 │   ├── public/                # Public assets
 │   ├── src/                   # Source code
 │   ├── package.json           # Application metadata
@@ -135,7 +136,8 @@ Next open the project by going to File -> Open. You should find the project in y
 Next, we will prepare our Python environment so the dependencies you use for this project don't clash with any dependencies used by Ubuntu to the OS. To do this, just run
 
 ```sh
-python3.11 -m venv .venv && source .venv/bin/activate
+python3.11 -m venv .venv
+source .venv/bin/activate
 ```
 
 Notice the `(venv)` appearing in your terminal now. This indicates all your Python dependencies will be stored and loaded from this project, and you should ensure the marker is present when you run any python code for the workshop.
@@ -143,6 +145,7 @@ Notice the `(venv)` appearing in your terminal now. This indicates all your Pyth
 Now we will start your local development environment by running:
 
 ```sh
+source ~/.bashrc
 ./bin/start-dev.sh
 ```
 
