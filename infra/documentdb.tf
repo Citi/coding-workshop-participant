@@ -39,22 +39,3 @@ resource "aws_docdb_cluster_instance" "this" {
 
   tags = local.app_tags
 }
-
-# resource "aws_secretsmanager_secret" "docdb" {
-#   count                   = data.aws_caller_identity.this.id != "000000000000" ? 1 : 0
-#   name                    = format("%s-docdb-%s", var.aws_project, local.app_id)
-#   recovery_window_in_days = 0
-
-#   tags = local.app_tags
-# }
-
-# resource "aws_secretsmanager_secret_version" "docdb" {
-#   count     = data.aws_caller_identity.this.id != "000000000000" ? 1 : 0
-#   secret_id = element(aws_secretsmanager_secret.docdb.*.id, count.index)
-#   secret_string = jsonencode({
-#     username = element(aws_docdb_cluster.this.*.master_username, count.index)
-#     password = element(aws_docdb_cluster.this.*.master_password, count.index)
-#     host     = element(aws_docdb_cluster.this.*.endpoint, count.index)
-#     port     = element(aws_docdb_cluster.this.*.port, count.index)
-#   })
-# }

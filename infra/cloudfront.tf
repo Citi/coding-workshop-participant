@@ -20,7 +20,7 @@ resource "aws_cloudfront_distribution" "this" {
   }
 
   dynamic "origin" {
-    for_each = local.lambda_origins
+    for_each = local.function_origins
     content {
       domain_name = origin.value.domain_name
       origin_id   = origin.value.origin_id
@@ -53,7 +53,7 @@ resource "aws_cloudfront_distribution" "this" {
   # }
 
   dynamic "ordered_cache_behavior" {
-    for_each = local.lambda_origins
+    for_each = local.function_origins
     content {
       path_pattern     = "/api/${ordered_cache_behavior.value.name}*"
       target_origin_id = ordered_cache_behavior.value.origin_id

@@ -11,88 +11,30 @@ drive / deliver value.
 
 ## Implementation Expectations
 
-### 1. Individuals Management
+### 1. Backend Service
 
-Individuals represent people employed by the organization.
-
-**Expected Capabilities:**
-
-- [ ] Create new individuals with relevant attributes (name, location, employment type)
-- [ ] Retrieve individuals records by ID or list all individuals
-- [ ] Update existing individuals records
-- [ ] Delete individuals records
-- [ ] Handle cases where requested individuals do not exist
-
-**Key Attributes to Consider:**
-
-- Name of the individual
-- Work location
-- Employment classification (full-time, part-time, contractor)
-- Timestamps for tracking record creation and updates
-
-### 2. Teams Management
-
-Teams represent groups of individuals with a designated leader.
+Backend service acts as the "brain" and "backbone" of modern applications,
+responsible for data management, business logic, security, and integration
+with dependent systems.
 
 **Expected Capabilities:**
 
-- [ ] Create teams with a team leader
-- [ ] Ensure team leaders reference valid individuals
-- [ ] Retrieve team records with member information
-- [ ] Update teams composition and details
-- [ ] Delete teams records
-- [ ] Validate that referenced members exist
+- [ ] Store and manage data
+- [ ] Authenticate and authorize users
+- [ ] Communicate and integrate through API endpoints
+- [ ] Execute service specific business logic
+- [ ] Deliver real-time capabilities
+- [ ] Handle async tasks where sync options are not feasible
 
 **Key Attributes to Consider:**
 
-- Team name
-- Team leader (must be a valid individual)
-- Team location
-- Team members (collection of individuals)
-- Timestamps for tracking record creation and updates
+- Reliability and high availability
+- Security and performance optimization
+- Maintainability and modularity
+- Monitoring and observability
+- Documentation and API standards
 
-### 3. Achievements Management
-
-Achievements record team accomplishments.
-
-**Expected Capabilities:**
-
-- [ ] Create achievements linked to specific teams
-- [ ] Support monthly tracking with appropriate date formatting
-- [ ] Retrieve achievements filtered by team or month
-- [ ] Update achievements records
-- [ ] Delete achievements records
-- [ ] Validate that referenced teams exist
-
-**Key Attributes to Consider:**
-
-- Associated team
-- Month of achievement (consider YYYY-MM format)
-- Description of the achievement
-- Optional metrics or quantitative data
-- Timestamps for tracking record creation and updates
-
-### 4. Metadata Management
-
-Metadata stores reference data organized by categories for use throughout the application.
-
-**Expected Capabilities:**
-
-- [ ] Create metadata entries within defined categories
-- [ ] Retrieve metadata by category or list all metadata
-- [ ] Organize metadata logically by category when listing
-- [ ] Update metadata entries
-- [ ] Delete metadata entries
-- [ ] Consider uniqueness constraints for category-key combinations
-
-**Key Attributes to Consider:**
-
-- Category classification (individual, team, organization)
-- Key identifier
-- Value
-- Timestamps for tracking record creation and updates
-
-### 5. Data Validation
+### 2. Data Validation
 
 Proper validation ensures data integrity and provides helpful feedback to users.
 
@@ -104,7 +46,7 @@ Proper validation ensures data integrity and provides helpful feedback to users.
 - [ ] Return meaningful error messages for validation failures
 - [ ] Handle malformed input gracefully
 
-### 6. Data Persistence
+### 3. Data Persistence
 
 Data should persist reliably and maintain consistency.
 
@@ -112,14 +54,14 @@ Data should persist reliably and maintain consistency.
 
 Predefined environment variables are injected into each backend service automatically, simplifying the need to manage them manually:
 
-| Variable | Description | Local | Cloud |
-|----------|-------------|-------|-------|
-| `IS_LOCAL` | Indicates local vs cloud environment | `true` | `false` |
+| Variable     | Description             | Local                  | Cloud                   |
+| ------------ | ----------------------- | ---------------------- | ----------------------- |
+| `IS_LOCAL`   | Is it local or cloud?   | `true`                 | `false`                 |
 | `MONGO_HOST` | Mongo database hostname | `host.docker.internal` | AWS DocumentDB endpoint |
-| `MONGO_PORT` | Mongo database port | `27017` | `27017` |
-| `MONGO_NAME` | Mongo database name | *(not injected)* | *(not injected)* |
-| `MONGO_USER` | Mongo database username | *(empty — no auth locally)* | AWS DocumentDB username |
-| `MONGO_PASS` | Mongo database password | *(empty — no auth locally)* | AWS DocumentDB password |
+| `MONGO_PORT` | Mongo database port     | `27017`                | `27017`                 |
+| `MONGO_NAME` | Mongo database name     | *(empty)*              | *(empty)*               |
+| `MONGO_USER` | Mongo database username | *(empty)*              | AWS DocumentDB username |
+| `MONGO_PASS` | Mongo database password | *(empty)*              | AWS DocumentDB password |
 
 Use `IS_LOCAL` to branch your connection logic — locally MongoDB runs without TLS even when credentials are present, while AWS DocumentDB requires TLS. When `IS_LOCAL` is `false`, append `?tls=true&tlsAllowInvalidCertificates=true&retryWrites=false` to your connection string.
 
@@ -131,7 +73,7 @@ Use `IS_LOCAL` to branch your connection logic — locally MongoDB runs without 
 - [ ] Retrieved records match stored data
 - [ ] Database errors are handled appropriately
 
-### 7. API Design
+### 4. API Design
 
 The API should follow RESTful conventions and provide consistent responses.
 
@@ -143,25 +85,23 @@ The API should follow RESTful conventions and provide consistent responses.
 - [ ] Return error information in a consistent format
 - [ ] Support query parameters for filtering where appropriate
 
-### 8. Frontend User Interface
+### 5. Frontend User Interface
 
-The frontend should provide an intuitive interface for managing all entities.
+Frontend user interface (UI) is no longer just a visual layout;
+it is a dynamic, intelligent, and highly interactive layer that
+bridges users with backend services.
 
 **Expected Capabilities:**
 
-- [ ] Display individuals in a tabular format with relevant columns
-- [ ] Display teams with leader and member information
-- [ ] Display achievements with filtering by team and month
-- [ ] Display metadata organized by category
-- [ ] Provide create, edit, and delete functionality for all entities
-- [ ] Include form validation with helpful error messages
-- [ ] Show confirmation dialogs for destructive operations
-- [ ] Display loading states during API calls
-- [ ] Show success and error notifications
-- [ ] Implement responsive design for various screen sizes
-- [ ] Provide clear navigation between sections
+- [ ] Responsive and adaptive design
+- [ ] High performance and speed
+- [ ] Real-time data interaction
+- [ ] Accessibility (a11y) and inclusivity
+- [ ] State management and feedback
+- [ ] Progressive web app (PWA) capabilities
+- [ ] Intelligent features with AI integration
 
-## 9. Authentication, Authorization & Role-Based Access Control (RBAC)
+## 6. Authentication, Authorization & Role-Based Access Control (RBAC)
 
 Secure access is essential to protect data and ensure users only perform permitted actions. This section outlines the minimum expectations for authentication and authorization.
 
@@ -189,12 +129,12 @@ Secure access is essential to protect data and ensure users only perform permitt
 
 ### Example Role Permissions
 
-| Role          | Access Level                                      |
-|---------------|---------------------------------------------------|
-| **Admin**     | Full access; manage users and roles               |
-| **Manager**   | Manage teams, achievements, and individuals       |
-| **Contributor** | Create/update but not delete                    |
-| **Viewer**    | Read-only                                         |
+| Role            | Access Level                              |
+| --------------- | ----------------------------------------- |
+| **Admin**       | Full access; manage users and roles       |
+| **Manager**     | Unlimited management of data and metadata |
+| **Contributor** | Create/update but not delete              |
+| **Viewer**      | Read-only                                 |
 
 ### Key Principles
 
@@ -202,49 +142,17 @@ Secure access is essential to protect data and ensure users only perform permitt
 - Centralize permission checks
 - Hide or disable UI actions the user cannot perform
 
-## API Endpoints Reference
+## 7. API Endpoints Reference
 
-### Individuals Endpoints
+| Method | Endpoint                 | Description                      |
+| ------ | ------------------------ | -------------------------------- |
+| POST   | `/{{service-name}}`      | Create new {{service-name}}      |
+| GET    | `/{{service-name}}`      | Retrieve all {{service-name}}    |
+| GET    | `/{{service-name}}/{id}` | Retrieve {{service-name}} by ID  |
+| PUT    | `/{{service-name}}/{id}` | Update {{service-name}}          |
+| DELETE | `/{{service-name}}/{id}` | Delete {{service-name}}          |
 
-| Method | Endpoint            | Description           |
-| ------ | ------------------- | --------------------- |
-| POST   | `/individuals`      | Create new individual |
-| GET    | `/individuals`      | List all individuals  |
-| GET    | `/individuals/{id}` | Get individual by ID  |
-| PUT    | `/individuals/{id}` | Update individual     |
-| DELETE | `/individuals/{id}` | Delete individual     |
-
-### Teams Endpoints
-
-| Method | Endpoint      | Description     |
-| ------ | ------------- | --------------- |
-| POST   | `/teams`      | Create new team |
-| GET    | `/teams`      | List all teams  |
-| GET    | `/teams/{id}` | Get team by ID  |
-| PUT    | `/teams/{id}` | Update team     |
-| DELETE | `/teams/{id}` | Delete team     |
-
-### Achievements Endpoints
-
-| Method | Endpoint             | Description                                            |
-| ------ | -------------------- | ------------------------------------------------------ |
-| POST   | `/achievements`      | Create new achievement                                 |
-| GET    | `/achievements`      | List achievements (supports team_id and month filters) |
-| GET    | `/achievements/{id}` | Get achievement by ID                                  |
-| PUT    | `/achievements/{id}` | Update achievement                                     |
-| DELETE | `/achievements/{id}` | Delete achievement                                     |
-
-### Metadata Endpoints
-
-| Method | Endpoint         | Description                               |
-| ------ | ---------------- | ----------------------------------------- |
-| POST   | `/metadata`      | Create new metadata entry                 |
-| GET    | `/metadata`      | List all metadata (organized by category) |
-| GET    | `/metadata/{id}` | Get metadata by ID                        |
-| PUT    | `/metadata/{id}` | Update metadata                           |
-| DELETE | `/metadata/{id}` | Delete metadata                           |
-
-## Validation Guidelines
+## 8. Validation Guidelines
 
 **Backend Validation Considerations:**
 
@@ -262,7 +170,7 @@ Secure access is essential to protect data and ensure users only perform permitt
 - [ ] Forms should prevent submission until validation passes
 - [ ] Loading states should disable form interaction
 
-## Error Handling Guidelines
+## 9. Error Handling Guidelines
 
 ### HTTP Status Codes
 

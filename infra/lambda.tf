@@ -6,8 +6,8 @@ module "lambda" {
   function_name   = format("%s-%s-%s", var.aws_project, each.value.name, local.app_id)
   package_type    = "Zip"
   architectures   = ["x86_64"]
-  handler         = "function.handler"
-  runtime         = "python3.11"
+  handler         = each.value.handler
+  runtime         = each.value.runtime
   memory_size     = 128
   timeout         = 300
   tracing_mode    = "PassThrough"
@@ -17,9 +17,9 @@ module "lambda" {
   s3_prefix       = data.aws_caller_identity.this.id != "000000000000" ? format("lambda/%s/%s/", local.app_id, each.value.name) : null
 
   source_path = [{
-    path             = each.value.path
-    pip_requirements = true
-    patterns         = ["!__pycache__/.*", "!\\..*"]
+    path             = try(each.value.path, null)
+    patterns         = try(each.value.patterns, null)
+    pip_requirements = try(each.value.pip_requirements, null)
   }]
 
   vpc_security_group_ids = data.aws_security_groups.this.ids
@@ -43,6 +43,7 @@ module "lambda" {
   cloudwatch_logs_retention_in_days = 7
   cloudwatch_logs_skip_destroy      = false
   use_existing_cloudwatch_log_group = false
+  trigger_on_package_timestamp      = false
   create_lambda_function_url        = true
   authorization_type                = "NONE"
   dead_letter_target_arn            = aws_sqs_queue.this[each.key].arn
@@ -62,35 +63,50 @@ module "lambda" {
   }
 
   tags = local.app_tags
+
+  depends_on = [null_resource.java_build]
 }
 
 resource "aws_sqs_queue" "this" {
-  for_each                = local.function_names
-  name                    = format("%s-%s-dlq-%s", var.aws_project, each.value.name, local.app_id)
+  for_each = local.function_names
+  name     = format("%s-%s-dlq-%s", var.aws_project, each.value.name, local.app_id)
+
   sqs_managed_sse_enabled = true
 
   tags = local.app_tags
 }
 
 resource "null_resource" "hot_reload" {
-  for_each = data.aws_caller_identity.this.id == "000000000000" ? local.function_names : {}
+  count = data.aws_caller_identity.this.id != "000000000000" ? 0 : length(local.function_names)
 
   triggers = {
-    source_code_hash = module.lambda[each.key].lambda_function_source_code_hash
+    source_code_hash = element(module.lambda.*.lambda_function_source_code_hash, count.index)
   }
 
   provisioner "local-exec" {
     command = <<-EOT
       AWS_REGION=us-east-1 \
-      AWS_ENDPOINT_URL=http://localhost:4566 \
       AWS_ACCESS_KEY_ID=test \
       AWS_SECRET_ACCESS_KEY=test \
+      AWS_ENDPOINT_URL=http://localhost:4566 \
       aws lambda update-function-code \
-        --function-name ${module.lambda[each.key].lambda_function_name} \
+        --function-name ${element(module.lambda.*.lambda_function_name, count.index)} \
         --s3-bucket hot-reload \
-        --s3-key ${abspath(path.module)}/${each.value.path}
+        --s3-key ${lookup(element(values(local.function_names), count.index), "path", "")}
     EOT
   }
 
   depends_on = [module.lambda]
+}
+
+resource "null_resource" "java_build" {
+  for_each = local.java_names
+
+  triggers = {
+    source_code_hash = md5(jsonencode(fileset(format("%s/../backend/%s/", path.module, each.key), "**/*")))
+  }
+
+  provisioner "local-exec" {
+    command = join(" && ", each.value.mvn_cmd)
+  }
 }

@@ -42,23 +42,3 @@ resource "aws_rds_cluster_instance" "this" {
 
   tags = local.app_tags
 }
-
-# resource "aws_secretsmanager_secret" "rds" {
-#   count                   = data.aws_caller_identity.this.id != "000000000000" ? 1 : 0
-#   name                    = format("%s-rds-%s", var.aws_project, local.app_id)
-#   recovery_window_in_days = 0
-
-#   tags = local.app_tags
-# }
-
-# resource "aws_secretsmanager_secret_version" "rds" {
-#   count     = data.aws_caller_identity.this.id != "000000000000" ? 1 : 0
-#   secret_id = element(aws_secretsmanager_secret.rds.*.id, count.index)
-#   secret_string = jsonencode({
-#     username = element(aws_rds_cluster.this.*.master_username, count.index)
-#     password = element(aws_rds_cluster.this.*.master_password, count.index)
-#     host     = element(aws_rds_cluster.this.*.endpoint, count.index)
-#     port     = element(aws_rds_cluster.this.*.port, count.index)
-#     dbname   = element(aws_rds_cluster.this.*.database_name, count.index)
-#   })
-# }
