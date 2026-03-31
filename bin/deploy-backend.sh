@@ -92,7 +92,7 @@ else
 fi
 
 # Initialize Terraform with backend configuration
-if [ -n "$PARTICIPANT_ID" ]; then
+if [ -n "$PARTICIPANT_ID" ] && [ "$TF_CMD" = "terraform" ]; then
     echo "Using custom backend configuration..."
     $TF_CMD init -reconfigure -backend-config="bucket=$PROJECT_NAME-tfstate-$PARTICIPANT_ID"
 else

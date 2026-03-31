@@ -5,7 +5,7 @@ module "lambda" {
 
   function_name   = format("%s-%s-%s", var.aws_project, each.value.name, local.app_id)
   package_type    = "Zip"
-  architectures   = ["x86_64"]
+  architectures   = [each.value.arch]
   handler         = each.value.handler
   runtime         = each.value.runtime
   memory_size     = 128
@@ -30,7 +30,6 @@ module "lambda" {
   create_role        = true
   role_name          = format("%s-%s-%s", var.aws_project, each.value.name, local.app_id)
   role_path          = "/service-role/"
-  policy_path        = "/service-role/"
   attach_policies    = true
   number_of_policies = length(local.iam_arns)
   policies           = local.iam_arns
@@ -77,10 +76,10 @@ resource "aws_sqs_queue" "this" {
 }
 
 resource "null_resource" "hot_reload" {
-  count = data.aws_caller_identity.this.id != "000000000000" ? 0 : length(local.function_names)
+  for_each = data.aws_caller_identity.this.id == "000000000000" ? local.function_names : tomap({})
 
   triggers = {
-    source_code_hash = element(module.lambda.*.lambda_function_source_code_hash, count.index)
+    source_code_hash = module.lambda[each.key].lambda_function_source_code_hash
   }
 
   provisioner "local-exec" {
@@ -90,20 +89,25 @@ resource "null_resource" "hot_reload" {
       AWS_SECRET_ACCESS_KEY=test \
       AWS_ENDPOINT_URL=http://localhost:4566 \
       aws lambda update-function-code \
-        --function-name ${element(module.lambda.*.lambda_function_name, count.index)} \
+        --function-name ${module.lambda[each.key].lambda_function_name} \
         --s3-bucket hot-reload \
-        --s3-key ${lookup(element(values(local.function_names), count.index), "path", "")}
+        --s3-key ${each.value.path}
     EOT
   }
 
-  depends_on = [module.lambda]
+  depends_on = [module.lambda, aws_s3_bucket.hot_reload]
 }
 
 resource "null_resource" "java_build" {
   for_each = local.java_names
 
   triggers = {
-    source_code_hash = md5(jsonencode(fileset(format("%s/../backend/%s/", path.module, each.key), "**/*")))
+    source_code_hash = md5(jsonencode({
+      for file in fileset(format("%s/../backend/%s", path.module, each.key), "**/*") :
+      file => {
+        size = try(filesize(format("%s/../backend/%s/%s", path.module, each.key, file)), 0)
+      }
+    }))
   }
 
   provisioner "local-exec" {

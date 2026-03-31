@@ -54,7 +54,7 @@ The following technologies are required to build the application:
 
 * Frontend: HTML, CSS, React.js with React Responsive and Material UI Components
 * Backend: Python
-* Database: MongoDB / DocumentDB
+* Database: MongoDB
 
 The following technologies are good to know, as they are used to manage and
 deploy code:

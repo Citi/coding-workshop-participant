@@ -189,7 +189,7 @@ else
     if docker ps | grep -q localstack-main; then
         echo -e "  ⚠ Stopping existing LocalStack container..."
         docker stop localstack-main
-        sleep 2
+        sleep 10
     fi
 
     echo -e "  ⚠ LocalStack not running, starting it..."

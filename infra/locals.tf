@@ -26,19 +26,21 @@ locals {
   java_names = {
     for name in local.java_dirs : name => {
       name    = name
-      runtime = "java21"
+      arch    = "x86_64"
+      runtime = "java25"
       handler = "com.example.Handler::handleRequest"
       path    = abspath(format("%s/../backend/%s/target", path.module, name))
       mvn_cmd = [
         format("cd %s", abspath(format("%s/../backend/%s", path.module, name))),
         "mvn clean package -DskipTests",
-        "find ./target ! -name '*.jar' -delete",
+        format("find ./target ! -name '%s*.jar' -delete", name),
       ]
     }
   }
   python_names = {
     for name in local.python_dirs : name => {
       name             = name
+      arch             = "x86_64"
       runtime          = "python3.11"
       handler          = "function.handler"
       path             = abspath(format("%s/../backend/%s", path.module, name))
