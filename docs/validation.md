@@ -35,6 +35,7 @@ cd coding-workshop-participant
 Setup your Participant ID and Participant Code as environment variables.
 
 ```sh
+echo "EVENT_ID=your-id" >> ~/.bashrc
 echo "PARTICIPANT_ID=your-id" >> ~/.bashrc
 echo "PARTICIPANT_CODE=your-id" >> ~/.bashrc
 source ~/.bashrc
