@@ -41,7 +41,7 @@ coding-workshop-participant/
 ├── backend/                             # Backend services
 │   ├── _examples/                         # Hello world examples
 │   │   ├── nodejs-service/                  # Backend service example for NodeJS developers
-│   │   │   ├── function.js                    # Business logic using Python
+│   │   │   ├── index.js                       # Business logic using Python
 │   │   │   └── package.json                   # NodeJS configuration and dependencies
 │   │   └── python-service/                  # Backend service example for Python developers
 │   │       ├── function.py                    # Business logic using Python
