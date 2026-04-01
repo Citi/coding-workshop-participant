@@ -2,7 +2,7 @@
 
 ## Overview
 
-This folder contains backend services for CRUD operations for Python and Java developers.
+This folder contains backend services for CRUD operations for Python and NodeJS developers.
 
 ## Prerequisites
 
