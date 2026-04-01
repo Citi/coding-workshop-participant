@@ -2,7 +2,7 @@ import json
 
 def handler(event = None, context = None):
     """
-    AWS Lambda Hello World.
+    AWS Lambda Hello World
     """
 
     return {

@@ -181,14 +181,13 @@ Everything else (AWS Account ID, S3 bucket name, IAM role) is **automatically de
 **Usage**:
 
 ```sh
-# 1. First, set your AWS access keys
-echo 'export AWS_ACCESS_KEY_ID=your-key' >> ~/.bashrc
-echo 'export AWS_SECRET_ACCESS_KEY=your-secret' >> ~/.bashrc
+# 1. First, set up environment variables
+echo 'export EVENT_ID=your-id' >> ~/.bashrc
 echo 'export PARTICIPANT_ID=your-id' >> ~/.bashrc
 echo 'export PARTICIPANT_CODE=your-code' >> ~/.bashrc
 source ~/.bashrc
 
-# 2. Run setup script
+# 2. Then, run the setup participant script
 ./bin/setup-participant.sh
 ```
 

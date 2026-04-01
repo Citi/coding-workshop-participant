@@ -52,7 +52,7 @@ else
 fi
 
 # Backup everything under PROJECT_ROOT
-if [ -n "$AWS_S3_BUCKET" ]; then
+if [ -n "$AWS_S3_BUCKET" ] && [ -z "$CODEBUILD_BUILD_ID" ]; then
     cd $PROJECT_ROOT
     rm -rf $BACKUP_FILE
     zip -r $BACKUP_FILE . -x ".git*" "node_modules*" "**/node_modules*" ".venv*" "**/.venv*" "*py*cache*" "**/*py*cache*" "**/.terraform*" "**/builds*" "*.zip"

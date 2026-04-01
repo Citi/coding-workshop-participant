@@ -35,13 +35,13 @@ cd coding-workshop-participant
 Setup your Participant ID and Participant Code as environment variables.
 
 ```sh
-echo "EVENT_ID=your-id" >> ~/.bashrc
+echo "EVENT_ID=event-id" >> ~/.bashrc
 echo "PARTICIPANT_ID=your-id" >> ~/.bashrc
 echo "PARTICIPANT_CODE=your-id" >> ~/.bashrc
 source ~/.bashrc
 ```
 
-Change `your-id` with your Participant ID and `your-code` with your Participant Code that you received over email from workshop organizer(s).
+Change `event-id` with your Event ID, `your-id` with your Participant ID and `your-code` with your Participant Code that you received over email from workshop organizer(s).
 
 Now in the terminal run:
 
@@ -72,10 +72,10 @@ As such, please allow some time for the script to finish installing everything b
 ```
 coding-workshop-participant/
 ├── backend/                 # Backend services
-│   ├── achievements/          # CRUD service for achievements
-│   ├── individuals/           # CRUD service for individuals
-│   ├── metadata/              # CRUD service for metadata
-│   ├── teams/                 # CRUD service for teams
+│   ├── _examples/             # Hello world examples
+│   │   ├── java-service/        # Backend service example for Java developers
+│   │   ├── nodejs-service/      # Backend service example for NodeJS developers
+│   │   └── python-service/      # Backend service example for Python developers
 │   └── README.md              # Backend guide
 ├── bin/                     # Shell scripts
 │   ├── clean-up.sh            # Clean up deployment script

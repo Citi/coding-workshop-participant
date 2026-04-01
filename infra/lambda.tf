@@ -1,7 +1,7 @@
 module "lambda" {
   for_each = local.function_names
   source   = "terraform-aws-modules/lambda/aws"
-  version  = "~> 7.0"
+  version  = "~> 8.0"
 
   function_name   = format("%s-%s-%s", var.aws_project, each.value.name, local.app_id)
   package_type    = "Zip"
@@ -20,6 +20,7 @@ module "lambda" {
     path             = try(each.value.path, null)
     patterns         = try(each.value.patterns, null)
     pip_requirements = try(each.value.pip_requirements, null)
+    npm_requirements = try(each.value.npm_requirements, null)
   }]
 
   vpc_security_group_ids = data.aws_security_groups.this.ids

@@ -188,6 +188,7 @@ else
     # Check if LocalStack docker container is already running
     if docker ps | grep -q localstack-main; then
         echo -e "  ⚠ Stopping existing LocalStack container..."
+        localstack stop
         docker stop localstack-main
         sleep 10
     fi

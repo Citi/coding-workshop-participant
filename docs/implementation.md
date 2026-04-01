@@ -34,6 +34,27 @@ with dependent systems.
 - Monitoring and observability
 - Documentation and API standards
 
+**How to Create New Backend Services from Examples:**
+
+To create a new backend service from an example, just run the following command:
+
+```sh
+## Java Service Example
+cp -R ../backend/_examples/java-service ../backend/{{service-name}}
+## NodeJS Service Example
+cp -R ../backend/_examples/nodejs-service ../backend/{{service-name}}
+## Python Service Example
+cp -R ../backend/_examples/python-service ../backend/{{service-name}}
+```
+
+Replace `{{service-name}}` with your corresponding new service name.
+
+When you create a new backend service, make sure to restart the development environment:
+
+```sh
+../bin/start-dev.sh
+```
+
 ### 2. Data Validation
 
 Proper validation ensures data integrity and provides helpful feedback to users.
@@ -54,16 +75,21 @@ Data should persist reliably and maintain consistency.
 
 Predefined environment variables are injected into each backend service automatically, simplifying the need to manage them manually:
 
-| Variable     | Description             | Local                  | Cloud                   |
-| ------------ | ----------------------- | ---------------------- | ----------------------- |
-| `IS_LOCAL`   | Is it local or cloud?   | `true`                 | `false`                 |
-| `MONGO_HOST` | Mongo database hostname | `host.docker.internal` | AWS DocumentDB endpoint |
-| `MONGO_PORT` | Mongo database port     | `27017`                | `27017`                 |
-| `MONGO_NAME` | Mongo database name     | *(empty)*              | AWS DocumentDB database |
-| `MONGO_USER` | Mongo database username | *(empty)*              | AWS DocumentDB username |
-| `MONGO_PASS` | Mongo database password | *(empty)*              | AWS DocumentDB password |
+| Variable        | Description           | Local                  | Cloud                   |
+| --------------- | --------------------- | ---------------------- | ----------------------- |
+| `IS_LOCAL`      | Is it local or cloud? | `true`                 | `false`                 |
+| `POSTGRES_HOST` | PostgreSQL hostname   | `localhost`            | AWS Aurora endpoint     |
+| `POSTGRES_PORT` | PostgreSQL port       | `5432`                 | `5432`                  |
+| `POSTGRES_NAME` | PostgreSQL name       | *(empty)*              | AWS Aurora database     |
+| `POSTGRES_USER` | PostgreSQL username   | *(empty)*              | AWS Aurora username     |
+| `POSTGRES_PASS` | PostgreSQL password   | *(empty)*              | AWS Aurora password     |
+| `MONGO_HOST`    | MongoDB hostname      | `host.docker.internal` | AWS DocumentDB endpoint |
+| `MONGO_PORT`.   | MongoDB port          | `27017`                | `27017`                 |
+| `MONGO_NAME`    | MongoDB db name       | *(empty)*              | AWS DocumentDB database |
+| `MONGO_USER`    | MongoDB username      | *(empty)*              | AWS DocumentDB username |
+| `MONGO_PASS`    | MongoDB password      | *(empty)*              | AWS DocumentDB password |
 
-Use `IS_LOCAL` to branch your connection logic — locally MongoDB runs without TLS even when credentials are present, while AWS DocumentDB requires TLS. When `IS_LOCAL` is `false`, append `?tls=true&tlsAllowInvalidCertificates=true&retryWrites=false` to your connection string.
+**Note:** Use `IS_LOCAL` to branch your connection logic — locally MongoDB runs without TLS even when credentials are present, while AWS DocumentDB requires TLS. When `IS_LOCAL` is `false`, append `?tls=true&tlsAllowInvalidCertificates=true&retryWrites=false` to your connection string.
 
 **Expected Capabilities:**
 
@@ -101,13 +127,17 @@ bridges users with backend services.
 - [ ] Progressive web app (PWA) capabilities
 - [ ] Intelligent features with AI integration
 
-## 6. Authentication, Authorization & Role-Based Access Control (RBAC)
+### 6. Authentication, Authorization & Role-Based Access Control (RBAC)
 
 Secure access is essential to protect data and ensure users only perform permitted actions. This section outlines the minimum expectations for authentication and authorization.
 
-### Authentication
+**Key Principles:**
 
-**Expected Capabilities:**
+- Authentication first, authorization second
+- Centralize permission checks
+- Hide or disable UI actions the user cannot perform
+
+**Authentication:**
 
 - [ ] Secure user login (e.g., JWT or OAuth)
 - [ ] Password hashing
@@ -116,9 +146,7 @@ Secure access is essential to protect data and ensure users only perform permitt
 - [ ] Middleware enforcing authentication before CRUD operations
 - [ ] Clear errors for invalid or expired credentials
 
-### Authorization & RBAC
-
-**Expected Capabilities:**
+**Authorization & RBAC:**
 
 - [ ] Define user roles (e.g., Admin, Manager, Contributor, Viewer)
 - [ ] Restrict endpoints based on role permissions
@@ -127,22 +155,16 @@ Secure access is essential to protect data and ensure users only perform permitt
 - [ ] Prevent privilege escalation
 - [ ] Return consistent “access denied” responses
 
-### Example Role Permissions
+#### Example Role Permissions
 
-| Role            | Access Level                              |
-| --------------- | ----------------------------------------- |
-| **Admin**       | Full access; manage users and roles       |
-| **Manager**     | Unlimited management of data and metadata |
-| **Contributor** | Create/update but not delete              |
-| **Viewer**      | Read-only                                 |
+| Role            | Access Level                             |
+| --------------- | ---------------------------------------- |
+| **Admin**       | Full access; manage users and roles      |
+| **Manager**     | Manage everything except users and roles |
+| **Contributor** | Create/update but not delete             |
+| **Viewer**      | Read-only                                |
 
-### Key Principles
-
-- Authentication first, authorization second
-- Centralize permission checks
-- Hide or disable UI actions the user cannot perform
-
-## 7. API Endpoints Reference
+### 7. API Endpoints Reference
 
 | Method | Endpoint                 | Description                      |
 | ------ | ------------------------ | -------------------------------- |
@@ -152,7 +174,7 @@ Secure access is essential to protect data and ensure users only perform permitt
 | PUT    | `/{{service-name}}/{id}` | Update {{service-name}}          |
 | DELETE | `/{{service-name}}/{id}` | Delete {{service-name}}          |
 
-## 8. Validation Guidelines
+### 8. Validation Guidelines
 
 **Backend Validation Considerations:**
 
@@ -170,9 +192,9 @@ Secure access is essential to protect data and ensure users only perform permitt
 - [ ] Forms should prevent submission until validation passes
 - [ ] Loading states should disable form interaction
 
-## 9. Error Handling Guidelines
+### 9. Error Handling Guidelines
 
-### HTTP Status Codes
+**HTTP Status Codes:**
 
 | Status                    | Usage                                 |
 | ------------------------- | ------------------------------------- |
@@ -183,7 +205,7 @@ Secure access is essential to protect data and ensure users only perform permitt
 | 404 Not Found             | Resource not found                    |
 | 500 Internal Server Error | Server or database error              |
 
-### Error Handling Expectations
+**Error Handling Expectations:**
 
 - [ ] API errors should return consistent response structures
 - [ ] Frontend should display user-friendly error messages

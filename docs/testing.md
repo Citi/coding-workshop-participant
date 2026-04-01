@@ -45,7 +45,7 @@ curl -X GET https://localhost:3001/api/{{service-name}} \
 ```
 
 Replace `{{service-name}}` with corresponding service name
-(e.g. `teams` or `individuals`).
+(e.g. `python-service`).
 
 To tail backend logs in real-time:
 
@@ -56,7 +56,7 @@ awslocal logs tail /aws/lambda/{{function-name}} \
 ```
 
 Replace `{{function-name}}` with corresponding service name
-(e.g. `coding-workshop-teams-abcd1234`).
+(e.g. `coding-workshop-python-service-abcd1234`).
 
 #### Cloud Deployment
 
@@ -69,7 +69,7 @@ curl -X GET https://{API_BASE_URL}/api/{{service-name}} \
 ```
 
 Replace `{{service-name}}` with corresponding service name
-(e.g. `teams` or `individuals`).
+(e.g. `python-service`).
 
 To tail backend logs in real-time:
 
@@ -80,7 +80,7 @@ aws logs tail /aws/lambda/{{function-name}} \
 ```
 
 Replace `{{function-name}}` with corresponding service name
-(e.g. `coding-workshop-teams-abcd1234`).
+(e.g. `coding-workshop-python-service-abcd1234`).
 
 ## Navigation Links
 

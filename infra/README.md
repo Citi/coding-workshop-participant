@@ -49,7 +49,7 @@ tflocal init -backend-config bucket=coding-workshop-tfstate-abcd1234
 tflocal apply -var aws_app_code=abcd1234
 ```
 
-> NOTE: Replace `abcd1234` from above with your participant id shared by workshop organizer(s).
+**Note:** Replace `abcd1234` from above with your participant id shared by workshop organizer(s).
 
 After successful execution, view outputs:
 
@@ -74,7 +74,7 @@ terraform init -backend-config bucket=coding-workshop-tfstate-abcd1234
 terraform apply -var aws_app_code=abcd1234
 ```
 
-> NOTE: Replace `abcd1234` from above with your participant id shared by workshop organizer(s).
+**Note:** Replace `abcd1234` from above with your participant id shared by workshop organizer(s).
 
 After successful execution, view outputs:
 
@@ -84,12 +84,12 @@ terraform output
 
 ### Outputs
 
-| Output | Description | Local | Cloud |
-|--------|-------------|-------|-------|
-| `api_base_url` | API Base URL | `""` (empty) | `https://***.cloudfront.net` |
-| `api_endpoints` | API Endpoints | `{"individual": "http://***.lambda-url..."}` | `{"individual": "/api/individual"}` |
-| `lambda_urls` | Backend / Lambda URLs | `{"individual": "http://***.lambda-url..."}` | `{"individual": "https://***.lambda-url..."}` |
-| `website_url` | Frontend / CloudFront URL | `http://***.s3-website...` | `https://***.cloudfront.net` |
+| Output          | Description   | Local                                          | Cloud                                           |
+| --------------- | ------------- | ---------------------------------------------- | ----------------------------------------------- |
+| `api_base_url`  | API Base URL  | *(empty)*                                      | `https://***.cloudfront.net`                    |
+| `api_endpoints` | API Endpoints | `{"service-name": "http://***.lambda-url..."}` | `{"service-name": "/api/service-name"}`         |
+| `lambda_urls`   | Backend URLs  | `{"service-name": "http://***.lambda-url..."}` | `{"service-name": "https://***.lambda-url..."}` |
+| `website_url`   | Frontend URL  | `http://***.s3-website...`                     | `https://***.cloudfront.net`                    |
 
 ## Clean Up
 
