@@ -40,10 +40,6 @@ The backend is organized into Lambda functions, one for each CRUD service:
 coding-workshop-participant/
 ├── backend/                             # Backend services
 │   ├── _examples/                         # Hello world examples
-│   │   ├── java-service/                    # Backend service example for Java developers
-│   │   │   ├── src/main/java/com/example/     # Path to Java package
-│   │   │   │   └── Handler.java               # Business logic using Java
-│   │   │   └── pom.xml                        # Java configuration and dependencies
 │   │   ├── nodejs-service/                  # Backend service example for NodeJS developers
 │   │   │   ├── function.js                    # Business logic using Python
 │   │   │   └── package.json                   # NodeJS configuration and dependencies
@@ -73,7 +69,7 @@ curl -X GET https://localhost:3001/api/{{service-name}} \
 ```
 
 Replace `{{service-name}}` with corresponding service name
-(e.g. `java-service` or `python-service`).
+(e.g. `python-service`).
 
 To tail logs in real-time:
 
@@ -103,7 +99,7 @@ curl -X GET https://{API_BASE_URL}/api/{{service-name}} \
 ```
 
 Replace `{{service-name}}` with corresponding service name
-(e.g. `java-service` or `python-service`).
+(e.g. `python-service`).
 
 To tail logs in real-time:
 

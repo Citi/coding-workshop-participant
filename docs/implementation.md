@@ -39,8 +39,6 @@ with dependent systems.
 To create a new backend service from an example, just run the following command:
 
 ```sh
-## Java Service Example
-cp -R ../backend/_examples/java-service ../backend/{{service-name}}
 ## NodeJS Service Example
 cp -R ../backend/_examples/nodejs-service ../backend/{{service-name}}
 ## Python Service Example
