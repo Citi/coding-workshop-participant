@@ -10,7 +10,6 @@ This folder contains backend services for CRUD operations for Python and NodeJS 
 - AWS DocumentDB - MongoDB-compatible database
 - AWS Lambda - Serverless compute
 - You backend language of choice
-    - Java and AWS SDK for Java
     - NodeJS and AWS SDK for JavaScript
     - Python and AWS SDK for Python (Boto3)
 
