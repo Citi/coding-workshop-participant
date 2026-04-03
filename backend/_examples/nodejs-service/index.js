@@ -41,6 +41,9 @@ const mongoConfig = {
  * @returns {Promise<Object>} A response object with statusCode, headers, and body
  */
 exports.handler = async (event, context) => {
+  console.log("Received event: ", event)
+  console.log("Received context: ", context)
+
   try {
     // Retrieve versions in parallel for better performance
     const [pgVersion, mongoVersion] = await Promise.all([
@@ -49,8 +52,8 @@ exports.handler = async (event, context) => {
     ]);
 
     // Log retrieved versions for debugging
-    console.log(`PostgreSQL Version: ${pgVersion}`);
-    console.log(`MongoDB Version: ${mongoVersion}`);
+    console.log("PostgreSQL Version: ", pgVersion);
+    console.log("MongoDB Version: ", mongoVersion);
 
     // Return successful response with database versions
     return {

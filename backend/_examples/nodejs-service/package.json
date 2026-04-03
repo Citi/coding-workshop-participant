@@ -2,10 +2,12 @@
   "name": "nodejs-service",
   "description": "Hello World",
   "version": "1.0.0",
+  "type": "module",
   "license": "MIT",
   "main": "index.js",
   "scripts": {
-    "test": "node index.js"
+    "test": "node index.js",
+    "lint": "eslint ."
   },
   "engines": {
     "node": ">=18.0.0"
@@ -13,5 +15,8 @@
   "dependencies": {
     "pg": "^8.11.3",
     "mongodb": "^6.3.0"
+  },
+  "devDependencies": {
+    "eslint": "^9.0.0"
   }
 }

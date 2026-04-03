@@ -5,8 +5,8 @@ Sample code: Hello World with PostgreSQL and MongoDB connectivity.
 import json
 import logging
 import os
-import postgres_service
-import mongo_service
+from postgres_service import get_postgres_version
+from mongo_service import get_mongo_version
 
 # Configure logging for Lambda
 logger = logging.getLogger()
@@ -46,14 +46,17 @@ def handler(event=None, context=None):
             - headers: Content-Type set to application/json
             - body: JSON string with database versions or error message
     """
+    logger.debug("Received event: %s", event)
+    logger.debug("Received context: %s", context)
+
     try:
         # Retrieve versions from both databases
         pg_version = get_postgres_version(PG_CONFIG)
         mongo_version = get_mongo_version(MONGO_CONFIG)
 
         # Log retrieved versions for debugging
-        logger.info(f"PostgreSQL Version: {pg_version}")
-        logger.info(f"MongoDB Version: {mongo_version}")
+        logger.info("PostgreSQL Version: %s", pg_version)
+        logger.info("MongoDB Version: %s", mongo_version)
 
         # Return successful response with database versions
         return {
@@ -67,7 +70,7 @@ def handler(event=None, context=None):
         }
     except Exception as e:
         # Return error response on any exception
-        logger.error(f"Handler error: {str(e)}")
+        logger.error("Handler error: %s", str(e))
         return {
             "statusCode": 500,
             "headers": {"Content-Type": "application/json"},
@@ -79,7 +82,4 @@ def handler(event=None, context=None):
 
 # Main entry point for local testing
 if __name__ == "__main__":
-    """
-    Main method with no arguments to test functionality locally.
-    """
     print(handler())
