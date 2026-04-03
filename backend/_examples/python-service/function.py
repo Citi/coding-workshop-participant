@@ -1,5 +1,5 @@
 """
-Sample code: Hello World with PostgreSQL and MongoDB connections.
+Sample code: Hello World with PostgreSQL and MongoDB connectivity.
 """
 
 import json
@@ -34,7 +34,7 @@ MONGO_CONFIG = {
 
 def handler(event=None, context=None):
     """
-    Sample code: Hello World with PostgreSQL and MongoDB connections.
+    Sample code: Hello World with PostgreSQL and MongoDB connectivity.
 
     Args:
         event (dict, optional): The Lambda event

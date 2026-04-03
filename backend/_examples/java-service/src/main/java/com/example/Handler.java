@@ -11,7 +11,7 @@ import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 
 /**
- * Sample code: Hello World with PostgreSQL and MongoDB connections.
+ * Sample code: Hello World with PostgreSQL and MongoDB connectivity.
  */
 public class Handler implements RequestHandler<Map<String, Object>, Map<String, Object>> {
 
@@ -19,7 +19,7 @@ public class Handler implements RequestHandler<Map<String, Object>, Map<String, 
     private static final Gson gson = new GsonBuilder().create();
 
     /**
-     * Sample code: Hello World with PostgreSQL and MongoDB connections.
+     * Sample code: Hello World with PostgreSQL and MongoDB connectivity.
      *
      * @param event the Lambda event
      * @param context the Lambda context

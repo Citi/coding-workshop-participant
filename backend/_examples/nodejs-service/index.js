@@ -1,5 +1,5 @@
 /**
- * Sample code: Hello World with PostgreSQL and MongoDB connections.
+ * Sample code: Hello World with PostgreSQL and MongoDB connectivity.
  */
 
 const { getPostgresVersion } = require("./postgres-service");
@@ -34,7 +34,7 @@ const mongoConfig = {
 };
 
 /**
- * Sample code: Hello World with PostgreSQL and MongoDB connections.
+ * Sample code: Hello World with PostgreSQL and MongoDB connectivity.
  *
  * @param {Object} event - The Lambda event
  * @param {Object} context - The Lambda context
