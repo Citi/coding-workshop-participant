@@ -22,7 +22,7 @@ coding-workshop-participant/
 │   │   ├── services/          # API client
 │   │   └── App.js             # Main app
 │   ├── .env.sample          # React environment variables
-│   ├── .eslint.config.js    # ESLint JS tool configuration
+│   ├── eslint.config.js     # ESLint JS tool configuration
 │   ├── index.html           # Landing page
 │   ├── package.json         # App metadata with dependencies
 │   ├── README.md            # Frontend guide (YOU ARE HERE)
