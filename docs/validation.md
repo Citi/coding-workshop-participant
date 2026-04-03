@@ -73,6 +73,7 @@ As such, please allow some time for the script to finish installing everything b
 coding-workshop-participant/
 ├── backend/                 # Backend services
 │   ├── _examples/             # Hello world examples
+│   │   ├── java-service/        # Backend service example for Java developers
 │   │   ├── nodejs-service/      # Backend service example for NodeJS developers
 │   │   └── python-service/      # Backend service example for Python developers
 │   └── README.md              # Backend guide

@@ -13,14 +13,16 @@
 #   - Containers: Docker (with sudo-less access)
 #   - Cloud Tools: Terraform CLI, AWS CLI v2
 #   - LocalStack: LocalStack CLI, tflocal, awslocal
+#   - Database: PostgreSQL, pgAdmin
 #   - Database: MongoDB, MongoDB Compass
-#   - Runtimes: Node.js 22, Python 3
+#   - Runtimes: Node.js, Python
 #   - Utilities: jq (JSON processor)
 #   - Optional: dnsmasq (for LocalStack DNS, use -d flag)
 #
 # Services configured to start on boot:
 #   - Docker
 #   - LocalStack
+#   - PostgreSQL
 #   - MongoDB
 #
 # Usage:
@@ -49,6 +51,7 @@ set +e
 # ============================================================================
 
 LOCALSTACK_VERSION="4.12.0"
+POSTGRES_VERSION="16"
 MONGODB_VERSION="7.0"
 COMPASS_VERSION="1.43.0"
 
@@ -87,9 +90,10 @@ Installed tools:
   - AWS CLI v2
   - LocalStack CLI
   - tflocal, awslocal
-  - MongoDB + MongoDB Compass
-  - Node.js 22
-  - Python 3
+  - PostgreSQL with pgAdmin
+  - MongoDB with MongoDB Compass
+  - Node.js
+  - Python
   - jq (JSON processor)
 
 Services configured to start on boot:
@@ -896,6 +900,111 @@ install_awslocal() {
 # SECTION 11: DATABASE TOOLS
 # ============================================================================
 
+install_postgres() {
+    local version="$1"
+    local display_name="PostgreSQL $version"
+
+    print_section "$display_name"
+
+    if is_dry_run; then
+        print_dry_run_header "POSTGRES" "$display_name"
+        if command -v psql &> /dev/null && psql --version 2>/dev/null | grep -q "psql.*$version"; then
+            print_dry_run_status "Already installed: $(psql --version 2>/dev/null)"
+        else
+            print_dry_run_missing "Not installed"
+            print_dry_run_action "Would add PostgreSQL APT repository GPG key"
+            print_dry_run_action "Would add PostgreSQL ${version} APT repository"
+            print_dry_run_action "Would install: postgresql-${version} postgresql-client-${version}"
+        fi
+        print_dry_run_action "Would enable: postgresql.service"
+        return
+    fi
+
+    print_info "Installing $display_name..."
+
+    # Idempotency check
+    if command -v psql &> /dev/null && psql --version 2>/dev/null | grep -q "psql.*$version"; then
+        print_info "$display_name already installed: $(psql --version)"
+
+        # Ensure service is running
+        if ! sudo systemctl is-active --quiet postgresql; then
+            print_info "Starting PostgreSQL service..."
+            sudo systemctl start postgresql && sudo systemctl enable postgresql
+        fi
+        return
+    fi
+
+    # Add PostgreSQL APT repository GPG key
+    if curl -fsSL https://www.postgresql.org/media/keys/ACCC4CF8.asc | \
+       sudo gpg --dearmor -o /usr/share/keyrings/postgresql-keyring.gpg; then
+
+        # Add repository
+        echo "deb [arch=amd64 signed-by=/usr/share/keyrings/postgresql-keyring.gpg] http://apt.postgresql.org/pub/repos/apt jammy-pgdg main" | \
+            sudo tee /etc/apt/sources.list.d/pgdg.list > /dev/null
+
+        # Install
+        if sudo apt update && sudo apt install -y "postgresql-${version}" "postgresql-client-${version}"; then
+            print_status "$display_name installed: $(psql --version)"
+
+            # Start and enable service
+            if sudo systemctl start postgresql && sudo systemctl enable postgresql; then
+                print_status "PostgreSQL service started and enabled"
+                print_info "PostgreSQL is accessible at: localhost:5432"
+            else
+                add_failure "Failed to start/enable PostgreSQL service"
+            fi
+        else
+            add_failure "Failed to install $display_name"
+        fi
+    else
+        add_failure "Failed to add PostgreSQL APT repository GPG key"
+    fi
+}
+
+install_pgadmin() {
+    print_section "pgAdmin"
+
+    if is_dry_run; then
+        print_dry_run_header "PGADMIN" "pgAdmin"
+        if dpkg -l 2>/dev/null | grep -q pgadmin4; then
+            print_dry_run_status "Already installed"
+        else
+            print_dry_run_missing "Not installed"
+            print_dry_run_action "Would add pgAdmin APT repository GPG key"
+            print_dry_run_action "Would add pgAdmin APT repository"
+            print_dry_run_action "Would install: pgadmin4-desktop"
+        fi
+        return
+    fi
+
+    print_info "Installing pgAdmin..."
+
+    # Idempotency check
+    if dpkg -l 2>/dev/null | grep -q pgadmin4; then
+        print_info "pgAdmin already installed"
+        return
+    fi
+
+    # Add pgAdmin APT repository GPG key
+    if curl -fsSL https://www.pgadmin.org/static/packages_pgadmin_org.pub | \
+       sudo gpg --dearmor -o /usr/share/keyrings/pgadmin-keyring.gpg; then
+
+        # Add repository
+        echo "deb [arch=amd64 signed-by=/usr/share/keyrings/pgadmin-keyring.gpg] https://ftp.postgresql.org/pub/pgadmin/pgadmin4/apt/jammy pgadmin4 main" | \
+            sudo tee /etc/apt/sources.list.d/pgadmin4.list > /dev/null
+
+        # Install desktop mode
+        if sudo apt update && sudo apt install -y pgadmin4-desktop; then
+            print_status "pgAdmin installed"
+            print_info "Launch pgAdmin from the application menu"
+        else
+            add_failure "Failed to install pgAdmin"
+        fi
+    else
+        add_failure "Failed to add pgAdmin APT repository GPG key"
+    fi
+}
+
 install_mongodb() {
     print_section "MongoDB"
 
@@ -1514,8 +1623,21 @@ print_summary() {
 
     # Connection info
     echo "CONNECTION INFO:"
-    echo "  • MongoDB: mongodb://localhost:27017"
-    echo "  • LocalStack: http://localhost:4566"
+    if systemctl is-active --quiet postgresql 2>/dev/null; then
+        echo -e "  ${GREEN}✓${NC} PostgreSQL: postgresql://localhost:5432"
+    else
+        echo -e "  ${RED}✗${NC} PostgreSQL: postgresql://localhost:5432 (not running)"
+    fi
+    if systemctl is-active --quiet mongod 2>/dev/null; then
+        echo -e "  ${GREEN}✓${NC} MongoDB: mongodb://localhost:27017"
+    else
+        echo -e "  ${RED}✗${NC} MongoDB: mongodb://localhost:27017 (not running)"
+    fi
+    if curl -s http://localhost:4566/_localstack/health &>/dev/null; then
+        echo -e "  ${GREEN}✓${NC} LocalStack: http://localhost:4566"
+    else
+        echo -e "  ${YELLOW}○${NC} LocalStack: http://localhost:4566 (not running)"
+    fi
     echo ""
 }
 
@@ -1583,6 +1705,8 @@ main() {
     install_localstack
     install_tflocal
     install_awslocal
+    install_postgres "$POSTGRES_VERSION"
+    install_pgadmin
     install_mongodb
     configure_mongodb_bind
     install_mongodb_compass

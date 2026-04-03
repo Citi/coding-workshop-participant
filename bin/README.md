@@ -197,13 +197,14 @@ Sets up the complete local development environment on Ubuntu 22.04.
 
 **What it does**:
 
-* Installs Docker (container runtime)
+* Installs Docker (Container runtime)
 * Installs LocalStack (AWS service emulation)
 * Installs AWS CLI v2 (AWS command-line tools)
-* Installs awslocal (LocalStack CLI wrapper)
-* Installs Terraform (infrastructure as code)
+* Installs awslocal (AWS CLI wrapper for LocalStack)
+* Installs Terraform (Infrastructure as Code)
 * Installs tflocal (Terraform wrapper for LocalStack)
-* Installs MongoDB (document database)
+* Installs PostgreSQL (Relational database)
+* Installs MongoDB (NoSQL database)
 * Optionally: Installs and configures dnsmasq (DNS resolution)
 
 **When to use**:

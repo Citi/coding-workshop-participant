@@ -21,8 +21,12 @@ coding-workshop-participant/
 │   │   ├── components/        # Reusable components
 │   │   ├── services/          # API client
 │   │   └── App.js             # Main app
+│   ├── .env.sample          # React environment variables
+│   ├── .eslint.config.js    # ESLint JS tool configuration
+│   ├── index.html           # Landing page
 │   ├── package.json         # App metadata with dependencies
-│   └── README.md            # Frontend guide
+│   ├── README.md            # Frontend guide (YOU ARE HERE)
+│   └── vite.config.js       # Vite build tool configuration
 ├── ...
 ```
 

@@ -2,16 +2,16 @@
 
 ## Overview
 
-This folder contains backend services for CRUD operations for Python and NodeJS developers.
+This folder contains backend services for CRUD operations with examples. Python with PostgreSQL are preferred, but Java and NodeJS with MongoDB options are available.
 
 ## Prerequisites
 
+- AWS Lambda - Serverless compute with supported languages such as
+    - Python and AWS SDK for Python (Boto3)
+    - NodeJS and AWS SDK for JavaScript
+    - Java and AWS SDK for Java
 - AWS Aurora - PostgreSQL-compatible database
 - AWS DocumentDB - MongoDB-compatible database
-- AWS Lambda - Serverless compute
-- You backend language of choice
-    - NodeJS and AWS SDK for JavaScript
-    - Python and AWS SDK for Python (Boto3)
 
 Predefined environment variables are injected into each backend service automatically, simplifying the need to manage them manually:
 
@@ -39,13 +39,23 @@ The backend is organized into Lambda functions, one for each CRUD service:
 coding-workshop-participant/
 ├── backend/                             # Backend services
 │   ├── _examples/                         # Hello world examples
+│   │   ├── java-service/                    # Backend service example for Java developers
+│   │   │   ├── src/main/java/com/example/     # Path to Java package
+│   │   │   │   ├── Handler.java               # Business logic using Java
+│   │   │   │   ├── MongoService.java          # MongoDB connectivity service
+│   │   │   │   └── PostgresService.java       # PostgreSQL connectivity service
+│   │   │   └── pom.xml                        # Java configuration and dependencies
 │   │   ├── nodejs-service/                  # Backend service example for NodeJS developers
 │   │   │   ├── index.js                       # Business logic using Python
-│   │   │   └── package.json                   # NodeJS configuration and dependencies
+│   │   │   ├── mongo-service.js               # MongoDB connectivity service
+│   │   │   ├── package.js                     # NodeJS configuration and dependencies
+│   │   │   └── postgres-service.json          # PostgreSQL connectivity service
 │   │   └── python-service/                  # Backend service example for Python developers
 │   │       ├── function.py                    # Business logic using Python
+│   │   │   ├── mongo_service.js               # MongoDB connectivity service
+│   │   │   ├── postgres_service.json          # PostgreSQL connectivity service
 │   │       └── requirements.txt               # Python configuration and dependencies
-│   └── README.md                        # Backend guide
+│   └── README.md                        # Backend guide (YOU ARE HERE)
 ├── ...
 ```
 

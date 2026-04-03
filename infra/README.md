@@ -27,7 +27,7 @@ coding-workshop-participant/
     ├── provider.tf          # Provider configurations
     ├── s3.tf                # S3 bucket
     ├── variable.tf          # Input variables
-    └── README.md            # Infrastructure guide
+    └── README.md            # Infrastructure guide (YOU ARE HERE)
 ```
 
 ## Usage
