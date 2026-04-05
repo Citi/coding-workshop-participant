@@ -6,12 +6,13 @@ This folder contains backend services for CRUD operations with examples. Python 
 
 ## Prerequisites
 
-- AWS Lambda - Serverless compute with supported languages such as
-    - Python and AWS SDK for Python (Boto3)
-    - NodeJS and AWS SDK for JavaScript
-    - Java and AWS SDK for Java
-- AWS Aurora - PostgreSQL-compatible database
-- AWS DocumentDB - MongoDB-compatible database
+- Compute environment
+    - AWS Lambda with Python Runtime and AWS SDK for Python (Boto3)
+    - AWS Lambda with NodeJS Runtime and AWS SDK for JavaScript
+    - AWS Lambda with Java Runtime and AWS SDK for Java
+- Database environment
+    - AWS Aurora for PostgreSQL-compatible database
+    - AWS DocumentDB for MongoDB-compatible database
 
 Predefined environment variables are injected into each backend service automatically, simplifying the need to manage them manually:
 
@@ -46,14 +47,15 @@ coding-workshop-participant/
 │   │   │   │   └── PostgresService.java       # PostgreSQL connectivity service
 │   │   │   └── pom.xml                        # Java configuration and dependencies
 │   │   ├── nodejs-service/                  # Backend service example for NodeJS developers
-│   │   │   ├── index.js                       # Business logic using Python
+│   │   │   ├── eslint.config.js               # ESLint JS tool configuration
+│   │   │   ├── index.js                       # Business logic using NodeJS
 │   │   │   ├── mongo-service.js               # MongoDB connectivity service
 │   │   │   ├── package.js                     # NodeJS configuration and dependencies
 │   │   │   └── postgres-service.json          # PostgreSQL connectivity service
 │   │   └── python-service/                  # Backend service example for Python developers
 │   │       ├── function.py                    # Business logic using Python
-│   │   │   ├── mongo_service.js               # MongoDB connectivity service
-│   │   │   ├── postgres_service.json          # PostgreSQL connectivity service
+│   │       ├── mongo_service.js               # MongoDB connectivity service
+│   │       ├── postgres_service.json          # PostgreSQL connectivity service
 │   │       └── requirements.txt               # Python configuration and dependencies
 │   └── README.md                        # Backend guide (YOU ARE HERE)
 ├── ...

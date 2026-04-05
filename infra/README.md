@@ -25,6 +25,7 @@ coding-workshop-participant/
     ├── output.tf            # Output values
     ├── policy.tftpl         # IAM policy template
     ├── provider.tf          # Provider configurations
+    ├── rds.tf               # Aurora serverless cluster
     ├── s3.tf                # S3 bucket
     ├── variable.tf          # Input variables
     └── README.md            # Infrastructure guide (YOU ARE HERE)
@@ -45,7 +46,7 @@ To deploy infrastructure locally:
 ```sh
 cd infra
 rm -rf .terraform*
-tflocal init -backend-config bucket=coding-workshop-tfstate-abcd1234
+tflocal init -backend-config bucket=coding-workshop-us-east-1-abcd1234
 tflocal apply -var aws_app_code=abcd1234
 ```
 
@@ -70,7 +71,7 @@ To deploy your infrastructure to AWS:
 ```sh
 cd infra
 rm -rf .terraform*
-terraform init -backend-config bucket=coding-workshop-tfstate-abcd1234
+terraform init -backend-config bucket=coding-workshop-us-east-1-abcd1234
 terraform apply -var aws_app_code=abcd1234
 ```
 

@@ -96,8 +96,12 @@ coding-workshop-participant/
 ├── frontend/                # Frontend user interfaces
 │   ├── public/                # Public assets
 │   ├── src/                   # Source code
-│   ├── package.json           # Application metadata
-│   └── README.md              # Frontend guide
+│   ├── .env.sample            # React environment variables
+│   ├── eslint.config.js       # ESLint JS tool configuration
+│   ├── index.html             # Landing page
+│   ├── package.json           # App metadata with dependencies
+│   ├── README.md              # Frontend guide (YOU ARE HERE)
+│   └── vite.config.js         # Vite build tool configuration
 └── infra/                   # Terraform infrastructure
     ├── cloudfront.tf          # CloudFront distribution
     ├── data.tf                # Data sources
@@ -108,6 +112,7 @@ coding-workshop-participant/
     ├── output.tf              # Output values
     ├── policy.tftpl           # IAM policy template
     ├── provider.tf            # Provider configurations
+    ├── rds.tf                 # Aurora serverless cluster
     ├── s3.tf                  # S3 bucket
     ├── variable.tf            # Input variables
     └── README.md              # Infrastructure guide

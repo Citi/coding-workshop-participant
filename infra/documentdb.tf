@@ -1,5 +1,5 @@
 resource "aws_docdb_subnet_group" "this" {
-  count      = data.aws_caller_identity.this.id != "000000000000" ? 1 : 0
+  count      = data.aws_caller_identity.this.id != "000000000000" && var.aws_mongo_enabled ? 1 : 0
   name       = format("%s-docdb-subnet-group-%s", var.aws_project, local.app_id)
   subnet_ids = local.public_subnet_ids
 
@@ -7,7 +7,7 @@ resource "aws_docdb_subnet_group" "this" {
 }
 
 resource "aws_docdb_cluster" "this" {
-  count                           = data.aws_caller_identity.this.id != "000000000000" ? 1 : 0
+  count                           = data.aws_caller_identity.this.id != "000000000000" && var.aws_mongo_enabled ? 1 : 0
   cluster_identifier              = format("%s-docdb-%s", var.aws_project, local.app_id)
   engine                          = "docdb"
   engine_version                  = "5.0.0"
@@ -30,7 +30,7 @@ resource "aws_docdb_cluster" "this" {
 }
 
 resource "aws_docdb_cluster_instance" "this" {
-  count                      = data.aws_caller_identity.this.id != "000000000000" ? 1 : 0
+  count                      = data.aws_caller_identity.this.id != "000000000000" && var.aws_mongo_enabled ? 1 : 0
   cluster_identifier         = element(aws_docdb_cluster.this.*.id, count.index)
   engine                     = element(aws_docdb_cluster.this.*.engine, count.index)
   identifier                 = format("%s-docdb-%s", var.aws_project, local.app_id)

@@ -2,7 +2,7 @@
 
 ## Overview
 
-This directory contains all the deployment scripts for the Team Management Tool. These scripts work with both **LocalStack** (local development) and **AWS** (cloud deployment).
+This directory contains all the deployment scripts for the Team Management Tool. These scripts work with both for local development with **LocalStack** and cloud deployment with **AWS**.
 
 ## Quick Start
 

@@ -9,10 +9,9 @@ This folder contains a comprehensive set of documentation to guide you through b
 By completing this workshop, you will:
 
 - [x] Create responsive React applications with Material UI components
-- [x] Understand serverless architecture with AWS
-- [x] Build RESTful APIs with Python
-- [x] Implement CRUD services with AWS Lambda
-- [x] Experience relational databases with PostgreSQL
+- [x] Understand microservices architecture (or services oriented architecture)
+- [x] Build RESTful APIs with Python (or similar language)
+- [x] Experience relational databases with PostgreSQL (or similar database)
 - [x] Write comprehensive tests
 - [x] Deploy applications to AWS Serverless
 - [x] Follow software engineering best practices

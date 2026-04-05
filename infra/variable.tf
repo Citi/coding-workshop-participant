@@ -7,7 +7,7 @@ variable "aws_project" {
 variable "aws_bucket" {
   description = "The AWS S3 bucket name for terraform state storage."
   type        = string
-  default     = "coding-workshop-tfstate-abcd1234"
+  default     = "coding-workshop-us-east-1-abcd1234"
 }
 
 variable "aws_app_code" {
@@ -20,6 +20,12 @@ variable "aws_vpc_id" {
   description = "The AWS VPC identifier."
   type        = string
   default     = null
+}
+
+variable "aws_mongo_enabled" {
+  description = "Enable or disable MongoDB. Set to 'true' to enable it."
+  type        = bool
+  default     = false
 }
 
 variable "aws_mongo_host" {

@@ -76,6 +76,7 @@ locals {
     APP_ID        = local.app_id
     APP_NAME      = format("%s-%s", var.aws_project, local.app_id)
     APP_ROLE      = format("arn:%s:iam::%s:role/%s-assume-%s", data.aws_partition.this.partition, data.aws_caller_identity.this.account_id, var.aws_project, local.app_id)
+    APP_REGION    = data.aws_region.this.region
     IS_LOCAL      = data.aws_caller_identity.this.id == "000000000000" ? "true" : "false"
     MONGO_HOST    = data.aws_caller_identity.this.id == "000000000000" ? coalesce(try(trimspace(var.aws_mongo_host), ""), "host.docker.internal") : element(aws_docdb_cluster.this.*.endpoint, 0)
     MONGO_PORT    = data.aws_caller_identity.this.id == "000000000000" ? "27017" : element(aws_docdb_cluster.this.*.port, 0)
