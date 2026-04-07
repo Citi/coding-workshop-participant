@@ -32,21 +32,26 @@ Change the active path to the project's directory.
 cd coding-workshop-participant
 ```
 
-Setup your Participant ID and Participant Code as environment variables.
+Setup your Event ID, Participant ID and Participant Code as environment variables.
 
 ```sh
 echo "export EVENT_ID=event-id" >> ~/.bashrc
 echo "export PARTICIPANT_ID=your-id" >> ~/.bashrc
 echo "export PARTICIPANT_CODE=your-code" >> ~/.bashrc
-echo "export LOCALSTACK_AUTH_TOKEN=your-token" >> ~/.bashrc
-source ~/.bashrc
 ```
 
-Change `event-id` with your Event ID, `your-id` with your Participant ID and `your-code` with your Participant Code that you received over email from workshop organizer(s). Then retrieve your LocalStack token from the [getting started page](https://app.localstack.cloud/getting-started) and replace `your-token` with the token you will see there.
+Change `event-id` with your Event ID, `your-id` with your Participant ID and `your-code` with your Participant Code that you received over email from workshop organizer(s).
+
+```sh
+echo "export LOCALSTACK_AUTH_TOKEN=your-token" >> ~/.bashrc
+```
+
+Retrieve your LocalStack token from the [getting started page](https://app.localstack.cloud/getting-started) and replace `your-token` with the token you will see there.
 
 Now in the terminal run:
 
 ```sh
+source ~/.bashrc
 ./bin/setup-participant.sh
 ```
 
