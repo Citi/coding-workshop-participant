@@ -21,12 +21,13 @@ By completing this workshop, you will:
 
 Before starting, ensure you have:
 
-- Access to your GitHub account
-- Email from your workshop organizer(s) with details such as Registration Code, Participant ID, Participant Code, and Participant URL
-- Access to pre-installed AWS Serverless environment (you will need Participant URL, Participant ID and Participant Code)
-- Access to pre-installed VDI instance (you will need Registration Code, Participant ID and Participant Code)
+- Access to your [GitHub](https://github.com) account.
+- Access to your [LocalStack](https://www.localstack.cloud) account.
+- Email from your workshop organizer(s) with details such as Registration Code, Event ID, Participant ID, and Participant Code.
+- Access to pre-installed AWS Serverless environment (you will need Event ID, Participant ID and Participant Code).
+- Access to pre-installed VDI (Virtual Desktop) instance (you will need Registration Code, Participant ID and Participant Code):
   - Connect to VDI through [WorkSpaces WebUI](https://webclient.amazonworkspaces.com/), or
-  - Install VDI client through [WorkSpaces Client](https://clients.amazonworkspaces.com/) on your personal computer / laptop
+  - Install VDI client through [WorkSpaces Client](https://clients.amazonworkspaces.com/) on your personal computer / laptop.
 
 ## Next Steps
 

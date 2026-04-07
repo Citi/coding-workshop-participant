@@ -35,13 +35,14 @@ cd coding-workshop-participant
 Setup your Participant ID and Participant Code as environment variables.
 
 ```sh
-echo "EVENT_ID=event-id" >> ~/.bashrc
-echo "PARTICIPANT_ID=your-id" >> ~/.bashrc
-echo "PARTICIPANT_CODE=your-id" >> ~/.bashrc
+echo "export EVENT_ID=event-id" >> ~/.bashrc
+echo "export PARTICIPANT_ID=your-id" >> ~/.bashrc
+echo "export PARTICIPANT_CODE=your-code" >> ~/.bashrc
+echo "export LOCALSTACK_AUTH_TOKEN=your-token" >> ~/.bashrc
 source ~/.bashrc
 ```
 
-Change `event-id` with your Event ID, `your-id` with your Participant ID and `your-code` with your Participant Code that you received over email from workshop organizer(s).
+Change `event-id` with your Event ID, `your-id` with your Participant ID and `your-code` with your Participant Code that you received over email from workshop organizer(s). Then retrieve your LocalStack token from the [getting started page](https://app.localstack.cloud/getting-started) and replace `your-token` with the token you will see there.
 
 Now in the terminal run:
 
@@ -122,9 +123,9 @@ coding-workshop-participant/
 
 ### Visual Studio Code
 
-**Note:** The first time you launch VS Code, it will take a lot longer than subsequent launches.
+**Note:** The first time you launch VS Code, it may take a lot longer than subsequent launches.
 
-VS Code comes pre installed with GitHub Copilot, which you will be allowed to use during this workshop. To enable it, login to your personal GitHub account. This will also leave you connected to your GitHub account for when you push your work for review.
+VS Code comes pre installed with GitHub Copilot, which you will be allowed to use during this workshop. You can use it anonymously for free before you login. When your free anonymous usage is stopped, login to your personal GitHub account to extend your free access to Copilot.
 
 Now open the project by going to File -> Open Folder... You should find the project in your Home directory. Once open you will be ready to proceed to the next section.
 
@@ -138,15 +139,6 @@ Go to File -> Settings -> Version Control -> GitHub and add your account. You ca
 Next open the project by going to File -> Open. You should find the project in your Home directory. Once open you will be ready to proceed to the next section.
 
 ### With Open Project
-
-Next, we will prepare our Python environment so the dependencies you use for this project don't clash with any dependencies used by Ubuntu to the OS. To do this, just run
-
-```sh
-python3.11 -m venv .venv
-source .venv/bin/activate
-```
-
-Notice the `(venv)` appearing in your terminal now. This indicates all your Python dependencies will be stored and loaded from this project, and you should ensure the marker is present when you run any python code for the workshop.
 
 Now we will start your local development environment by running:
 

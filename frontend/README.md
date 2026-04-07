@@ -2,7 +2,7 @@
 
 ## Overview
 
-This folder contains React frontend application for tracking team members, team locations, monthly team achievements, as well as individual-level and team-level metadata.
+This folder contains React frontend application with hello world example.
 
 ## Prerequisites
 
