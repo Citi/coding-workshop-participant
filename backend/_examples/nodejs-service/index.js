@@ -29,6 +29,7 @@ const mongoConfig = {
   port: parseInt(process.env.MONGO_PORT || "27017"),
   user: process.env.MONGO_USER || "test",
   password: process.env.MONGO_PASS || "test",
+  database: process.env.MONGO_NAME || "test",
   serverSelectionTimeoutMS: 5000,
   socketTimeoutMS: 45000,
 };

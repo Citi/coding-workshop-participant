@@ -28,6 +28,7 @@ MONGO_CONFIG = {
     "port": int(os.getenv("MONGO_PORT", "27017")),
     "user": os.getenv("MONGO_USER", "test"),
     "password": os.getenv("MONGO_PASS", "test"),
+    "database": os.getenv("MONGO_NAME", "test"),
     "serverSelectionTimeoutMS": 5000,
     "socketTimeoutMS": 45000,
 }
