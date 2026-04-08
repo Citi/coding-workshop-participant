@@ -95,11 +95,11 @@ coding-workshop-participant/
 │   ├── start-dev.sh           # Local environment startup script
 │   └── README.md              # Shell scripts guide
 ├── docs/                    # Documentation
-│   ├── README.md              # Main guide
 │   ├── evaluation.md          # Evaluation guide
 │   ├── implementation.md      # Implementation guide
 │   ├── testing.md             # Testing guide
-│   └── validation.md          # Validation guide (YOU ARE HERE)
+│   ├── validation.md          # Validation guide (YOU ARE HERE)
+│   └── README.md              # Main guide
 ├── frontend/                # Frontend user interfaces
 │   ├── public/                # Public assets
 │   ├── src/                   # Source code
@@ -107,8 +107,8 @@ coding-workshop-participant/
 │   ├── eslint.config.js       # ESLint JS tool configuration
 │   ├── index.html             # Landing page
 │   ├── package.json           # App metadata with dependencies
-│   ├── README.md              # Frontend guide (YOU ARE HERE)
-│   └── vite.config.js         # Vite build tool configuration
+│   ├── vite.config.js         # Vite build tool configuration
+│   └── README.md              # Frontend guide
 └── infra/                   # Terraform infrastructure
     ├── cloudfront.tf          # CloudFront distribution
     ├── data.tf                # Data sources

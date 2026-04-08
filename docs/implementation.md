@@ -17,7 +17,7 @@ Backend service acts as the "brain" and "backbone" of modern applications,
 responsible for data management, business logic, security, and integration
 with dependent systems.
 
-**Expected Capabilities:**
+**Expected Capabilities**
 
 - [ ] Store and manage data
 - [ ] Authenticate and authorize users
@@ -26,7 +26,7 @@ with dependent systems.
 - [ ] Deliver real-time capabilities
 - [ ] Handle async tasks where sync options are not feasible
 
-**Key Attributes to Consider:**
+**Key Attributes to Consider**
 
 - Reliability and high availability
 - Security and performance optimization
@@ -34,20 +34,17 @@ with dependent systems.
 - Monitoring and observability
 - Documentation and API standards
 
-**How to Create New Backend Services from Examples:**
+**How to Create New Backend Services**
+
+Python is the recommended language option, but we also support Java and NodeJS.
 
 To create a new backend service from an example, just run the following command:
 
 ```sh
-## Java Service Example
-cp -R ../backend/_examples/java-service ../backend/{{service-name}}
-## NodeJS Service Example
-cp -R ../backend/_examples/nodejs-service ../backend/{{service-name}}
-## Python Service Example
-cp -R ../backend/_examples/python-service ../backend/{{service-name}}
+cp -R ../backend/_examples/{{coding-language}}-service ../backend/{{service-name}}
 ```
 
-Replace `{{service-name}}` with your corresponding new service name.
+Replace `{{coding-language}}` with either `python`, `java` or `nodejs`, as well as `{{service-name}}` with your corresponding new service name.
 
 When you create a new backend service, make sure to restart the development environment:
 
@@ -55,25 +52,13 @@ When you create a new backend service, make sure to restart the development envi
 ../bin/start-dev.sh
 ```
 
-**Note:** As you create more services, think about how to restructure your files and folders to reuse as much as possible (instead of copy-paste).
+**Note:** As you create more services, think about how to restructure your files and folders to reuse code as much as possible (instead of copy-paste).
 
-### 2. Data Validation
-
-Proper validation ensures data integrity and provides helpful feedback to users.
-
-**Expected Capabilities:**
-
-- [ ] Validate required fields are present and non-empty
-- [ ] Validate field values meet expected formats and constraints
-- [ ] Validate references to other entities exist before accepting
-- [ ] Return meaningful error messages for validation failures
-- [ ] Handle malformed input gracefully
-
-### 3. Data Persistence
+### 2. Data Persistence
 
 Data should persist reliably and maintain consistency.
 
-**Database Environment Variables:**
+**Database Environment Variables**
 
 Predefined environment variables are injected into each backend service automatically, simplifying the need to manage them manually:
 
@@ -93,9 +78,9 @@ Predefined environment variables are injected into each backend service automati
 
 **Note:** Use `IS_LOCAL` to branch your connection logic — locally MongoDB runs without TLS even when credentials are present, while AWS DocumentDB requires TLS. When `IS_LOCAL` is `false`, append `?tls=true&tlsAllowInvalidCertificates=true&retryWrites=false` to your connection string.
 
-**Enable Cloud Deploy for MongoDB**
+**How to Enable Cloud Deploy for MongoDB**
 
-If you prefer to use MongoDB (instead of PostgreSQL), it comes pre-installed locally, but not in the cloud. To enable the AWS DocumentDB (Mongo-compatible database), run the following commands:
+PostgreSQL is the recommended database option, but we also support MongoDB which comes pre-installed locally, although not in the cloud. To enable the AWS DocumentDB (Mongo-compatible database), run the following commands:
 
 ```sh
 echo "export TF_VAR_aws_docdb_enabled=true" >> ~/.bashrc
@@ -108,7 +93,7 @@ Going forward, every deploy backend execution will ensure that AWS DocumentDB is
 ./bin/deploy-backend.sh
 ```
 
-**Expected Capabilities:**
+**Expected Capabilities**
 
 - [ ] Created records persist in the database
 - [ ] Updated records reflect changes accurately
@@ -116,11 +101,23 @@ Going forward, every deploy backend execution will ensure that AWS DocumentDB is
 - [ ] Retrieved records match stored data
 - [ ] Database errors are handled appropriately
 
+### 3. Data Validation
+
+Proper validation ensures data integrity and provides helpful feedback to users.
+
+**Expected Capabilities**
+
+- [ ] Validate required fields are present and non-empty
+- [ ] Validate field values meet expected formats and constraints
+- [ ] Validate references to other entities exist before accepting
+- [ ] Return meaningful error messages for validation failures
+- [ ] Handle malformed input gracefully
+
 ### 4. API Design
 
 The API should follow RESTful conventions and provide consistent responses.
 
-**Expected Capabilities:**
+**Expected Capabilities**
 
 - [ ] Use appropriate HTTP methods for each operation (POST, GET, PUT, DELETE)
 - [ ] Return appropriate HTTP status codes (201 for creation, 200 for success, 204 for deletion, 400 for validation errors, 404 for not found)
@@ -134,7 +131,7 @@ Frontend user interface (UI) is no longer just a visual layout;
 it is a dynamic, intelligent, and highly interactive layer that
 bridges users with backend services.
 
-**Expected Capabilities:**
+**Expected Capabilities**
 
 - [ ] Responsive and adaptive design
 - [ ] High performance and speed
@@ -148,13 +145,13 @@ bridges users with backend services.
 
 Secure access is essential to protect data and ensure users only perform permitted actions. This section outlines the minimum expectations for authentication and authorization.
 
-**Key Principles:**
+**Key Principles**
 
 - Authentication first, authorization second
 - Centralize permission checks
 - Hide or disable UI actions the user cannot perform
 
-**Authentication:**
+**Authentication**
 
 - [ ] Secure user login (e.g., JWT or OAuth)
 - [ ] Password hashing
@@ -163,7 +160,7 @@ Secure access is essential to protect data and ensure users only perform permitt
 - [ ] Middleware enforcing authentication before CRUD operations
 - [ ] Clear errors for invalid or expired credentials
 
-**Authorization & RBAC:**
+**Authorization & RBAC**
 
 - [ ] Define user roles (e.g., Admin, Manager, Contributor, Viewer)
 - [ ] Restrict endpoints based on role permissions
@@ -193,7 +190,7 @@ Secure access is essential to protect data and ensure users only perform permitt
 
 ### 8. Validation Guidelines
 
-**Backend Validation Considerations:**
+**Backend Validation Considerations**
 
 - [ ] Required fields should be validated before persistence
 - [ ] Field values should conform to expected types and formats
@@ -201,7 +198,7 @@ Secure access is essential to protect data and ensure users only perform permitt
 - [ ] Duplicate constraints should be enforced where appropriate
 - [ ] Error responses should clearly indicate what failed validation
 
-**Frontend Validation Considerations:**
+**Frontend Validation Considerations**
 
 - [ ] Required fields should be indicated visually
 - [ ] Validation should occur before form submission
@@ -211,7 +208,7 @@ Secure access is essential to protect data and ensure users only perform permitt
 
 ### 9. Error Handling Guidelines
 
-**HTTP Status Codes:**
+**HTTP Status Codes**
 
 | Status                    | Usage                                 |
 | ------------------------- | ------------------------------------- |
@@ -222,7 +219,7 @@ Secure access is essential to protect data and ensure users only perform permitt
 | 404 Not Found             | Resource not found                    |
 | 500 Internal Server Error | Server or database error              |
 
-**Error Handling Expectations:**
+**Error Handling Expectations**
 
 - [ ] API errors should return consistent response structures
 - [ ] Frontend should display user-friendly error messages
