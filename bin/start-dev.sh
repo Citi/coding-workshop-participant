@@ -42,7 +42,7 @@ INFRA_DIR="$PROJECT_ROOT/infra"
 FRONTEND_DIR="$PROJECT_ROOT/frontend"
 
 # ============================================================
-# STEP 1: Check and Start MongoDB
+# STEP 1: Check and Start PostgreSQL
 # ============================================================
 echo -e "[1/5] Checking PostgreSQL..."
 
