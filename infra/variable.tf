@@ -22,7 +22,7 @@ variable "aws_vpc_id" {
   default     = null
 }
 
-variable "aws_mongo_enabled" {
+variable "aws_docdb_enabled" {
   description = "Enable or disable MongoDB. Set to 'true' to enable it."
   type        = bool
   default     = false
