@@ -93,6 +93,14 @@ Predefined environment variables are injected into each backend service automati
 
 **Note:** Use `IS_LOCAL` to branch your connection logic — locally MongoDB runs without TLS even when credentials are present, while AWS DocumentDB requires TLS. When `IS_LOCAL` is `false`, append `?tls=true&tlsAllowInvalidCertificates=true&retryWrites=false` to your connection string.
 
+### TODO: ADD EXAMPLE HOW TO ENABLE MONGODB
+
+```sh
+export TF_VAR_aws_mongo_enabled=true >> ~/.bashrc
+source ~/.bashrc
+./bin/deploy-backend.sh
+```
+
 **Expected Capabilities:**
 
 - [ ] Created records persist in the database

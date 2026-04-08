@@ -161,8 +161,13 @@ echo ""
 echo -e "[2/4] Checking LocalStack..."
 
 # Use free tier only
+export ACTIVATE_PRO=0
 export LOCALSTACK_ACTIVATE_PRO=0
 export LOCALSTACK_ACKNOWLEDGE_ACCOUNT_REQUIREMENT=1
+
+# Set LocalStack AWS credentials
+#export AWS_ACCESS_KEY_ID=test
+#export AWS_SECRET_ACCESS_KEY=test
 
 # Check if localstack is installed
 if ! command -v localstack &> /dev/null; then
@@ -188,8 +193,8 @@ else
     # Check if LocalStack docker container is already running
     if docker ps | grep -q localstack-main; then
         echo -e "  ⚠ Stopping existing LocalStack container..."
-        localstack stop
-        docker stop localstack-main
+        localstack stop || echo "WARNING: localstack stop didn't work"
+        docker stop localstack-main || echo "WARNING: docker stop localstack-main didn't work"
         sleep 10
     fi
 
@@ -241,11 +246,6 @@ if ! command -v tflocal &> /dev/null; then
     exit 1
 fi
 
-# Set LocalStack AWS credentials
-export AWS_REGION=us-east-1
-export AWS_ACCESS_KEY_ID=test
-export AWS_SECRET_ACCESS_KEY=test
-
 # Detect MongoDB host for LocalStack Lambda functions
 if [[ "$OSTYPE" == "linux-gnu"* ]]; then
     export TF_VAR_mongodb_host="172.17.0.1"
@@ -283,7 +283,7 @@ if [ "$BACKEND_OK" = false ]; then
     echo -e "  ⚠ Backend not deployed or not working, deploying..."
 
     # Deploy backend
-    "$SCRIPT_DIR/deploy-backend.sh" local > /tmp/backend-deploy.log 2>&1 || {
+    $SCRIPT_DIR/deploy-backend.sh local > /tmp/backend-deploy.log 2>&1 || {
         echo -e "  ✗ Backend deployment failed"
         tail -n 50 /tmp/backend-deploy.log | sed 's/^/    /'
         exit 1

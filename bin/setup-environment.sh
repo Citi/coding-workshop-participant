@@ -50,10 +50,14 @@ set +e
 # SECTION 2: CONFIGURATION CONSTANTS
 # ============================================================================
 
-LOCALSTACK_VERSION="4.12.0"
+LOCALSTACK_VERSION="2026.3.0"
 POSTGRES_VERSION="16"
 MONGODB_VERSION="7.0"
 COMPASS_VERSION="1.43.0"
+MONGO_USER="${MONGO_USER:-mongo}"
+MONGO_PASS="${MONGO_PASS:-mongo123}"
+POSTGRES_USER="${POSTGRES_USER:-postgres}"
+POSTGRES_PASS="${POSTGRES_PASS:-postgres123}"
 
 # ============================================================================
 # SECTION 3: COMMAND-LINE ARGUMENT PARSING
@@ -736,168 +740,7 @@ install_awscli() {
 }
 
 # ============================================================================
-# SECTION 10: LOCALSTACK ECOSYSTEM
-# ============================================================================
-
-install_localstack() {
-    print_section "LocalStack CLI"
-
-    if is_dry_run; then
-        print_dry_run_header "LOCALSTACK" "LocalStack CLI"
-        if command -v localstack &> /dev/null; then
-            print_dry_run_status "Already installed: $(localstack --version 2>/dev/null)"
-        else
-            print_dry_run_missing "Not installed"
-            print_dry_run_action "Would download: v${LOCALSTACK_VERSION}"
-            print_dry_run_action "Would install to: /usr/local/bin/localstack"
-        fi
-        print_dry_run_action "Would create: /etc/systemd/system/localstack.service"
-        print_dry_run_action "Would enable: localstack.service"
-        return
-    fi
-
-    print_info "Installing LocalStack CLI..."
-
-    # Idempotency check
-    if command -v localstack &> /dev/null; then
-        print_info "LocalStack already installed: $(localstack --version)"
-    else
-        local tmp_dir=$(mktemp -d)
-        cd "$tmp_dir"
-
-        local url="https://github.com/localstack/localstack-cli/releases/download/v${LOCALSTACK_VERSION}/localstack-cli-${LOCALSTACK_VERSION}-linux-amd64-onefile.tar.gz"
-
-        print_info "Downloading LocalStack CLI v${LOCALSTACK_VERSION}..."
-        if curl -fsSLo localstack-cli.tar.gz "$url"; then
-            if tar -xzf localstack-cli.tar.gz && sudo mv localstack /usr/local/bin/ && sudo chmod +x /usr/local/bin/localstack; then
-                print_status "LocalStack CLI installed: $(localstack --version)"
-            else
-                add_failure "Failed to extract/install LocalStack CLI"
-            fi
-        else
-            add_failure "Failed to download LocalStack CLI"
-        fi
-
-        cd - > /dev/null
-        rm -rf "$tmp_dir"
-    fi
-
-    # Configure LocalStack systemd service
-    configure_localstack_service
-}
-
-configure_localstack_service() {
-    print_info "Configuring LocalStack systemd service..."
-
-    if sudo tee /etc/systemd/system/localstack.service > /dev/null <<EOF
-[Unit]
-Description=LocalStack - Local AWS Cloud Stack
-After=docker.service
-Requires=docker.service
-
-[Service]
-Type=simple
-User=$ACTUAL_USER
-Group=docker
-Environment="PATH=/usr/local/bin:/usr/bin:/bin"
-Environment="HOME=$ACTUAL_HOME"
-ExecStart=/usr/local/bin/localstack start
-ExecStop=/usr/local/bin/localstack stop
-Restart=on-failure
-RestartSec=10
-
-[Install]
-WantedBy=multi-user.target
-EOF
-    then
-        if ! sudo systemctl daemon-reload; then
-            add_failure "Failed to reload systemd daemon"
-            return
-        fi
-
-        if ! sudo systemctl enable localstack.service; then
-            add_failure "Failed to enable LocalStack service"
-            return
-        fi
-
-        if ! sudo systemctl start localstack.service; then
-            add_failure "Failed to start LocalStack service"
-            return
-        fi
-
-        print_status "LocalStack service started and enabled (starts on boot)"
-    else
-        add_failure "Failed to create LocalStack systemd service"
-    fi
-}
-
-install_tflocal() {
-    print_section "tflocal (terraform-local)"
-
-    if is_dry_run; then
-        print_dry_run_header "TFLOCAL" "tflocal (terraform-local)"
-        if command -v tflocal &> /dev/null || [ -f "$ACTUAL_HOME/.local/bin/tflocal" ]; then
-            print_dry_run_status "Already installed"
-        else
-            print_dry_run_missing "Not installed"
-            print_dry_run_action "Would install: terraform-local (via pip3)"
-            print_dry_run_action "Would update PATH in ~/.bashrc"
-        fi
-        return
-    fi
-
-    print_info "Installing tflocal..."
-
-    # Idempotency check
-    if command -v tflocal &> /dev/null || [ -f "$ACTUAL_HOME/.local/bin/tflocal" ]; then
-        print_info "tflocal already installed"
-        return
-    fi
-
-    if pip3 install --user terraform-local; then
-        # Add ~/.local/bin to PATH if not already there
-        if [[ ":$PATH:" != *":$ACTUAL_HOME/.local/bin:"* ]]; then
-            echo 'export PATH="$HOME/.local/bin:$PATH"' >> "$ACTUAL_HOME/.bashrc"
-            export PATH="$ACTUAL_HOME/.local/bin:$PATH"
-            print_info "Added ~/.local/bin to PATH in ~/.bashrc"
-        fi
-        print_status "tflocal installed"
-    else
-        add_failure "Failed to install tflocal"
-    fi
-}
-
-install_awslocal() {
-    print_section "awslocal (awscli-local)"
-
-    if is_dry_run; then
-        print_dry_run_header "AWSLOCAL" "awslocal (awscli-local)"
-        if command -v awslocal &> /dev/null || [ -f "$ACTUAL_HOME/.local/bin/awslocal" ]; then
-            print_dry_run_status "Already installed"
-        else
-            print_dry_run_missing "Not installed"
-            print_dry_run_action "Would install: awscli-local (via pip3)"
-        fi
-        return
-    fi
-
-    print_info "Installing awslocal..."
-
-    # Idempotency check
-    if command -v awslocal &> /dev/null || [ -f "$ACTUAL_HOME/.local/bin/awslocal" ]; then
-        print_info "awslocal already installed"
-        return
-    fi
-
-    if pip3 install --user awscli-local; then
-        print_status "awslocal installed"
-    else
-        add_failure "Failed to install awslocal"
-    fi
-}
-
-# ============================================================================
-# SECTION 11: DATABASE TOOLS
+# SECTION 10: DATABASE TOOLS
 # ============================================================================
 
 install_postgres() {
@@ -958,6 +801,26 @@ install_postgres() {
         fi
     else
         add_failure "Failed to add PostgreSQL APT repository GPG key"
+    fi
+}
+
+configure_postgres_auth() {
+    print_section "PostgreSQL Authentication"
+
+    if is_dry_run; then
+        print_dry_run_header "POSTGRES-AUTH" "PostgreSQL Authentication"
+        print_dry_run_action "Would set password for PostgreSQL user: ${POSTGRES_USER}"
+        return
+    fi
+
+    print_info "Configuring PostgreSQL authentication..."
+
+    # Set password for the postgres superuser via psql as the postgres system user
+    if sudo -u postgres psql -c "ALTER USER ${POSTGRES_USER} WITH PASSWORD '${POSTGRES_PASS}';" 2>/dev/null; then
+        print_status "PostgreSQL password set for user '${POSTGRES_USER}'"
+        print_info "Connect with: psql -U ${POSTGRES_USER} -h localhost -W"
+    else
+        add_failure "Failed to set PostgreSQL password for user '${POSTGRES_USER}'"
     fi
 }
 
@@ -1118,6 +981,68 @@ configure_mongodb_bind() {
     fi
 }
 
+configure_mongodb_auth() {
+    print_section "MongoDB Authentication"
+
+    local config_file="/etc/mongod.conf"
+
+    if is_dry_run; then
+        print_dry_run_header "MONGODB-AUTH" "MongoDB Authentication"
+        print_dry_run_action "Would create admin user: ${MONGO_USER}"
+        print_dry_run_action "Would enable security.authorization in ${config_file}"
+        print_dry_run_action "Would restart: mongod.service"
+        return
+    fi
+
+    print_info "Configuring MongoDB authentication..."
+
+    # Check if auth is already enabled
+    if sudo grep -q "authorization: enabled" "$config_file" 2>/dev/null; then
+        print_info "MongoDB authentication already enabled"
+        return
+    fi
+
+    # Wait for MongoDB to be ready
+    for i in {1..10}; do
+        mongosh --quiet --eval "db.adminCommand('ping')" &>/dev/null && break
+        sleep 2
+    done
+
+    # Create the admin user while auth is still disabled
+    if mongosh --quiet --eval "
+        db = db.getSiblingDB('admin');
+        if (db.getUser('${MONGO_USER}') === null) {
+            db.createUser({
+                user: '${MONGO_USER}',
+                pwd: '${MONGO_PASS}',
+                roles: [{ role: 'root', db: 'admin' }]
+            });
+            print('created');
+        } else {
+            print('exists');
+        }
+    " | grep -qE "created|exists"; then
+        print_status "MongoDB admin user '${MONGO_USER}' is set"
+    else
+        add_failure "Failed to create MongoDB admin user"
+        return
+    fi
+
+    # Enable authorization in mongod.conf
+    if sudo grep -q "^security:" "$config_file"; then
+        sudo sed -i '/^security:/a\  authorization: enabled' "$config_file"
+    else
+        echo -e "\nsecurity:\n  authorization: enabled" | sudo tee -a "$config_file" > /dev/null
+    fi
+
+    if sudo systemctl restart mongod; then
+        print_status "MongoDB authentication enabled and service restarted"
+        print_info "Connect with: mongosh -u ${MONGO_USER} -p <password> --authenticationDatabase admin"
+    else
+        add_failure "Failed to restart MongoDB after enabling authentication"
+    fi
+}
+
 install_mongodb_compass() {
     print_section "MongoDB Compass"
 
@@ -1162,7 +1087,7 @@ install_mongodb_compass() {
 }
 
 # ============================================================================
-# SECTION 12: RUNTIMES
+# SECTION 11: RUNTIMES
 # ============================================================================
 
 install_nodejs() {
@@ -1250,6 +1175,155 @@ install_python() {
         fi
     else
         add_failure "Failed to add deadsnakes PPA"
+    fi
+}
+
+# ============================================================================
+# SECTION 12: LOCALSTACK ECOSYSTEM
+# ============================================================================
+
+install_localstack() {
+    print_section "LocalStack CLI"
+
+    if is_dry_run; then
+        print_dry_run_header "LOCALSTACK" "LocalStack CLI"
+        if command -v localstack &> /dev/null; then
+            print_dry_run_status "Already installed: $(localstack --version 2>/dev/null)"
+        else
+            print_dry_run_missing "Not installed"
+            print_dry_run_action "Would download: v${LOCALSTACK_VERSION}"
+            print_dry_run_action "Would install to: /usr/local/bin/localstack"
+        fi
+        print_dry_run_action "Would create: /etc/systemd/system/localstack.service"
+        print_dry_run_action "Would enable: localstack.service"
+        return
+    fi
+
+    print_info "Installing LocalStack CLI..."
+
+    # Idempotency check
+    if command -v localstack &> /dev/null; then
+        print_info "LocalStack already installed: $(localstack --version)"
+    else
+        if python3 -m pip install localstack==$LOCALSTACK_VERSION; then
+            print_status "LocalStack CLI installed: $(localstack --version)"
+
+            # Add ~/.local/bin to PATH if not already there
+            if [[ ":$PATH:" != *":$ACTUAL_HOME/.local/bin:"* ]]; then
+                echo 'export PATH="$HOME/.local/bin:$PATH"' >> "$ACTUAL_HOME/.bashrc"
+                export PATH="$ACTUAL_HOME/.local/bin:$PATH"
+                print_info "Added ~/.local/bin to PATH in ~/.bashrc"
+            fi
+        else
+            add_failure "Failed to install LocalStack CLI"
+        fi
+    fi
+
+    # Configure LocalStack systemd service
+    configure_localstack_service
+}
+
+configure_localstack_service() {
+    print_info "Configuring LocalStack systemd service..."
+
+    if sudo tee /etc/systemd/system/localstack.service > /dev/null <<EOF
+[Unit]
+Description=LocalStack - Local AWS Cloud Stack
+After=docker.service
+Requires=docker.service
+
+[Service]
+Type=simple
+User=$ACTUAL_USER
+Group=docker
+Environment="PATH=$ACTUAL_HOME/.local/bin:/usr/local/bin:/usr/bin:/bin"
+Environment="HOME=$ACTUAL_HOME"
+ExecStart=$ACTUAL_HOME/.local/bin/localstack start
+ExecStop=$ACTUAL_HOME/.local/bin/localstack stop
+Restart=on-failure
+RestartSec=10
+
+[Install]
+WantedBy=multi-user.target
+EOF
+    then
+        if ! sudo systemctl daemon-reload; then
+            add_failure "Failed to reload systemd daemon"
+            return
+        fi
+
+        if ! sudo systemctl enable localstack.service; then
+            add_failure "Failed to enable LocalStack service"
+            return
+        fi
+
+        if ! sudo systemctl start localstack.service; then
+            add_failure "Failed to start LocalStack service"
+            return
+        fi
+
+        print_status "LocalStack service started and enabled (starts on boot)"
+    else
+        add_failure "Failed to create LocalStack systemd service"
+    fi
+}
+
+install_tflocal() {
+    print_section "tflocal (terraform-local)"
+
+    if is_dry_run; then
+        print_dry_run_header "TFLOCAL" "tflocal (terraform-local)"
+        if command -v tflocal &> /dev/null || [ -f "$ACTUAL_HOME/.local/bin/tflocal" ]; then
+            print_dry_run_status "Already installed"
+        else
+            print_dry_run_missing "Not installed"
+            print_dry_run_action "Would install: terraform-local (via pip3)"
+            print_dry_run_action "Would update PATH in ~/.bashrc"
+        fi
+        return
+    fi
+
+    print_info "Installing tflocal..."
+
+    # Idempotency check
+    if command -v tflocal &> /dev/null || [ -f "$ACTUAL_HOME/.local/bin/tflocal" ]; then
+        print_info "tflocal already installed"
+        return
+    fi
+
+    if python3 -m pip install terraform-local; then
+        print_status "tflocal installed"
+    else
+        add_failure "Failed to install tflocal"
+    fi
+}
+
+install_awslocal() {
+    print_section "awslocal (awscli-local)"
+
+    if is_dry_run; then
+        print_dry_run_header "AWSLOCAL" "awslocal (awscli-local)"
+        if command -v awslocal &> /dev/null || [ -f "$ACTUAL_HOME/.local/bin/awslocal" ]; then
+            print_dry_run_status "Already installed"
+        else
+            print_dry_run_missing "Not installed"
+            print_dry_run_action "Would install: awscli-local (via pip3)"
+        fi
+        return
+    fi
+
+    print_info "Installing awslocal..."
+
+    # Idempotency check
+    if command -v awslocal &> /dev/null || [ -f "$ACTUAL_HOME/.local/bin/awslocal" ]; then
+        print_info "awslocal already installed"
+        return
+    fi
+
+    if python3 -m pip install awscli-local; then
+        print_status "awslocal installed"
+    else
+        add_failure "Failed to install awslocal"
     fi
 }
 
@@ -1706,9 +1780,11 @@ main() {
     install_tflocal
     install_awslocal
     install_postgres "$POSTGRES_VERSION"
+    configure_postgres_auth
     install_pgadmin
     install_mongodb
     configure_mongodb_bind
+    configure_mongodb_auth
     install_mongodb_compass
     install_nodejs
     install_python "3.11"

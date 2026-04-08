@@ -19,7 +19,7 @@ resource "aws_rds_cluster" "this" {
   preferred_backup_window         = "07:00-09:00"
   skip_final_snapshot             = true
   storage_encrypted               = true
-  db_subnet_group_name            = element(aws_docdb_subnet_group.this.*.name, count.index)
+  db_subnet_group_name            = element(aws_db_subnet_group.this.*.name, count.index)
   vpc_security_group_ids          = data.aws_security_groups.this.ids
   enabled_cloudwatch_logs_exports = ["postgresql"]
 

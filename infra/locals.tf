@@ -80,13 +80,14 @@ locals {
     IS_LOCAL      = data.aws_caller_identity.this.id == "000000000000" ? "true" : "false"
     MONGO_HOST    = data.aws_caller_identity.this.id == "000000000000" ? coalesce(try(trimspace(var.aws_mongo_host), ""), "host.docker.internal") : element(aws_docdb_cluster.this.*.endpoint, 0)
     MONGO_PORT    = data.aws_caller_identity.this.id == "000000000000" ? "27017" : element(aws_docdb_cluster.this.*.port, 0)
+    MONGO_NAME    = data.aws_caller_identity.this.id == "000000000000" ? "mongo" : element(aws_docdb_cluster.this.*.database_name, 0)
     MONGO_USER    = data.aws_caller_identity.this.id == "000000000000" ? "mongo" : element(aws_docdb_cluster.this.*.master_username, 0)
-    MONGO_PASS    = data.aws_caller_identity.this.id == "000000000000" ? "mongo123!" : element(aws_docdb_cluster.this.*.master_password, 0)
+    MONGO_PASS    = data.aws_caller_identity.this.id == "000000000000" ? "mongo123" : element(aws_docdb_cluster.this.*.master_password, 0)
     POSTGRES_HOST = data.aws_caller_identity.this.id == "000000000000" ? "localhost" : element(aws_rds_cluster.this.*.endpoint, 0)
     POSTGRES_PORT = data.aws_caller_identity.this.id == "000000000000" ? "5432" : element(aws_rds_cluster.this.*.port, 0)
     POSTGRES_NAME = data.aws_caller_identity.this.id == "000000000000" ? "postgres" : element(aws_rds_cluster.this.*.database_name, 0)
     POSTGRES_USER = data.aws_caller_identity.this.id == "000000000000" ? "postgres" : element(aws_rds_cluster.this.*.master_username, 0)
-    POSTGRES_PASS = data.aws_caller_identity.this.id == "000000000000" ? "postgres123!" : element(aws_rds_cluster.this.*.master_password, 0)
+    POSTGRES_PASS = data.aws_caller_identity.this.id == "000000000000" ? "postgres123" : element(aws_rds_cluster.this.*.master_password, 0)
   }
   iam_arns = [
     format("arn:%s:iam::aws:policy/service-role/AWSLambdaVPCAccessExecutionRole", data.aws_partition.this.partition),

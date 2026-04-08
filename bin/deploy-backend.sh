@@ -87,14 +87,14 @@ else
     fi
 
     # Set dummy AWS credentials for local development
-    export AWS_ACCESS_KEY_ID=test
-    export AWS_SECRET_ACCESS_KEY=test
+    #export AWS_ACCESS_KEY_ID=test
+    #export AWS_SECRET_ACCESS_KEY=test
 fi
 
 # Initialize Terraform with backend configuration
-if [ -n "$PARTICIPANT_ID" ] && [ "$TF_CMD" = "terraform" ]; then
+if [ -n "$PARTICIPANT_ID" ]; then
     echo "Using custom backend configuration..."
-    $TF_CMD init -reconfigure -backend-config="bucket=$PROJECT_NAME-tfstate-$PARTICIPANT_ID"
+    $TF_CMD init -reconfigure -backend-config="bucket=coding-workshop-tfstate-${PARTICIPANT_ID:-abcd1234}" -backend-config="region=${AWS_REGION:-us-east-1}"
 else
     echo "WARNING: No backend.config found. Using default backend configuration."
     echo "For multi-participant workshops, run: ./bin/setup-participant.sh"
