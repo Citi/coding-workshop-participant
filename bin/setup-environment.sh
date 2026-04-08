@@ -728,6 +728,7 @@ install_awscli() {
     if curl -fsSL "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"; then
         if unzip -q awscliv2.zip && sudo ./aws/install --update; then
             print_status "AWS CLI v2 installed: $(aws --version)"
+            sudo rm -rf /usr/bin/aws
         else
             add_failure "Failed to install AWS CLI v2"
         fi
@@ -1787,10 +1788,10 @@ main() {
     configure_mongodb_auth
     install_mongodb_compass
     install_nodejs
-    install_python "3.11"
-    install_python "3.12"
-    install_python "3.13"
     install_python "3.14"
+    install_python "3.13"
+    install_python "3.12"
+    install_python "3.11"
     configure_dnsmasq
 
     # Verification and summary

@@ -44,7 +44,12 @@ FRONTEND_DIR="$PROJECT_ROOT/frontend"
 # ============================================================
 # STEP 1: Check and Start MongoDB
 # ============================================================
-echo -e "[1/4] Checking MongoDB..."
+echo -e "[1/5] Checking PostgreSQL..."
+
+# ============================================================
+# STEP 2: Check and Start MongoDB
+# ============================================================
+echo -e "[2/5] Checking MongoDB..."
 
 # Check if mongod is installed
 if ! command -v mongod &> /dev/null; then
@@ -156,14 +161,14 @@ fi
 echo ""
 
 # ============================================================
-# STEP 2: Check and Start LocalStack
+# STEP 3: Check and Start LocalStack
 # ============================================================
-echo -e "[2/4] Checking LocalStack..."
+echo -e "[3/5] Checking LocalStack..."
 
 # Use free tier only
-export ACTIVATE_PRO=0
-export LOCALSTACK_ACTIVATE_PRO=0
-export LOCALSTACK_ACKNOWLEDGE_ACCOUNT_REQUIREMENT=1
+#export ACTIVATE_PRO=0
+#export LOCALSTACK_ACTIVATE_PRO=0
+#export LOCALSTACK_ACKNOWLEDGE_ACCOUNT_REQUIREMENT=1
 
 # Set LocalStack AWS credentials
 #export AWS_ACCESS_KEY_ID=test
@@ -235,9 +240,9 @@ echo -e "  ✓ LocalStack services verified"
 echo ""
 
 # ============================================================
-# STEP 3: Check and Deploy Backend
+# STEP 4: Check and Deploy Backend
 # ============================================================
-echo -e "[3/4] Checking Backend Infrastructure..."
+echo -e "[4/5] Checking Backend Infrastructure..."
 
 # Verify required tools
 if ! command -v tflocal &> /dev/null; then
@@ -299,9 +304,9 @@ tflocal output -json lambda_urls 2>/dev/null | grep -o 'http://[^"]*' | sed 's/^
 echo ""
 
 # ============================================================
-# STEP 4: Check and Start Frontend
+# STEP 5: Check and Start Frontend
 # ============================================================
-echo -e "[4/4] Checking Frontend..."
+echo -e "[5/5] Checking Frontend..."
 
 # Check if npm is installed
 if ! command -v npm &> /dev/null; then
