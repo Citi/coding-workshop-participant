@@ -28,9 +28,9 @@ if [ "$1" = "-h" ] || [ "$1" = "--help" ]; then
     exit 0
 fi
 
-echo "============================================================"
+echo "==================================================="
 echo "Comprehensive Local Development Environment Startup"
-echo "============================================================"
+echo "==================================================="
 echo ""
 
 # Resolve script directory and project root paths

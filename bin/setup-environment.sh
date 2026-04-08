@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 
-# ============================================================================
+# ===============================================
 # Ubuntu 22.04 Developer Workstation Setup Script
-# ============================================================================
+# ===============================================
 #
 # Purpose: Prepare a fresh Ubuntu 22.04 machine for development with all
 #          essential tools, IDEs, and services configured and ready to use.

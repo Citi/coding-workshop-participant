@@ -35,12 +35,13 @@ cd coding-workshop-participant
 Setup your Event ID, Participant ID and Participant Code as environment variables.
 
 ```sh
+echo "export AWS_REGION=your-region" >> ~/.bashrc
 echo "export EVENT_ID=event-id" >> ~/.bashrc
 echo "export PARTICIPANT_ID=your-id" >> ~/.bashrc
 echo "export PARTICIPANT_CODE=your-code" >> ~/.bashrc
 ```
 
-Change `event-id` with your Event ID, `your-id` with your Participant ID and `your-code` with your Participant Code that you received over email from workshop organizer(s).
+You should have received an email with instructions from workshop organizer(s). Change `your-region` with your AWS Region, `event-id` with your Event ID, `your-id` with your Participant ID and `your-code` with your Participant Code from that email.
 
 ```sh
 echo "export LOCALSTACK_AUTH_TOKEN=your-token" >> ~/.bashrc

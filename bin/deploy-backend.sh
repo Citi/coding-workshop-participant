@@ -30,9 +30,9 @@ if [ "$1" = "-h" ] || [ "$1" = "--help" ]; then
     exit 0
 fi
 
-echo "=========================================="
+echo "===================================="
 echo "Coding Workshop - Backend Deployment"
-echo "=========================================="
+echo "===================================="
 echo ""
 
 # Verify required dependencies
@@ -55,15 +55,15 @@ TF_CMD="terraform"
 export PATH="$HOME/.local/bin:$PATH"
 export AWS_REGION=${AWS_REGION:-us-east-1}
 
-echo "Deploying infrastructure..."
-echo "Environment: $ENVIRONMENT"
+echo "INFO: Deploying infrastructure..."
+echo "INFO: Environment - $ENVIRONMENT"
 
 # Change to infrastructure directory
 cd "$INFRA_DIR"
 
 # AWS Deployment Configuration
 if [ "$ENVIRONMENT" = "aws" ]; then
-    echo "Using AWS deployment (terraform)..."
+    echo "INFO: Using AWS deployment (terraform)..."
 
     # Setup participant if config is missing
     $SCRIPT_DIR/setup-participant.sh
@@ -78,11 +78,10 @@ if [ "$ENVIRONMENT" = "aws" ]; then
 else
     # Local development configuration
     if command -v tflocal > /dev/null 2>&1; then
-        echo "Using local development (tflocal)..."
+        echo "INFO: Using local development (tflocal)..."
         TF_CMD="tflocal"
     else
-        echo "Using local development (terraform with AWS_ENDPOINT override)..."
-        echo "Note: Install tflocal for easier usage: pip install terraform-local"
+        echo "INFO: Using local development (terraform with AWS_ENDPOINT override)..."
         export AWS_ENDPOINT_URL="http://localhost:4566"
     fi
 
@@ -92,18 +91,18 @@ else
 fi
 
 # Initialize Terraform with backend configuration
-if [ -n "$PARTICIPANT_ID" ]; then
-    echo "Using custom backend configuration..."
+if [ -n "$PARTICIPANT_ID" ] && [ "$TF_CMD" = "terraform" ]; then
+    echo "INFO: Using custom backend configuration..."
     $TF_CMD init -reconfigure -backend-config="bucket=coding-workshop-tfstate-${PARTICIPANT_ID:-abcd1234}" -backend-config="region=${AWS_REGION:-us-east-1}"
 else
     echo "WARNING: No backend.config found. Using default backend configuration."
-    echo "For multi-participant workshops, run: ./bin/setup-participant.sh"
+    echo "INFO: For multi-participant workshops, run: ./bin/setup-participant.sh"
     $TF_CMD init -reconfigure
 fi
 
 # Apply Terraform configuration automatically
 $TF_CMD apply -auto-approve
-echo "Infrastructure deployment complete!"
+echo "INFO: Infrastructure deployment complete!"
 
 # Display API endpoint
 if [ -n "$API_BASE_URL" ]; then

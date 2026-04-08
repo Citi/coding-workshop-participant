@@ -23,9 +23,9 @@ if [ "$1" = "-h" ] || [ "$1" = "--help" ]; then
     exit 0
 fi
 
-echo "=========================================="
+echo "====================================="
 echo "Coding Workshop - Clean Up Deployment"
-echo "=========================================="
+echo "====================================="
 echo ""
 
 # Verify required dependencies
