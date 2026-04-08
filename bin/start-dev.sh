@@ -12,15 +12,17 @@ if [ "$1" = "-h" ] || [ "$1" = "--help" ]; then
     echo ""
     echo "Description:"
     echo "  Validates and starts all required services:"
-    echo "  1. MongoDB (with proper binding)"
-    echo "  2. LocalStack (AWS services emulation)"
-    echo "  3. Backend infrastructure (Terraform + Lambda)"
-    echo "  4. Frontend development server (React)"
+    echo "  1. PostgreSQL (with proper binding)"
+    echo "  2. MongoDB (with proper binding)"
+    echo "  3. LocalStack (AWS services emulation)"
+    echo "  4. Backend infrastructure (Terraform + Lambda)"
+    echo "  5. Frontend development server (React)"
     echo ""
     echo "Options:"
     echo "  -h, --help      Show this help message"
     echo ""
     echo "Requirements:"
+    echo "  - postgres installed"
     echo "  - mongod installed"
     echo "  - npm installed"
     echo "  - localstack installed"
@@ -45,6 +47,10 @@ FRONTEND_DIR="$PROJECT_ROOT/frontend"
 # STEP 1: Check and Start PostgreSQL
 # ============================================================
 echo -e "[1/5] Checking PostgreSQL..."
+
+echo "WARNING: NOT IMPLEMENTED ... TODO ..."
+
+echo ""
 
 # ============================================================
 # STEP 2: Check and Start MongoDB
