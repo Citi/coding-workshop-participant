@@ -36,7 +36,7 @@ with dependent systems.
 
 **How to Create New Backend Services**
 
-Python is the recommended language option, but we also support Java and NodeJS.
+Python is the recommended coding language option, but we also support Java and NodeJS.
 
 To create a new backend service from an example, just run the following command:
 
