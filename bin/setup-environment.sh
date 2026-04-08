@@ -381,7 +381,7 @@ install_prerequisites() {
     print_section "System Prerequisites"
 
     local packages="ca-certificates curl gnupg lsb-release apt-transport-https"
-    packages="$packages software-properties-common unzip wget python3-pip jq"
+    packages="$packages software-properties-common unzip wget jq"
 
     if [ "$INSTALL_DNSMASQ" = true ]; then
         packages="$packages dnsmasq"
@@ -728,7 +728,6 @@ install_awscli() {
     if curl -fsSL "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"; then
         if unzip -q awscliv2.zip && sudo ./aws/install --update; then
             print_status "AWS CLI v2 installed: $(aws --version)"
-            sudo rm -rf /usr/bin/aws
         else
             add_failure "Failed to install AWS CLI v2"
         fi
@@ -1206,6 +1205,10 @@ install_localstack() {
     if command -v localstack &> /dev/null; then
         print_info "LocalStack already installed: $(localstack --version)"
     else
+        sudo rm -f /usr/bin/aws /usr/bin/python3
+        sudo ln -s /usr/bin/python3.11 /usr/bin/python3
+        python3 -m pip install -U pip botocore boto3
+
         if python3 -m pip install localstack==$LOCALSTACK_VERSION; then
             print_status "LocalStack CLI installed: $(localstack --version)"
 
