@@ -93,9 +93,9 @@ Predefined environment variables are injected into each backend service automati
 
 **Note:** Use `IS_LOCAL` to branch your connection logic — locally MongoDB runs without TLS even when credentials are present, while AWS DocumentDB requires TLS. When `IS_LOCAL` is `false`, append `?tls=true&tlsAllowInvalidCertificates=true&retryWrites=false` to your connection string.
 
-#### Enable Cloud Deploy for MongoDB
+**Enable Cloud Deploy for MongoDB**
 
-If you prefer to use MongoDB (instead of PostgreSQL), it is come pre-installed locally, but not in the cloud. To enable the AWS DocumentDB (Mongo-compatible database), run the following commands:
+If you prefer to use MongoDB (instead of PostgreSQL), it comes pre-installed locally, but not in the cloud. To enable the AWS DocumentDB (Mongo-compatible database), run the following commands:
 
 ```sh
 echo "export TF_VAR_aws_docdb_enabled=true" >> ~/.bashrc
