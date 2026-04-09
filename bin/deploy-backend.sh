@@ -80,14 +80,13 @@ else
     if command -v tflocal > /dev/null 2>&1; then
         echo "INFO: Using local development (tflocal)..."
         TF_CMD="tflocal"
-    else
-        echo "INFO: Using local development (terraform with AWS_ENDPOINT override)..."
-        export AWS_ENDPOINT_URL="http://localhost:4566"
     fi
 
     # Set dummy AWS credentials for local development
     #export AWS_ACCESS_KEY_ID=test
     #export AWS_SECRET_ACCESS_KEY=test
+    export AWS_ENDPOINT_URL="http://localhost:4566"
+    export AWS_ENDPOINT_URL_S3="http://localhost:4566"
 fi
 
 # Initialize Terraform with backend configuration
