@@ -48,9 +48,6 @@ ENVIRONMENT_CONFIG="$PROJECT_ROOT/ENVIRONMENT.config"
 INFRA_DIR="$PROJECT_ROOT/infra"
 ENVIRONMENT=${1:-"aws"}
 
-# Select terraform command (terraform or tflocal)
-TF_CMD="terraform"
-
 # Set up PATH and AWS region
 export PATH="$HOME/.local/bin:$PATH"
 export AWS_REGION=${AWS_REGION:-us-east-1}
@@ -77,36 +74,27 @@ if [ "$ENVIRONMENT" = "aws" ]; then
     fi
 else
     # Local development configuration
-    if command -v tflocal > /dev/null 2>&1; then
-        echo "INFO: Using local development (tflocal)..."
-        #TF_CMD="tflocal"
-        TF_CMD="terraform"
+    BUCKET_NAME="coding-workshop-tfstate-${PARTICIPANT_ID:-abcd1234}"
+    if ! aws s3 ls | grep -q "$BUCKET_NAME"; then
+        aws s3 mb "s3://$BUCKET_NAME"
     fi
 
-    RSP=$(aws s3 ls | grep coding-workshop-tfstate-${PARTICIPANT_ID:-abcd1234})
-    if [ -z "$RSP" ]; then
-        aws s3 mb s3://coding-workshop-tfstate-${PARTICIPANT_ID:-abcd1234}
-    fi
-
-    # Set dummy AWS credentials for local development
-    #export AWS_ACCESS_KEY_ID=test
-    #export AWS_SECRET_ACCESS_KEY=test
     export AWS_ENDPOINT_URL="http://localhost:4566"
-    #export AWS_ENDPOINT_URL_S3="http://s3.localhost.localstack.cloud:4566"
+    export AWS_ENDPOINT_URL_S3="http://s3.localhost.localstack.cloud:4566"
 fi
 
 # Initialize Terraform with backend configuration
-if [ -n "$PARTICIPANT_ID" ] && [ "$TF_CMD" = "terraform" ]; then
+if [ -n "$PARTICIPANT_ID" ]; then
     echo "INFO: Using custom backend configuration..."
-    $TF_CMD init -reconfigure -backend-config="bucket=coding-workshop-tfstate-${PARTICIPANT_ID:-abcd1234}" -backend-config="region=${AWS_REGION:-us-east-1}"
+    terraform init -reconfigure -backend-config="bucket=coding-workshop-tfstate-${PARTICIPANT_ID:-abcd1234}" -backend-config="region=${AWS_REGION:-us-east-1}"
 else
     echo "WARNING: No backend.config found. Using default backend configuration."
     echo "INFO: For multi-participant workshops, run: ./bin/setup-participant.sh"
-    $TF_CMD init -reconfigure
+    terraform init -reconfigure
 fi
 
 # Apply Terraform configuration automatically
-$TF_CMD apply -auto-approve
+terraform apply -auto-approve
 echo "INFO: Infrastructure deployment complete!"
 
 # Display API endpoint
