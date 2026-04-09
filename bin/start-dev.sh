@@ -198,9 +198,20 @@ echo -e "  ✓ Docker is running"
 # Check if LocalStack is running
 LOCALSTACK_OK=false
 if curl -s http://localhost:4566/_localstack/health > /dev/null 2>&1; then
-    LOCALSTACK_OK=true
-    echo -e "  ✓ LocalStack is running"
-else
+    # Verify the correct image is running
+    RUNNING_IMAGE=$(docker inspect localstack-main --format '{{.Config.Image}}' 2>/dev/null || echo "")
+    if [ "$RUNNING_IMAGE" != "$LOCALSTACK_IMAGE" ]; then
+        echo -e "  ⚠ LocalStack running with wrong image ($RUNNING_IMAGE), expected $LOCALSTACK_IMAGE. Restarting..."
+        localstack stop
+        docker stop localstack-main 2>/dev/null || true
+        sleep 5
+    else
+        LOCALSTACK_OK=true
+        echo -e "  ✓ LocalStack is running ($LOCALSTACK_IMAGE)"
+    fi
+fi
+
+if [ "$LOCALSTACK_OK" = false ]; then
     # Check if LocalStack docker container is already running
     if docker ps | grep -q localstack-main; then
         echo -e "  ⚠ Stopping existing LocalStack container..."
@@ -260,10 +271,12 @@ fi
 # Detect MongoDB host for LocalStack Lambda functions
 if [[ "$OSTYPE" == "linux-gnu"* ]]; then
     export TF_VAR_mongodb_host="172.17.0.1"
-    echo -e "  Detected Linux - using MongoDB host: 172.17.0.1"
+    export TF_VAR_aws_postgres_host="172.17.0.1"
+    echo -e "  Detected Linux - using host: 172.17.0.1"
 else
     export TF_VAR_mongodb_host="host.docker.internal"
-    echo -e "  Detected Mac/Windows - using MongoDB host: host.docker.internal"
+    export TF_VAR_aws_postgres_host="host.docker.internal"
+    echo -e "  Detected Mac/Windows - using host: host.docker.internal"
 fi
 
 # Change to infrastructure directory
@@ -382,6 +395,7 @@ echo "============================================================"
 echo ""
 echo "Services Status:"
 echo "  • MongoDB:    Running on 0.0.0.0:27017"
+echo "  • PostgreSQL: Running on localhost:5432"
 echo "  • LocalStack: Running on localhost:4566"
 echo "  • Backend:    Deployed to LocalStack"
 echo "  • Proxy:      Running on localhost:3001"

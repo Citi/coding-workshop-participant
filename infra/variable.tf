@@ -33,3 +33,9 @@ variable "aws_mongo_host" {
   type        = string
   default     = null
 }
+
+variable "aws_postgres_host" {
+  description = "PostgreSQL host for LocalStack. Defaults to 'host.docker.internal' (on Linux, set to '172.17.0.1')."
+  type        = string
+  default     = null
+}

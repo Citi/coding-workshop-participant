@@ -380,7 +380,7 @@ run_preflight_checks() {
 install_prerequisites() {
     print_section "System Prerequisites"
 
-    local packages="ca-certificates curl gnupg lsb-release apt-transport-https"
+    local packages="ca-certificates curl python3-pip gnupg lsb-release apt-transport-https"
     packages="$packages software-properties-common unzip wget jq"
 
     if [ "$INSTALL_DNSMASQ" = true ]; then
@@ -1773,16 +1773,15 @@ main() {
 
     # Install everything
     install_prerequisites
+    install_python "3.11"
+    install_python "3.12"
+    install_python "3.13"
+    install_python "3.14"
     install_vscode
     install_intellij
     install_pycharm
     install_chrome
     install_docker
-    install_terraform
-    install_awscli
-    install_localstack
-    install_tflocal
-    install_awslocal
     install_postgres "$POSTGRES_VERSION"
     configure_postgres_auth
     install_pgadmin
@@ -1791,10 +1790,11 @@ main() {
     configure_mongodb_auth
     install_mongodb_compass
     install_nodejs
-    install_python "3.14"
-    install_python "3.13"
-    install_python "3.12"
-    install_python "3.11"
+    install_terraform
+    install_awscli
+    install_localstack
+    install_tflocal
+    install_awslocal
     configure_dnsmasq
 
     # Verification and summary
