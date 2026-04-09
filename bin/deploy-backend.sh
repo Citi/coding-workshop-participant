@@ -56,24 +56,31 @@ echo "INFO: Environment - $ENVIRONMENT"
 # Change to infrastructure directory
 cd "$INFRA_DIR"
 
+# Load participant configuration (provides PARTICIPANT_ID, TF_VAR_aws_app_code, etc.)
+if [ -f "$ENVIRONMENT_CONFIG" ]; then
+    echo "INFO: Loading participant environment configuration..."
+    source $ENVIRONMENT_CONFIG
+fi
+
 # AWS Deployment Configuration
 if [ "$ENVIRONMENT" = "aws" ]; then
     echo "INFO: Using AWS deployment (terraform)..."
 
     # Setup participant if config is missing
-    $SCRIPT_DIR/setup-participant.sh
-
-    # Load participant-specific configuration if available
-    if [ -f "$ENVIRONMENT_CONFIG" ]; then
-        echo "INFO: Loading participant environment configuration..."
-        source $ENVIRONMENT_CONFIG
-    else
-        echo "WARNING: $ENVIRONMENT_CONFIG is missing"
+    if [ -z "$PARTICIPANT_ID" ]; then
+        $SCRIPT_DIR/setup-participant.sh
+        if [ -f "$ENVIRONMENT_CONFIG" ]; then
+            source $ENVIRONMENT_CONFIG
+        fi
     fi
 else
-    # Local development configuration
+    # Local development configuration — override credentials for LocalStack
     export AWS_ENDPOINT_URL="http://localhost:4566"
     export AWS_ENDPOINT_URL_S3="http://s3.localhost.localstack.cloud:4566"
+    export AWS_ACCESS_KEY_ID=test
+    export AWS_SECRET_ACCESS_KEY=test
+    export AWS_REGION=us-east-1
+    unset AWS_SESSION_TOKEN
 
     BUCKET_NAME="coding-workshop-tfstate-${PARTICIPANT_ID:-abcd1234}"
     if ! aws s3 ls | grep -q "$BUCKET_NAME"; then

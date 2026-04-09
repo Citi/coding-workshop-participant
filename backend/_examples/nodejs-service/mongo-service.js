@@ -33,14 +33,16 @@ let mongoClient = null;
  */
 async function getMongoVersion(config) {
   try {
-    // Build MongoDB connection URI with credentials
-    const uri = `mongodb://${config.user}:${config.password}@${config.host}:${config.port}`;
+    // Build MongoDB connection URI — include credentials only when provided
+    const auth = config.user ? `${config.user}:${config.password}@` : "";
+    const uri = `mongodb://${auth}${config.host}:${config.port}`;
 
     // Create client if not already pooled
     if (!mongoClient) {
       mongoClient = new MongoClient(uri, {
         serverSelectionTimeoutMS: config.serverSelectionTimeoutMS,
         socketTimeoutMS: config.socketTimeoutMS,
+        ...(config.isLocal ? {} : { tls: true, tlsAllowInvalidCertificates: true, retryWrites: false }),
       });
       await mongoClient.connect();
     }

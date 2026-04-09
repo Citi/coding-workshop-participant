@@ -76,7 +76,9 @@ Predefined environment variables are injected into each backend service automati
 | `MONGO_USER`    | MongoDB username      | *(empty)*              | AWS DocumentDB username |
 | `MONGO_PASS`    | MongoDB password      | *(empty)*              | AWS DocumentDB password |
 
-**Note:** Use `IS_LOCAL` to branch your connection logic — locally MongoDB runs without TLS even when credentials are present, while AWS DocumentDB requires TLS. When `IS_LOCAL` is `false`, append `?tls=true&tlsAllowInvalidCertificates=true&retryWrites=false` to your connection string.
+**Note:** Use `IS_LOCAL` to branch your connection logic:
+- **PostgreSQL:** locally runs without SSL. When `IS_LOCAL` is `false`, add `sslmode=require` to your connection string for AWS Aurora.
+- **MongoDB:** locally runs without TLS. When `IS_LOCAL` is `false`, add `tls=True`, `tlsAllowInvalidCertificates=True`, and `retryWrites=False` to your connection config for AWS DocumentDB.
 
 **How to Enable Cloud Deploy for MongoDB**
 

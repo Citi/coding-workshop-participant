@@ -57,10 +57,19 @@ if ! command -v psql &> /dev/null; then
     exit 1
 fi
 
+PG_OK=false
+
 if pg_isready -q; then
-    echo -e "  ✓ PostgreSQL is running and connection verified"
-else
-    echo -e "  ⚠ PostgreSQL not running, starting it..."
+    # Check if bound to 0.0.0.0 so Docker Lambda containers can reach it
+    if ss -ltn 2>/dev/null | grep -q '0.0.0.0:5432'; then
+        PG_OK=true
+        echo -e "  ✓ PostgreSQL is running and bound to 0.0.0.0:5432"
+    else
+        echo -e "  ⚠ PostgreSQL running but not bound to 0.0.0.0, reconfiguring..."
+    fi
+fi
+
+if [ "$PG_OK" = false ]; then
     if [[ "$(uname)" == "Darwin" ]]; then
         PG_SERVICE=$(brew services list 2>/dev/null | awk '/^postgresql/ {print $1}' | head -1)
         if [ -z "$PG_SERVICE" ]; then
@@ -71,25 +80,29 @@ else
         if [ ! -d "$PG_DATA_DIR" ] || [ -z "$(ls -A "$PG_DATA_DIR" 2>/dev/null)" ]; then
             echo -e "  ⚠ PostgreSQL data directory not found, initializing..."
             initdb "$PG_DATA_DIR" || { echo -e "  ✗ Failed to initialize PostgreSQL data directory"; exit 1; }
-            echo -e "  ✓ PostgreSQL data directory initialized"
         fi
         brew services restart "$PG_SERVICE" || { echo -e "  ✗ Failed to start PostgreSQL"; exit 1; }
     else
+        PG_CONF=$(find /etc/postgresql -name "postgresql.conf" 2>/dev/null | head -1)
         PG_SERVICE=$(systemctl list-units --type=service --all 2>/dev/null | awk '/postgresql/ {print $1}' | head -1)
         if [ -z "$PG_SERVICE" ]; then
             echo -e "  ✗ No PostgreSQL systemctl service found. Install: sudo apt install postgresql"
             exit 1
         fi
-        sudo systemctl start "$PG_SERVICE" 2>/dev/null || sudo systemctl restart "$PG_SERVICE" || {
-            echo -e "  ✗ Failed to start PostgreSQL"
-            exit 1
-        }
+
+        PG_HBA=$(find /etc/postgresql -name "pg_hba.conf" 2>/dev/null | head -1)
+        [ -n "$PG_CONF" ] && sudo sed -i "s/#\?listen_addresses\s*=\s*'[^']*'/listen_addresses = '*'/" "$PG_CONF"
+        # Allow all hosts to connect (local dev only)
+        if [ -n "$PG_HBA" ] && ! sudo grep -q "0.0.0.0/0" "$PG_HBA"; then
+            echo "host all all 0.0.0.0/0 trust" | sudo tee -a "$PG_HBA" > /dev/null
+        fi
+        sudo systemctl restart "$PG_SERVICE" || { echo -e "  ✗ Failed to restart PostgreSQL"; exit 1; }
     fi
 
-    # Wait for PostgreSQL to be ready
+    # Wait for PostgreSQL to be ready and bound
     for i in {1..10}; do
-        if pg_isready -q; then
-            echo -e "  ✓ PostgreSQL started and connection verified"
+        if pg_isready -q && ss -ltn 2>/dev/null | grep -q '0.0.0.0:5432'; then
+            echo -e "  ✓ PostgreSQL started and bound to 0.0.0.0:5432"
             break
         fi
         if [ "$i" -eq 10 ]; then
@@ -305,37 +318,73 @@ echo -e "[4/5] Checking Backend Infrastructure..."
 
 # Detect MongoDB host for LocalStack Lambda functions
 if [[ "$OSTYPE" == "linux-gnu"* ]]; then
-    export TF_VAR_mongodb_host="172.17.0.1"
+    export TF_VAR_aws_mongo_host="172.17.0.1"
     export TF_VAR_aws_postgres_host="172.17.0.1"
     echo -e "  Detected Linux - using host: 172.17.0.1"
 else
-    export TF_VAR_mongodb_host="host.docker.internal"
+    export TF_VAR_aws_mongo_host="host.docker.internal"
     export TF_VAR_aws_postgres_host="host.docker.internal"
     echo -e "  Detected Mac/Windows - using host: host.docker.internal"
 fi
 
+# Install pip requirements into each Python service directory for hot-reload
+for req in "$PROJECT_ROOT"/backend/*/requirements.txt; do
+    svc_dir="$(dirname "$req")"
+    echo -e "  Installing pip requirements for $(basename "$svc_dir")..."
+    pip install --quiet --target="$svc_dir" -r "$req" 2>/dev/null || true
+done
+
+# Install npm dependencies into each Node.js service directory for hot-reload
+for pkg in "$PROJECT_ROOT"/backend/*/package.json; do
+    svc_dir="$(dirname "$pkg")"
+    echo -e "  Installing npm dependencies for $(basename "$svc_dir")..."
+    npm install --prefix "$svc_dir" --silent 2>/dev/null || true
+done
+
 # Change to infrastructure directory
 cd "$INFRA_DIR"
 
-# Clean up old Lambda build artifacts to force fresh builds
-echo -e "  Cleaning up old Lambda build artifacts..."
-rm -rf "$INFRA_DIR/builds"
+# Load participant configuration (provides PARTICIPANT_ID, TF_VAR_aws_app_code, etc.)
+PARTICIPANT_CONFIG="$PROJECT_ROOT/ENVIRONMENT.config"
+if [ -f "$PARTICIPANT_CONFIG" ]; then
+    source "$PARTICIPANT_CONFIG"
+fi
 
-# Check if backend is deployed
+# Override credentials for LocalStack
+export AWS_ENDPOINT_URL="http://localhost:4566"
+export AWS_ENDPOINT_URL_S3="http://s3.localhost.localstack.cloud:4566"
+export AWS_ACCESS_KEY_ID=test
+export AWS_SECRET_ACCESS_KEY=test
+export AWS_REGION=us-east-1
+unset AWS_SESSION_TOKEN
+
+# Ensure terraform is initialized against the correct LocalStack backend
+terraform init -reconfigure \
+    -backend-config="bucket=coding-workshop-tfstate-${PARTICIPANT_ID:-abcd1234}" \
+    -backend-config="region=${AWS_REGION:-us-east-1}" \
+    > /dev/null 2>&1
+
+
+# Count services on disk vs deployed
+SERVICES_ON_DISK=$(find "$PROJECT_ROOT/backend" -mindepth 2 -maxdepth 2 \( -name "function.py" -o -name "package.json" -o -name "pom.xml" \) -not -path "*/_*" -not -path "*/\.*" | wc -l)
+SERVICES_DEPLOYED=$(terraform output -json lambda_urls 2>/dev/null | grep -o 'http://[^"]*' | wc -l)
+
+# Check if backend is deployed and all services are present
 BACKEND_OK=false
-if terraform output lambda_urls > /dev/null 2>&1; then
-    # Backend is deployed, verify functions are accessible
+if [ "$SERVICES_DEPLOYED" -ge "$SERVICES_ON_DISK" ] && [ "$SERVICES_DEPLOYED" -gt 0 ]; then
     LAMBDA_URLS=$(terraform output -json lambda_urls 2>/dev/null | grep -o 'http://[^"]*' | head -1 || echo "")
-
     if [ -n "$LAMBDA_URLS" ]; then
-        # Test if at least one function responds
-        if curl -s -f "$LAMBDA_URLS" > /dev/null 2>&1; then
+        # Check if Lambda responds with any HTTP status (200 or 500 both mean it's running)
+        HTTP_STATUS=$(curl -s -o /dev/null -w "%{http_code}" "$LAMBDA_URLS" 2>/dev/null || echo "000")
+        if [ "$HTTP_STATUS" != "000" ]; then
             BACKEND_OK=true
-            echo -e "  ✓ Backend is deployed and functions are responding"
+            echo -e "  ✓ Backend is deployed and functions are responding ($SERVICES_DEPLOYED/$SERVICES_ON_DISK services)"
         else
             echo -e "  ⚠ Backend is deployed but functions not responding"
         fi
     fi
+else
+    echo -e "  ⚠ Services on disk ($SERVICES_ON_DISK) vs deployed ($SERVICES_DEPLOYED) — redeploying..."
 fi
 
 if [ "$BACKEND_OK" = false ]; then
@@ -343,9 +392,33 @@ if [ "$BACKEND_OK" = false ]; then
 
     # Deploy backend
     $SCRIPT_DIR/deploy-backend.sh local > /tmp/backend-deploy.log 2>&1 || {
-        echo -e "  ✗ Backend deployment failed"
-        tail -n 50 /tmp/backend-deploy.log | sed 's/^/    /'
-        exit 1
+        echo -e "  ⚠ Backend deployment failed, resetting LocalStack and retrying..."
+
+        # Stop LocalStack, clear stale state, restart
+        localstack stop 2>/dev/null || true
+        docker stop localstack-main 2>/dev/null || true
+        sleep 5
+        localstack start -d
+
+        # Wait for LocalStack to be ready
+        for i in {1..30}; do
+            if curl -s http://localhost:4566/_localstack/health > /dev/null 2>&1; then
+                echo -e "  ✓ LocalStack restarted"
+                break
+            fi
+            if [ "$i" -eq 30 ]; then
+                echo -e "  ✗ LocalStack failed to restart"
+                exit 1
+            fi
+            sleep 1
+        done
+
+        # Retry deploy against clean LocalStack
+        $SCRIPT_DIR/deploy-backend.sh local > /tmp/backend-deploy.log 2>&1 || {
+            echo -e "  ✗ Backend deployment failed after LocalStack reset"
+            tail -n 50 /tmp/backend-deploy.log | sed 's/^/    /'
+            exit 1
+        }
     }
 
     echo -e "  ✓ Backend deployed successfully"

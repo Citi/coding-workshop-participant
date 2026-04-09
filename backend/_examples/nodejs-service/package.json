@@ -2,7 +2,6 @@
   "name": "nodejs-service",
   "description": "Hello World",
   "version": "1.0.0",
-  "type": "module",
   "license": "MIT",
   "main": "index.js",
   "scripts": {

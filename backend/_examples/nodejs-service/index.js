@@ -20,19 +20,22 @@ const pgConfig = {
 };
 
 /**
- * MongoDB configuration loaded from environment variables with sensible defaults.
+ * MongoDB configuration loaded from environment variables.
+ * Null when MONGO_HOST is not set (e.g. DocumentDB disabled on AWS).
  *
- * @type {Object}
+ * @type {Object|null}
  */
-const mongoConfig = {
-  host: process.env.MONGO_HOST || "localhost",
+const _mongoHost = process.env.MONGO_HOST || "";
+const mongoConfig = _mongoHost ? {
+  host: _mongoHost,
   port: parseInt(process.env.MONGO_PORT || "27017"),
-  user: process.env.MONGO_USER || "test",
-  password: process.env.MONGO_PASS || "test",
-  database: process.env.MONGO_NAME || "test",
+  user: process.env.MONGO_USER || "",
+  password: process.env.MONGO_PASS || "",
+  database: process.env.MONGO_NAME || "",
+  isLocal: process.env.IS_LOCAL === "true",
   serverSelectionTimeoutMS: 5000,
   socketTimeoutMS: 45000,
-};
+} : null;
 
 /**
  * Sample code: Hello World with PostgreSQL and MongoDB connectivity.
@@ -46,11 +49,9 @@ exports.handler = async (event, context) => {
   console.log("Received context: ", context)
 
   try {
-    // Retrieve versions in parallel for better performance
-    const [pgVersion, mongoVersion] = await Promise.all([
-      getPostgresVersion(pgConfig),
-      getMongoVersion(mongoConfig),
-    ]);
+    // Retrieve versions — MongoDB skipped if not configured
+    const pgVersion = await getPostgresVersion(pgConfig);
+    const mongoVersion = mongoConfig ? await getMongoVersion(mongoConfig) : null;
 
     // Log retrieved versions for debugging
     console.log("PostgreSQL Version: ", pgVersion);

@@ -24,7 +24,7 @@ Predefined environment variables are injected into each backend service automati
 | `POSTGRES_NAME` | PostgreSQL name       | *(empty)*              | AWS Aurora database     |
 | `POSTGRES_USER` | PostgreSQL username   | *(empty)*              | AWS Aurora username     |
 | `POSTGRES_PASS` | PostgreSQL password   | *(empty)*              | AWS Aurora password     |
-| `MONGO_HOST`    | MongoDB hostname      | `host.docker.internal` | AWS DocumentDB endpoint |
+| `MONGO_HOST`    | MongoDB hostname      | `172.17.0.1` (Linux) / `host.docker.internal` (Mac/Windows) | AWS DocumentDB endpoint |
 | `MONGO_PORT`.   | MongoDB port          | `27017`                | `27017`                 |
 | `MONGO_NAME`    | MongoDB db name       | *(empty)*              | AWS DocumentDB database |
 | `MONGO_USER`    | MongoDB username      | *(empty)*              | AWS DocumentDB username |
@@ -50,16 +50,34 @@ coding-workshop-participant/
 │   │   │   ├── eslint.config.js               # ESLint JS tool configuration
 │   │   │   ├── index.js                       # Business logic using NodeJS
 │   │   │   ├── mongo-service.js               # MongoDB connectivity service
-│   │   │   ├── package.js                     # NodeJS configuration and dependencies
-│   │   │   └── postgres-service.json          # PostgreSQL connectivity service
+│   │   │   ├── package.json                   # NodeJS configuration and dependencies
+│   │   │   └── postgres-service.js            # PostgreSQL connectivity service
 │   │   └── python-service/                  # Backend service example for Python developers
 │   │       ├── function.py                    # Business logic using Python
-│   │       ├── mongo_service.js               # MongoDB connectivity service
-│   │       ├── postgres_service.json          # PostgreSQL connectivity service
+│   │       ├── mongo_service.py               # MongoDB connectivity service
+│   │       ├── postgres_service.py            # PostgreSQL connectivity service
 │   │       └── requirements.txt               # Python configuration and dependencies
 │   └── README.md                        # Backend guide (YOU ARE HERE)
 ├── ...
 ```
+
+## Adding a New Service
+
+Place your service folder **directly under `backend/`** — one level deep:
+
+```
+backend/
+├── my-service/          ✓ will be deployed
+│   └── function.py
+├── _examples/
+│   └── my-service/      ✗ will NOT be deployed (underscore prefix)
+│       └── function.py
+└── group/
+    └── my-service/      ✗ will NOT be deployed (too deep)
+        └── function.py
+```
+
+Terraform auto-discovers services by looking for `function.py` (Python), `package.json` (Node.js), or `pom.xml` (Java) one level under `backend/`. Any folder prefixed with `_` is ignored.
 
 ## Usage
 

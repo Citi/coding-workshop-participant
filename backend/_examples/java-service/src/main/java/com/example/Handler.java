@@ -108,20 +108,33 @@ public class Handler implements RequestHandler<Map<String, Object>, Map<String, 
 
     /**
      * Retrieves the MongoDB version using the MongoService.
+     * Returns null when MONGO_HOST is not set (e.g. DocumentDB disabled on AWS).
      *
-     * @return the MongoDB version string, or "unknown" if retrieval fails
+     * @return the MongoDB version string, null if not configured, or "unknown" on error
      */
     private String getMongoVersion() {
+        String host = System.getenv("MONGO_HOST");
+        if (host == null || host.isEmpty()) {
+            return null;
+        }
         try {
-            String host = getEnvOrDefault("MONGO_HOST", "localhost");
             int port = Integer.parseInt(getEnvOrDefault("MONGO_PORT", "27017"));
-            String user = getEnvOrDefault("MONGO_USER", "test");
-            String password = getEnvOrDefault("MONGO_PASS", "test");
-            String database = getEnvOrDefault("MONGO_NAME", "test");
+            String user = System.getenv("MONGO_USER");
+            String password = System.getenv("MONGO_PASS");
+            String database = getEnvOrDefault("MONGO_NAME", "admin");
+            boolean isLocal = "true".equals(System.getenv("IS_LOCAL"));
 
+            // Include credentials only when provided
+            String auth = (user != null && !user.isEmpty())
+                ? user + ":" + password + "@"
+                : "";
+            // TLS required for DocumentDB on AWS, disabled locally
+            String tls = isLocal
+                ? ""
+                : "?tls=true&tlsAllowInvalidCertificates=true&retryWrites=false";
             String connectionString = String.format(
-                "mongodb://%s:%s@%s:%d/%s",
-                user, password, host, port, database
+                "mongodb://%s%s:%d/%s%s",
+                auth, host, port, database, tls
             );
 
             MongoService service = new MongoService(connectionString, database);

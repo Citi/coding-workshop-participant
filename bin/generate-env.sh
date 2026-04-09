@@ -43,30 +43,48 @@ ENVIRONMENT_CONFIG="$FRONTEND_DIR/.env.local"
 # Change to infrastructure directory to retrieve Terraform outputs
 cd "$INFRA_DIR"
 
-# Detect environment (local with LocalStack or AWS)
-if command -v tflocal > /dev/null 2>&1 && tflocal output -raw api_base_url >/dev/null 2>&1; then
-    # LocalStack available and configured for local development
-    ENVIRONMENT="local"
-    TF_CMD="tflocal"
+# Load participant configuration
+PARTICIPANT_CONFIG="$PROJECT_ROOT/ENVIRONMENT.config"
+if [ -f "$PARTICIPANT_CONFIG" ]; then
+    source "$PARTICIPANT_CONFIG"
+fi
 
-    # Set LocalStack AWS credentials
-    export AWS_REGION=us-east-1
+# Detect environment (local with LocalStack or AWS)
+if curl -s http://localhost:4566/_localstack/health > /dev/null 2>&1; then
+    # LocalStack is running — use it
+    ENVIRONMENT="local"
+    export AWS_ENDPOINT_URL="http://localhost:4566"
+    export AWS_ENDPOINT_URL_S3="http://s3.localhost.localstack.cloud:4566"
     export AWS_ACCESS_KEY_ID=test
     export AWS_SECRET_ACCESS_KEY=test
+    export AWS_REGION=us-east-1
+    unset AWS_SESSION_TOKEN
+    BUCKET_NAME="coding-workshop-tfstate-${PARTICIPANT_ID:-abcd1234}"
 else
     # AWS deployment environment
     ENVIRONMENT="aws"
-    TF_CMD="terraform"
+    BUCKET_NAME="coding-workshop-tfstate-${PARTICIPANT_ID:-abcd1234}"
 fi
 
-# Retrieve API base URL from Terraform outputs
-API_BASE_URL=$($TF_CMD output -raw api_base_url 2>/dev/null || echo "ERROR")
+# Initialize terraform with the correct backend so outputs come from the right state
+terraform init -reconfigure \
+    -backend-config="bucket=$BUCKET_NAME" \
+    -backend-config="region=${AWS_REGION:-us-east-1}" \
+    > /dev/null 2>&1
 
-# Verify Terraform output was retrieved successfully
-if [ "$API_BASE_URL" = "ERROR" ]; then
-    echo "WARNING: Could not get api_base_url from Terraform outputs"
+# Retrieve API base URL from Terraform outputs
+ALL_OUTPUTS=$(terraform output -json 2>/dev/null || echo "{}")
+API_BASE_URL=$(echo "$ALL_OUTPUTS" | grep -o '"api_base_url":{[^}]*}' | grep -o '"value":"[^"]*"' | cut -d'"' -f4 || echo "")
+
+if [ -z "$ALL_OUTPUTS" ] || [ "$ALL_OUTPUTS" = "{}" ]; then
+    echo "WARNING: Could not get outputs from Terraform"
     echo "Make sure infrastructure is deployed first with: ./bin/deploy-backend.sh"
     exit 1
+fi
+
+# Fallback using terraform output -raw (suppress stderr warnings)
+if [ -z "$API_BASE_URL" ]; then
+    API_BASE_URL=$(terraform output -raw api_base_url 2>/dev/null || echo "")
 fi
 
 # Handle empty API base URL (valid for local development - uses direct Lambda URLs)
@@ -77,8 +95,9 @@ else
     echo "API Base URL: $API_BASE_URL"
 fi
 
-# Retrieve API endpoints configuration from Terraform outputs
-API_ENDPOINTS=$($TF_CMD output -json api_endpoints 2>/dev/null || echo "{}")
+# Retrieve API endpoints and Lambda URLs from Terraform outputs
+API_ENDPOINTS=$(terraform output -json api_endpoints 2>/dev/null || echo "{}")
+LAMBDA_URLS=$(terraform output -json lambda_urls 2>/dev/null || echo "{}")
 
 # Generate .env.local configuration file for React frontend
 cat > "$ENVIRONMENT_CONFIG" << EOF
@@ -87,8 +106,10 @@ cat > "$ENVIRONMENT_CONFIG" << EOF
 # Environment: $ENVIRONMENT
 REACT_APP_API_URL=$API_BASE_URL
 REACT_APP_API_ENDPOINTS='$API_ENDPOINTS'
+REACT_APP_LAMBDA_URLS='$LAMBDA_URLS'
 VITE_API_URL=$API_BASE_URL
 VITE_API_ENDPOINTS='$API_ENDPOINTS'
+VITE_LAMBDA_URLS='$LAMBDA_URLS'
 EOF
 
 echo ""
