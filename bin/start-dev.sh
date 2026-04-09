@@ -218,15 +218,6 @@ echo ""
 # ============================================================
 echo -e "[3/5] Checking LocalStack..."
 
-# Use free tier only
-#export ACTIVATE_PRO=0
-#export LOCALSTACK_ACTIVATE_PRO=0
-#export LOCALSTACK_ACKNOWLEDGE_ACCOUNT_REQUIREMENT=1
-
-# Set LocalStack AWS credentials
-export AWS_ACCESS_KEY_ID=test
-export AWS_SECRET_ACCESS_KEY=test
-
 # Check if localstack is installed
 if ! command -v localstack &> /dev/null; then
     echo -e "ERROR: LocalStack is not installed"
