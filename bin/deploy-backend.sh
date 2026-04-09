@@ -35,6 +35,10 @@ echo "Coding Workshop - Backend Deployment"
 echo "===================================="
 echo ""
 
+# Set up PATH and AWS region
+export PATH="$HOME/.local/bin:$PATH"
+export AWS_REGION=${AWS_REGION:-us-east-1}
+
 # Verify required dependencies
 tflocal --version > /dev/null 2>&1 || { echo "ERROR: 'tflocal' is missing. Aborting..."; exit 1; }
 terraform --version > /dev/null 2>&1 || { echo "ERROR: 'terraform' is missing. Aborting..."; exit 1; }
@@ -47,10 +51,6 @@ PROJECT_ROOT="$(cd $SCRIPT_DIR/.. > /dev/null 2>&1 || exit 1; pwd -P)"
 ENVIRONMENT_CONFIG="$PROJECT_ROOT/ENVIRONMENT.config"
 INFRA_DIR="$PROJECT_ROOT/infra"
 ENVIRONMENT=${1:-"aws"}
-
-# Set up PATH and AWS region
-export PATH="$HOME/.local/bin:$PATH"
-export AWS_REGION=${AWS_REGION:-us-east-1}
 
 echo "INFO: Deploying infrastructure..."
 echo "INFO: Environment - $ENVIRONMENT"

@@ -48,7 +48,54 @@ FRONTEND_DIR="$PROJECT_ROOT/frontend"
 # ============================================================
 echo -e "[1/5] Checking PostgreSQL..."
 
-echo "WARNING: NOT IMPLEMENTED ... TODO ..."
+if ! command -v psql &> /dev/null; then
+    echo -e "ERROR: PostgreSQL (psql) is not installed"
+    echo "Install: brew install postgresql@16 (Mac) or sudo apt install postgresql (Linux)"
+    exit 1
+fi
+
+if pg_isready -q; then
+    echo -e "  ✓ PostgreSQL is running and connection verified"
+else
+    echo -e "  ⚠ PostgreSQL not running, starting it..."
+    if [[ "$(uname)" == "Darwin" ]]; then
+        PG_SERVICE=$(brew services list 2>/dev/null | awk '/^postgresql/ {print $1}' | head -1)
+        if [ -z "$PG_SERVICE" ]; then
+            echo -e "  ✗ No PostgreSQL brew service found. Install: brew install postgresql@16"
+            exit 1
+        fi
+        PG_DATA_DIR="/opt/homebrew/var/${PG_SERVICE}"
+        if [ ! -d "$PG_DATA_DIR" ] || [ -z "$(ls -A "$PG_DATA_DIR" 2>/dev/null)" ]; then
+            echo -e "  ⚠ PostgreSQL data directory not found, initializing..."
+            initdb "$PG_DATA_DIR" || { echo -e "  ✗ Failed to initialize PostgreSQL data directory"; exit 1; }
+            echo -e "  ✓ PostgreSQL data directory initialized"
+        fi
+        brew services restart "$PG_SERVICE" || { echo -e "  ✗ Failed to start PostgreSQL"; exit 1; }
+    else
+        PG_SERVICE=$(systemctl list-units --type=service --all 2>/dev/null | awk '/postgresql/ {print $1}' | head -1)
+        if [ -z "$PG_SERVICE" ]; then
+            echo -e "  ✗ No PostgreSQL systemctl service found. Install: sudo apt install postgresql"
+            exit 1
+        fi
+        sudo systemctl start "$PG_SERVICE" 2>/dev/null || sudo systemctl restart "$PG_SERVICE" || {
+            echo -e "  ✗ Failed to start PostgreSQL"
+            exit 1
+        }
+    fi
+
+    # Wait for PostgreSQL to be ready
+    for i in {1..10}; do
+        if pg_isready -q; then
+            echo -e "  ✓ PostgreSQL started and connection verified"
+            break
+        fi
+        if [ "$i" -eq 10 ]; then
+            echo -e "  ✗ PostgreSQL failed to start within 10 seconds"
+            exit 1
+        fi
+        sleep 1
+    done
+fi
 
 echo ""
 
@@ -177,8 +224,8 @@ echo -e "[3/5] Checking LocalStack..."
 #export LOCALSTACK_ACKNOWLEDGE_ACCOUNT_REQUIREMENT=1
 
 # Set LocalStack AWS credentials
-#export AWS_ACCESS_KEY_ID=test
-#export AWS_SECRET_ACCESS_KEY=test
+export AWS_ACCESS_KEY_ID=test
+export AWS_SECRET_ACCESS_KEY=test
 
 # Check if localstack is installed
 if ! command -v localstack &> /dev/null; then
@@ -197,6 +244,7 @@ echo -e "  ✓ Docker is running"
 
 # Check if LocalStack is running
 LOCALSTACK_OK=false
+LOCALSTACK_IMAGE="${LOCALSTACK_IMAGE:-localstack/localstack-pro}"
 if curl -s http://localhost:4566/_localstack/health > /dev/null 2>&1; then
     # Verify the correct image is running
     RUNNING_IMAGE=$(docker inspect localstack-main --format '{{.Config.Image}}' 2>/dev/null || echo "")
