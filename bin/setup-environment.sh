@@ -12,7 +12,7 @@
 #   - Browser: Google Chrome
 #   - Containers: Docker (with sudo-less access)
 #   - Cloud Tools: Terraform CLI, AWS CLI v2
-#   - LocalStack: LocalStack CLI, tflocal, awslocal
+#   - LocalStack: LocalStack CLI
 #   - Database: PostgreSQL, pgAdmin
 #   - Database: MongoDB, MongoDB Compass
 #   - Runtimes: Node.js, Python
@@ -93,7 +93,6 @@ Installed tools:
   - Terraform CLI
   - AWS CLI v2
   - LocalStack CLI
-  - tflocal, awslocal
   - PostgreSQL with pgAdmin
   - MongoDB with MongoDB Compass
   - Node.js
@@ -1272,65 +1271,6 @@ EOF
     fi
 }
 
-install_tflocal() {
-    print_section "tflocal (terraform-local)"
-
-    if is_dry_run; then
-        print_dry_run_header "TFLOCAL" "tflocal (terraform-local)"
-        if command -v tflocal &> /dev/null || [ -f "$ACTUAL_HOME/.local/bin/tflocal" ]; then
-            print_dry_run_status "Already installed"
-        else
-            print_dry_run_missing "Not installed"
-            print_dry_run_action "Would install: terraform-local (via pip3)"
-            print_dry_run_action "Would update PATH in ~/.bashrc"
-        fi
-        return
-    fi
-
-    print_info "Installing tflocal..."
-
-    # Idempotency check
-    if command -v tflocal &> /dev/null || [ -f "$ACTUAL_HOME/.local/bin/tflocal" ]; then
-        print_info "tflocal already installed"
-        return
-    fi
-
-    if python3 -m pip install terraform-local; then
-        print_status "tflocal installed"
-    else
-        add_failure "Failed to install tflocal"
-    fi
-}
-
-install_awslocal() {
-    print_section "awslocal (awscli-local)"
-
-    if is_dry_run; then
-        print_dry_run_header "AWSLOCAL" "awslocal (awscli-local)"
-        if command -v awslocal &> /dev/null || [ -f "$ACTUAL_HOME/.local/bin/awslocal" ]; then
-            print_dry_run_status "Already installed"
-        else
-            print_dry_run_missing "Not installed"
-            print_dry_run_action "Would install: awscli-local (via pip3)"
-        fi
-        return
-    fi
-
-    print_info "Installing awslocal..."
-
-    # Idempotency check
-    if command -v awslocal &> /dev/null || [ -f "$ACTUAL_HOME/.local/bin/awslocal" ]; then
-        print_info "awslocal already installed"
-        return
-    fi
-
-    if python3 -m pip install awscli-local; then
-        print_status "awslocal installed"
-    else
-        add_failure "Failed to install awslocal"
-    fi
-}
-
 # ============================================================================
 # SECTION 13: DNSMASQ CONFIGURATION (OPTIONAL)
 # ============================================================================
@@ -1472,8 +1412,6 @@ run_verification() {
 
     # LocalStack
     verify_tool "LocalStack" "localstack --version"
-    verify_tool_path "tflocal" "$ACTUAL_HOME/.local/bin/tflocal"
-    verify_tool_path "awslocal" "$ACTUAL_HOME/.local/bin/awslocal"
 
     # Database
     verify_tool "MongoDB" "mongod --version" "grep 'db version'"
@@ -1793,8 +1731,6 @@ main() {
     install_terraform
     install_awscli
     install_localstack
-    install_tflocal
-    install_awslocal
     configure_dnsmasq
 
     # Verification and summary

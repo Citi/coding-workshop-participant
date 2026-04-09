@@ -86,8 +86,9 @@ To tail logs in real-time:
 
 ```sh
 # Example: Get logs for {{service-name}}
-awslocal logs tail /aws/lambda/{{function-name}} \
-         --follow --format short --color on
+AWS_ENDPOINT_URL="http://localhost:4566" \
+    aws logs tail /aws/lambda/{{function-name}} \
+        --follow --format short --color on
 ```
 
 Replace `{{function-name}}` with corresponding service name

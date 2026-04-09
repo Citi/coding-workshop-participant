@@ -21,7 +21,7 @@ if [ "$1" = "-h" ] || [ "$1" = "--help" ]; then
     echo "Requirements:"
     echo "  - aws cli installed"
     echo "  - npm installed"
-    echo "  - terraform/tflocal installed"
+    echo "  - terraform installed"
     echo "  - Backend infrastructure deployed first"
     echo ""
     echo "Examples:"
@@ -39,7 +39,6 @@ echo ""
 # Verify required dependencies
 aws --version > /dev/null 2>&1 || { echo "ERROR: 'aws' is missing. Aborting..."; exit 1; }
 npm --version > /dev/null 2>&1 || { echo "ERROR: 'npm' is missing. Aborting..."; exit 1; }
-tflocal --version > /dev/null 2>&1 || { echo "ERROR: 'tflocal' is missing. Aborting..."; exit 1; }
 terraform --version > /dev/null 2>&1 || { echo "ERROR: 'terraform' is missing. Aborting..."; exit 1; }
 
 # Resolve script directory and project root paths
@@ -51,9 +50,6 @@ ENVIRONMENT_CONFIG="$PROJECT_ROOT/ENVIRONMENT.config"
 FRONTEND_DIR="$PROJECT_ROOT/frontend"
 INFRA_DIR="$PROJECT_ROOT/infra"
 ENVIRONMENT=${1:-"aws"}
-
-# Select terraform command (terraform or tflocal)
-TF_CMD="terraform"
 
 # Set up PATH and AWS region
 export PATH="$HOME/.local/bin:$PATH"
@@ -76,24 +72,20 @@ if [ "$ENVIRONMENT" = "aws" ]; then
     fi
 else
     # Local development configuration
-    if command -v tflocal > /dev/null 2>&1; then
-        TF_CMD="tflocal"
-    else
-        # Fallback to terraform with local endpoint
-        export AWS_ENDPOINT_URL="http://localhost:4566"
-    fi
+    export AWS_ENDPOINT_URL="http://localhost:4566"
+    export AWS_ENDPOINT_URL_S3="http://s3.localhost.localstack.cloud:4566"
 
-    # Set dummy AWS credentials for local development
-    export AWS_ACCESS_KEY_ID=test
-    export AWS_SECRET_ACCESS_KEY=test
-    AWS_ENDPOINT="--endpoint-url=http://localhost:4566"
+    BUCKET_NAME="coding-workshop-tfstate-${PARTICIPANT_ID:-abcd1234}"
+    if ! aws s3 ls | grep -q "$BUCKET_NAME"; then
+        aws s3 mb "s3://$BUCKET_NAME"
+    fi
 fi
 
 # Change to infrastructure directory
 cd "$INFRA_DIR"
 
 # Retrieve S3 bucket name from Terraform outputs
-BUCKET_NAME=$($TF_CMD output -raw s3_bucket_name 2>/dev/null || echo "")
+BUCKET_NAME=$(terraform output -raw s3_bucket_name 2>/dev/null || echo "")
 echo "INFO: Target bucket - $BUCKET_NAME"
 
 # Verify S3 bucket exists (indicates backend infrastructure is deployed)
@@ -104,9 +96,9 @@ if [ -z "$BUCKET_NAME" ]; then
 fi
 
 # Retrieve API configuration from Terraform outputs
-API_BASE_URL=$($TF_CMD output -raw api_base_url 2>/dev/null || echo "")
+API_BASE_URL=$(terraform output -raw api_base_url 2>/dev/null || echo "")
 echo "INFO: API Base URL - $API_BASE_URL"
-API_ENDPOINTS=$($TF_CMD output -json api_endpoints 2>/dev/null || echo "{}")
+API_ENDPOINTS=$(terraform output -json api_endpoints 2>/dev/null || echo "{}")
 echo "INFO: API Endpoints - $API_ENDPOINTS"
 
 # Local Development: Skip frontend build (use start-dev.sh instead)
@@ -165,7 +157,7 @@ if [ "$ENVIRONMENT" = "aws" ]; then
     cd "$INFRA_DIR"
     
     # Retrieve CloudFront distribution ID from Terraform outputs
-    DISTRIBUTION_ID=$($TF_CMD output -raw cloudfront_distribution_id 2>/dev/null || echo "")
+    DISTRIBUTION_ID=$(terraform output -raw cloudfront_distribution_id 2>/dev/null || echo "")
     
     # Create cache invalidation for all files
     if [ -n "$DISTRIBUTION_ID" ]; then
@@ -180,7 +172,7 @@ echo "INFO: Frontend deployment complete!"
 
 # Display CloudFront URL
 cd "$INFRA_DIR"
-URL=$($TF_CMD output -raw website_url 2>/dev/null || echo "")
+URL=$(terraform output -raw website_url 2>/dev/null || echo "")
 
 if [ -n "$URL" ]; then
     echo ""

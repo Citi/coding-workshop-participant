@@ -18,7 +18,7 @@ if [ "$1" = "-h" ] || [ "$1" = "--help" ]; then
     echo "  -h, --help      Show this help message"
     echo ""
     echo "Requirements:"
-    echo "  - terraform or tflocal installed"
+    echo "  - terraform installed"
     echo "  - Backend infrastructure deployed"
     echo ""
     echo "Output:"

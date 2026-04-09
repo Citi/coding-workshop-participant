@@ -20,7 +20,6 @@ if [ "$1" = "-h" ] || [ "$1" = "--help" ]; then
     echo ""
     echo "Requirements:"
     echo "  - terraform installed"
-    echo "  - tflocal installed (for local development)"
     echo "  - ENVIRONMENT.config file (auto-created for AWS)"
     echo ""
     echo "Examples:"
@@ -40,7 +39,6 @@ export PATH="$HOME/.local/bin:$PATH"
 export AWS_REGION=${AWS_REGION:-us-east-1}
 
 # Verify required dependencies
-tflocal --version > /dev/null 2>&1 || { echo "ERROR: 'tflocal' is missing. Aborting..."; exit 1; }
 terraform --version > /dev/null 2>&1 || { echo "ERROR: 'terraform' is missing. Aborting..."; exit 1; }
 
 # Resolve script directory and project root paths

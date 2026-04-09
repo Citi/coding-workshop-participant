@@ -26,7 +26,6 @@ if [ "$1" = "-h" ] || [ "$1" = "--help" ]; then
     echo "  - mongod installed"
     echo "  - npm installed"
     echo "  - localstack installed"
-    echo "  - tflocal installed"
     exit 0
 fi
 
@@ -42,6 +41,10 @@ PROJECT_ROOT="$(cd $SCRIPT_DIR/.. > /dev/null 2>&1 || exit 1; pwd -P)"
 # Define project directories
 INFRA_DIR="$PROJECT_ROOT/infra"
 FRONTEND_DIR="$PROJECT_ROOT/frontend"
+
+# Ensure local development
+export AWS_ENDPOINT_URL="http://localhost:4566"
+export AWS_ENDPOINT_URL_S3="http://s3.localhost.localstack.cloud:4566"
 
 # ============================================================
 # STEP 1: Check and Start PostgreSQL
@@ -300,13 +303,6 @@ echo ""
 # ============================================================
 echo -e "[4/5] Checking Backend Infrastructure..."
 
-# Verify required tools
-if ! command -v tflocal &> /dev/null; then
-    echo -e "ERROR: tflocal is not installed"
-    echo "Install: pip install terraform-local"
-    exit 1
-fi
-
 # Detect MongoDB host for LocalStack Lambda functions
 if [[ "$OSTYPE" == "linux-gnu"* ]]; then
     export TF_VAR_mongodb_host="172.17.0.1"
@@ -327,9 +323,9 @@ rm -rf "$INFRA_DIR/builds"
 
 # Check if backend is deployed
 BACKEND_OK=false
-if tflocal output lambda_urls > /dev/null 2>&1; then
+if terraform output lambda_urls > /dev/null 2>&1; then
     # Backend is deployed, verify functions are accessible
-    LAMBDA_URLS=$(tflocal output -json lambda_urls 2>/dev/null | grep -o 'http://[^"]*' | head -1 || echo "")
+    LAMBDA_URLS=$(terraform output -json lambda_urls 2>/dev/null | grep -o 'http://[^"]*' | head -1 || echo "")
 
     if [ -n "$LAMBDA_URLS" ]; then
         # Test if at least one function responds
@@ -357,7 +353,7 @@ fi
 
 # Display Lambda URLs
 echo -e "  Lambda Function URLs:"
-tflocal output -json lambda_urls 2>/dev/null | grep -o 'http://[^"]*' | sed 's/^/    /' || echo "    (none)"
+terraform output -json lambda_urls 2>/dev/null | grep -o 'http://[^"]*' | sed 's/^/    /' || echo "    (none)"
 
 echo ""
 

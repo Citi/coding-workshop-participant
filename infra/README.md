@@ -41,13 +41,20 @@ To run your application locally:
 localstack start -d
 ```
 
+Make sure that AWS APIs are accessible locally:
+
+```sh
+export AWS_ENDPOINT_URL="http://localhost:4566"
+export AWS_ENDPOINT_URL_S3="http://s3.localhost.localstack.cloud:4566"
+```
+
 To deploy infrastructure locally:
 
 ```sh
 cd infra
 rm -rf .terraform*
-tflocal init -backend-config bucket=coding-workshop-us-east-1-abcd1234
-tflocal apply -var aws_app_code=abcd1234
+terraform init -backend-config bucket=coding-workshop-us-east-1-abcd1234
+terraform apply -var aws_app_code=abcd1234
 ```
 
 **Note:** Replace `abcd1234` from above with your participant id shared by workshop organizer(s).
@@ -55,7 +62,7 @@ tflocal apply -var aws_app_code=abcd1234
 After successful execution, view outputs:
 
 ```sh
-tflocal output
+terraform output
 ```
 
 ### Cloud Deployment
@@ -64,6 +71,13 @@ To setup participant environment:
 
 ```sh
 ./bin/setup-participant.sh
+```
+
+Make sure that AWS APIs are accessible remotely:
+
+```sh
+unset AWS_ENDPOINT_URL
+unset AWS_ENDPOINT_URL_S3
 ```
 
 To deploy your infrastructure to AWS:
