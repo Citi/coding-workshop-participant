@@ -328,6 +328,7 @@ else
 fi
 
 # Install pip requirements into each Python service directory for hot-reload
+shopt -s nullglob
 for req in "$PROJECT_ROOT"/backend/*/requirements.txt; do
     svc_dir="$(dirname "$req")"
     echo -e "  Installing pip requirements for $(basename "$svc_dir")..."
@@ -340,6 +341,7 @@ for pkg in "$PROJECT_ROOT"/backend/*/package.json; do
     echo -e "  Installing npm dependencies for $(basename "$svc_dir")..."
     npm install --prefix "$svc_dir" --silent 2>/dev/null || true
 done
+shopt -u nullglob
 
 # Change to infrastructure directory
 cd "$INFRA_DIR"

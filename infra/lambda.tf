@@ -77,7 +77,7 @@ resource "aws_sqs_queue" "this" {
 }
 
 resource "null_resource" "hot_reload" {
-  for_each = data.aws_caller_identity.this.id == "000000000000" ? local.function_names : tomap({})
+  for_each = {for k, v in local.function_names : k => v if data.aws_caller_identity.this.id == "000000000000"}
 
   triggers = {
     source_code_hash = module.lambda[each.key].lambda_function_source_code_hash

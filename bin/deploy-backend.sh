@@ -56,22 +56,19 @@ echo "INFO: Environment - $ENVIRONMENT"
 # Change to infrastructure directory
 cd "$INFRA_DIR"
 
-# Load participant configuration (provides PARTICIPANT_ID, TF_VAR_aws_app_code, etc.)
-if [ -f "$ENVIRONMENT_CONFIG" ]; then
-    echo "INFO: Loading participant environment configuration..."
-    source $ENVIRONMENT_CONFIG
-fi
-
 # AWS Deployment Configuration
 if [ "$ENVIRONMENT" = "aws" ]; then
     echo "INFO: Using AWS deployment (terraform)..."
 
     # Setup participant if config is missing
-    if [ -z "$PARTICIPANT_ID" ]; then
-        $SCRIPT_DIR/setup-participant.sh
-        if [ -f "$ENVIRONMENT_CONFIG" ]; then
-            source $ENVIRONMENT_CONFIG
-        fi
+    $SCRIPT_DIR/setup-participant.sh
+
+    # Load participant-specific configuration if available
+    if [ -f "$ENVIRONMENT_CONFIG" ]; then
+        echo "INFO: Loading participant environment configuration..."
+        source $ENVIRONMENT_CONFIG
+    else
+        echo "WARNING: $ENVIRONMENT_CONFIG is missing"
     fi
 else
     # Local development configuration — override credentials for LocalStack
