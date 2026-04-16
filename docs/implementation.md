@@ -85,7 +85,7 @@ Predefined environment variables are injected into each backend service automati
 PostgreSQL is the recommended database option, but we also added support for MongoDB which comes pre-installed locally, although not in the cloud. To enable the AWS DocumentDB (Mongo-compatible database), run the following commands:
 
 ```sh
-echo "export TF_VAR_aws_docdb_enabled=true" >> ~/.bashrc
+echo "export TF_VAR_aws_mongo_enabled=true" >> ~/.bashrc
 source ~/.bashrc
 ```
 

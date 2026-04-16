@@ -102,6 +102,7 @@ Installed tools:
 Services configured to start on boot:
   - Docker
   - LocalStack
+  - PostgreSQL
   - MongoDB
 
 Examples:
@@ -1414,6 +1415,8 @@ run_verification() {
     verify_tool "LocalStack" "localstack --version"
 
     # Database
+    verify_tool "PostgreSQL" "psql --version"
+    verify_tool "PostgreSQL pgAdmin" "pgAdmin"
     verify_tool "MongoDB" "mongod --version" "grep 'db version'"
     verify_dpkg "MongoDB Compass" "mongodb-compass"
 

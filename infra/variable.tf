@@ -22,20 +22,26 @@ variable "aws_vpc_id" {
   default     = null
 }
 
-variable "aws_docdb_enabled" {
-  description = "Enable or disable MongoDB. Set to 'true' to enable it."
+variable "aws_postgres_enabled" {
+  description = "Enable or disable PostgreSQL (AWS Aurora). Default: true (set to 'false' to disable it)."
+  type        = bool
+  default     = true
+}
+
+variable "aws_postgres_host" {
+  description = "PostgreSQL host for LocalStack. Default: 'host.docker.internal' (set to '172.17.0.1' on Linux)."
+  type        = string
+  default     = null
+}
+
+variable "aws_mongo_enabled" {
+  description = "Enable or disable MongoDB (AWS DocumentDB). Default: false (set to 'true' to enable it)."
   type        = bool
   default     = false
 }
 
 variable "aws_mongo_host" {
-  description = "MongoDB host for LocalStack. Defaults to 'host.docker.internal' (on Linux, set to '172.17.0.1')."
-  type        = string
-  default     = null
-}
-
-variable "aws_postgres_host" {
-  description = "PostgreSQL host for LocalStack. Defaults to 'host.docker.internal' (on Linux, set to '172.17.0.1')."
+  description = "MongoDB host for LocalStack. Default: 'host.docker.internal' (set to '172.17.0.1' on Linux)."
   type        = string
   default     = null
 }

@@ -380,7 +380,7 @@ fi
 
 # Ensure terraform is initialized against the correct LocalStack backend
 terraform init -reconfigure \
-    -backend-config="bucket=coding-workshop-tfstate-${PARTICIPANT_ID:-abcd1234}" \
+    -backend-config="bucket=$BUCKET_NAME" \
     -backend-config="region=${AWS_REGION:-us-east-1}" \
     > /tmp/tf-init.log 2>&1 || {
     echo -e "  ✗ Terraform init failed:"
