@@ -38,80 +38,33 @@ coding-workshop-participant/
 To run your application locally:
 
 ```sh
-localstack start -d
+../bin/start-dev.sh
 ```
 
-Make sure that AWS APIs are accessible locally:
-
-```sh
-export AWS_ENDPOINT_URL="http://localhost:4566"
-export AWS_ENDPOINT_URL_S3="http://s3.localhost.localstack.cloud:4566"
-```
-
-To deploy infrastructure locally:
-
-```sh
-cd infra
-rm -rf .terraform*
-terraform init -backend-config bucket=coding-workshop-us-east-1-abcd1234
-terraform apply -var aws_app_code=abcd1234
-```
-
-**Note:** Replace `abcd1234` from above with your participant id shared by workshop organizer(s).
-
-After successful execution, view outputs:
-
-```sh
-terraform output
-```
+To view your application, open the browser and navigate to `http://localhost:3000`.
 
 ### Cloud Deployment
 
-To setup participant environment:
+To deploy your backend to AWS:
 
 ```sh
-./bin/setup-participant.sh
+../bin/deploy-backend.sh
 ```
 
-Make sure that AWS APIs are accessible remotely:
+To deploy your frontend to AWS:
 
 ```sh
-unset AWS_ENDPOINT_URL
-unset AWS_ENDPOINT_URL_S3
+../bin/deploy-frontend.sh
 ```
 
-To deploy your infrastructure to AWS:
-
-```sh
-cd infra
-rm -rf .terraform*
-terraform init -backend-config bucket=coding-workshop-us-east-1-abcd1234
-terraform apply -var aws_app_code=abcd1234
-```
-
-**Note:** Replace `abcd1234` from above with your participant id shared by workshop organizer(s).
-
-After successful execution, view outputs:
-
-```sh
-terraform output
-```
-
-### Outputs
-
-| Output          | Description   | Local                                          | Cloud                                           |
-| --------------- | ------------- | ---------------------------------------------- | ----------------------------------------------- |
-| `api_base_url`  | API Base URL  | *(empty)*                                      | `https://***.cloudfront.net`                    |
-| `api_endpoints` | API Endpoints | `{"service-name": "http://***.lambda-url..."}` | `{"service-name": "/api/service-name"}`         |
-| `lambda_urls`   | Backend URLs  | `{"service-name": "http://***.lambda-url..."}` | `{"service-name": "https://***.lambda-url..."}` |
-| `website_url`   | Frontend URL  | `http://***.s3-website...`                     | `https://***.cloudfront.net`                    |
+To view your application, open the browser and navigate to CloudFront URL.
 
 ## Clean Up
 
 To remove all deployed resources:
 
 ```sh
-./bin/clean-up.sh
+../bin/cleanup-environment.sh
 ```
 
 **Warning**: This removes all infra resources. Cannot be undone.

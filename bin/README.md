@@ -240,7 +240,7 @@ Sets up the complete local development environment on Ubuntu 22.04.
 * Dry run mode (`-n`) shows planned actions without making changes
 * dnsmasq (`-d`) is optional - enables DNS resolution for `.local` domains
 
-### `clean-up.sh`
+### `cleanup-environment.sh`
 
 Destroys all infrastructure resources created by the deployment scripts.
 
@@ -268,5 +268,5 @@ Destroys all infrastructure resources created by the deployment scripts.
 **Usage**:
 
 ```sh
-./bin/clean-up.sh
+./bin/cleanup-environment.sh
 ```

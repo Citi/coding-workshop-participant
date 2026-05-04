@@ -147,7 +147,7 @@ Replace `{{function-name}}` with corresponding service name
 To remove all deployed resources (including backend):
 
 ```sh
-./bin/clean-up.sh
+./bin/cleanup-environment.sh
 ```
 
 This will remove all AWS resources such as Lambda functions, CloudFront distributions, and much more.

@@ -57,7 +57,7 @@ To view your application, open the browser and navigate to CloudFront URL.
 To remove all deployed resources (including frontend):
 
 ```sh
-./bin/clean-up.sh
+./bin/cleanup-environment.sh
 ```
 
 **Warning**: This removes all infra resources. Cannot be undone.

@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
-# Script: Clean Up Deployment
+# Script: Clean Up Environment
 # Purpose: Destroy backend infrastructure for the coding workshop
-# Usage: ./clean-up.sh
+# Usage: ./cleanup-environment.sh
 
 set -e
 

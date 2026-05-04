@@ -78,51 +78,51 @@ As such, please allow some time for the script to finish installing everything b
 
 ```
 coding-workshop-participant/
-├── backend/                 # Backend services
-│   ├── _examples/             # Hello world examples
-│   │   ├── java-service/        # Backend service example for Java developers
-│   │   ├── nodejs-service/      # Backend service example for NodeJS developers
-│   │   └── python-service/      # Backend service example for Python developers
-│   └── README.md              # Backend guide
-├── bin/                     # Shell scripts
-│   ├── clean-up.sh            # Clean up deployment script
-│   ├── deploy-backend.sh      # Backend infrastructure deployment script
-│   ├── deploy-frontend.sh     # Frontend application deployment script
-│   ├── generate-env.sh        # Generate frontend environment script
-│   ├── proxy-server.js        # CORS-enabled proxy server script
-│   ├── setup-environment.sh   # Setup environment script
-│   ├── setup-participant.sh   # Setup participant script
-│   ├── start-dev.sh           # Local environment startup script
-│   └── README.md              # Shell scripts guide
-├── docs/                    # Documentation
-│   ├── evaluation.md          # Evaluation guide
-│   ├── implementation.md      # Implementation guide
-│   ├── testing.md             # Testing guide
-│   ├── validation.md          # Validation guide (YOU ARE HERE)
-│   └── README.md              # Main guide
-├── frontend/                # Frontend user interfaces
-│   ├── public/                # Public assets
-│   ├── src/                   # Source code
-│   ├── .env.sample            # React environment variables
-│   ├── eslint.config.js       # ESLint JS tool configuration
-│   ├── index.html             # Landing page
-│   ├── package.json           # App metadata with dependencies
-│   ├── vite.config.js         # Vite build tool configuration
-│   └── README.md              # Frontend guide
-└── infra/                   # Terraform infrastructure
-    ├── cloudfront.tf          # CloudFront distribution
-    ├── data.tf                # Data sources
-    ├── documentdb.tf          # DocumentDB serverless cluster
-    ├── lambda.tf              # Lambda functions
-    ├── locals.tf              # Local values
-    ├── main.tf                # Main resources
-    ├── output.tf              # Output values
-    ├── policy.tftpl           # IAM policy template
-    ├── provider.tf            # Provider configurations
-    ├── rds.tf                 # Aurora serverless cluster
-    ├── s3.tf                  # S3 bucket
-    ├── variable.tf            # Input variables
-    └── README.md              # Infrastructure guide
+├── backend/                    # Backend services
+│   ├── _examples/                # Hello world examples
+│   │   ├── java-service/           # Backend service example for Java developers
+│   │   ├── nodejs-service/         # Backend service example for NodeJS developers
+│   │   └── python-service/         # Backend service example for Python developers
+│   └── README.md                 # Backend guide
+├── bin/                        # Shell scripts
+│   ├── cleanup-environment.sh    # Clean up environment script
+│   ├── deploy-backend.sh         # Backend infrastructure deployment script
+│   ├── deploy-frontend.sh        # Frontend application deployment script
+│   ├── generate-env.sh           # Generate frontend environment script
+│   ├── proxy-server.js           # CORS-enabled proxy server script
+│   ├── setup-environment.sh      # Setup environment script
+│   ├── setup-participant.sh      # Setup participant script
+│   ├── start-dev.sh              # Local environment startup script
+│   └── README.md                 # Shell scripts guide
+├── docs/                       # Documentation
+│   ├── evaluation.md             # Evaluation guide
+│   ├── implementation.md         # Implementation guide
+│   ├── testing.md                # Testing guide
+│   ├── validation.md             # Validation guide (YOU ARE HERE)
+│   └── README.md                 # Main guide
+├── frontend/                   # Frontend user interfaces
+│   ├── public/                   # Public assets
+│   ├── src/                      # Source code
+│   ├── .env.sample               # React environment variables
+│   ├── eslint.config.js          # ESLint JS tool configuration
+│   ├── index.html                # Landing page
+│   ├── package.json              # App metadata with dependencies
+│   ├── vite.config.js            # Vite build tool configuration
+│   └── README.md                 # Frontend guide
+└── infra/                      # Terraform infrastructure
+    ├── cloudfront.tf             # CloudFront distribution
+    ├── data.tf                   # Data sources
+    ├── documentdb.tf             # DocumentDB serverless cluster
+    ├── lambda.tf                 # Lambda functions
+    ├── locals.tf                 # Local values
+    ├── main.tf                   # Main resources
+    ├── output.tf                 # Output values
+    ├── policy.tftpl              # IAM policy template
+    ├── provider.tf               # Provider configurations
+    ├── rds.tf                    # Aurora serverless cluster
+    ├── s3.tf                     # S3 bucket
+    ├── variable.tf               # Input variables
+    └── README.md                 # Infrastructure guide
 ```
 
 ## Configuring Your Dev Tools
