@@ -75,7 +75,7 @@ locals {
   env_vars = {
     APP_ID        = local.app_id
     APP_NAME      = format("%s-%s", var.aws_project, local.app_id)
-    APP_ROLE      = format("arn:%s:iam::%s:role/%s-assume-%s-%s", data.aws_partition.this.partition, data.aws_caller_identity.this.account_id, var.aws_project, data.aws_region.this, local.app_id)
+    APP_ROLE      = format("arn:%s:iam::%s:role/%s-assume-%s-%s", data.aws_partition.this.partition, data.aws_caller_identity.this.account_id, var.aws_project, data.aws_region.this.region, local.app_id)
     APP_REGION    = data.aws_region.this.region
     IS_LOCAL      = data.aws_caller_identity.this.id == "000000000000" ? "true" : "false"
     POSTGRES_HOST = data.aws_caller_identity.this.id == "000000000000" ? coalesce(try(trimspace(var.aws_postgres_host), ""), "172.17.0.1") : try(element(aws_rds_cluster.this.*.endpoint, 0), "")
