@@ -117,10 +117,6 @@ if [ -z "$AWS_ACCOUNT_ID" ]; then
     exit 1
 fi
 
-# Derive participant-specific AWS resource names
-AWS_IAM_ROLE="arn:aws:iam::${AWS_ACCOUNT_ID}:role/${PROJECT_NAME}-assume-${PARTICIPANT_ID}"
-AWS_S3_BUCKET="${PROJECT_NAME}-tfstate-${PARTICIPANT_ID}"
-
 echo "  ✓ AWS profile configured"
 echo ""
 
@@ -134,8 +130,7 @@ export AWS_ACCESS_KEY_ID="$AWS_ACCESS_KEY_ID"
 export AWS_SECRET_ACCESS_KEY="$AWS_SECRET_ACCESS_KEY"
 export AWS_SESSION_TOKEN="$AWS_SESSION_TOKEN"
 export AWS_ACCOUNT_ID="$AWS_ACCOUNT_ID"
-export AWS_IAM_ROLE="$AWS_IAM_ROLE"
-export AWS_S3_BUCKET="$AWS_S3_BUCKET"
+export AWS_S3_BUCKET="$PROJECT_NAME-tfstate-$PARTICIPANT_ID"
 export PARTICIPANT_ID="$PARTICIPANT_ID"
 export PARTICIPANT_URL="$PARTICIPANT_URL"
 export PROJECT_NAME="$PROJECT_NAME"
