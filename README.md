@@ -84,7 +84,7 @@ See the [LICENSE](./LICENSE) resource for more details.
 ## Roadmap
 
 See the
-[open issues](https://github.com/eistrati/coding-workshop-participant/issues)
+[open issues](https://github.com/citi/coding-workshop-participant/issues)
 for a list of proposed roadmap features (and known issues).
 
 ## Security

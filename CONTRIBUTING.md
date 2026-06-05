@@ -1,76 +1,87 @@
-# Contributing Guidelines
+# Contributing to Citi
 
-Thank you for your interest in contributing to our project. Whether it's a bug
-report, new feature, correction, or additional documentation, we greatly value
-feedback and contributions from our community.
+Welcome to Citi's Open Source contribution guidelines. We aim to provide simple and easy-to-follow documentation, but suggestions and improvements are always welcome.
 
-Please read through this document before submitting any issues or pull requests
-to ensure we have all the necessary information to effectively respond to your
-bug report or contribution.
+## ⚡ Get started
 
-## Reporting Bugs/Feature Requests
+#### Create an issue
 
-We welcome you to use the GitHub issue tracker to report bugs or suggest
-features.
+<img src="https://img.shields.io/badge/-coming%20soon-green">
 
-When filing an issue, please check existing open, or recently closed, issues
-to make sure somebody else hasn't already reported the issue. Please try to
-include as much information as you can. Details like these are incredibly
-useful:
+<br />
+<br />
 
-* A reproducible test case or series of steps
-* The version of our code being used
-* Any modifications you've made relevant to the bug
-* Anything unusual about your environment or deployment
+<img align="right" width="300" src="https://firstcontributions.github.io/assets/Readme/fork.png" alt="fork this repository" />
 
-## Contributing via Pull Requests
+#### Fork the repository
 
-Contributions via pull requests are much appreciated. Before sending us a pull
-request, please ensure that:
+Click on the **fork** button at the top of the page. This will create a copy of this repository under your GitHub account.
 
-1. You are working against the latest source on the *main* branch.
-2. You check existing open, and recently merged, pull requests to make sure
-someone else hasn't addressed the problem already.
-3. You open an issue to discuss any significant work - we would hate for your
-time to be wasted.
+<br />
+<br />
 
-To send us a pull request, please:
+#### Clone the repository
 
-1. Fork the repository.
-2. Modify the source; please focus on the specific change you are contributing.
-If you also reformat all the code, it will be hard for us to focus on your
-change.
-3. Ensure local tests pass.
-4. Commit to your fork using clear commit messages.
-5. Send us a pull request, answering any default questions in the pull request
-interface.
-6. Pay attention to any automated CI failures reported in the pull request, and
-stay involved in the conversation.
+<img align="right" width="300" src="https://firstcontributions.github.io/assets/Readme/copy-to-clipboard.png" alt="copy URL to clipboard" />
 
-GitHub provides additional document on
-[forking a repository](https://help.github.com/articles/fork-a-repo/) and
-[creating a pull request](https://help.github.com/articles/creating-a-pull-request/).
+**Clone** the repository to your machine. Go to the repository via your GitHub account and click on the **Code** button.
 
-## Finding contributions to work on
+Run the following command in a terminal/command line:
 
-Looking at the existing issues is a great way to find something to contribute
-on. As our projects, by default, use the default GitHub issue labels
-(enhancement/bug/duplicate/help wanted/invalid/question/wontfix), looking at
-any 'help wanted' issues is a great place to start.
+```bash
+$ git clone https://github.com/YOUR_GITHUB_USRERNAME/REPO_NAME.git
+```
 
-## Code of Conduct
+<br />
+<br />
 
-This project has adopted the
-[Contributor Covenant Code of Conduct](https://www.contributor-covenant.org/).
-For more information see the [Code of Conduct FAQ](./CODE_OF_CONDUCT.md).
+#### Make your changes, commit & push
 
-## Security issue notifications
+<img src="https://img.shields.io/badge/-coming%20soon-green">
 
-If you discover a potential security issue in this project we ask that you
-notify [@eistrati](http://github.com/eistrati).
-Please do **not** create a public github issue.
+#### Open a pull request
 
-## Licensing
+<img src="https://img.shields.io/badge/-coming%20soon-green">
 
-See the [LICENSE](./LICENSE) file for our project's licensing. We will ask you
-to confirm the licensing of your contribution.
+#### 🎉 Congratulations
+
+<img src="https://img.shields.io/badge/-coming%20soon-green">
+
+##  ⚖️ Code of Conduct
+
+Citi has adopted a [Code of Conduct](https://github.com/Citi/.github/blob/main/CODE_OF_CONDUCT.md) adapted from the [Contributor Covenant](https://www.contributor-covenant.org/) (v2.0). To report any inappropriate behavior or for any questions related to our Code of Conduct, please contact opensource@citi.com.
+
+##  ✍️ DCO (Developer Certificate of Origin)
+
+Open source projects are commonly distributed under an [open source license](https://en.wikipedia.org/wiki/Open-source_license). Any contribution to a project with a license is subsequently licensed under the same terms. Typically, you can find the license for a project at the root of the repository under `LICENSE` or `LICENSE.md`.
+
+To accept the terms of a project's license and for us to accept your contribution, you must agree to the [Developer Certificate of Origin](/DCO.md) on *each contribution* (referred to as per-commit sign-off).
+
+To agree to the DCO, simply add the `-s` flag each time you create a commit:
+
+```bash
+$ git commit -s ...
+```
+To sign-off historical commits missing a signature, you can run:
+
+```bash
+$ git rebase --signoff HEAD~4 // ℹ️ Add sign-off on the last 4 commits...
+```
+
+You can verify that you have successfully signed a commit:
+
+```bash
+$ git log
+
+commit 816e57945c8f4f15b0bbd27e088b7d2bd74df34b
+Author: Jane Doe <jane.doe@example.com>
+Date:   Mon Mar 17 21:52:11 2008 -0700
+
+Signed-off-by: Jane Doe <jane.doe@example.com> // Waheey! 🎉 You agreed to the DCO...
+```
+
+## 🤝 Responsible Vulnerability Disclosure
+
+If you discover a vulnerability in a Citi repository, please e-mail opensource@citi.com.
+
+Thank you for improving the security of Citi and open source!

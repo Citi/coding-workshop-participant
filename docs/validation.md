@@ -23,7 +23,7 @@ If you believe any of the instructions below do not work as we intended, please 
 Login to your VDI desktop and open a new Terminal from the applications menu (9-dot icon at the bottom of your desktop) and clone this repo with
 
 ```sh
-git clone https://github.com/eistrati/coding-workshop-participant
+git clone https://github.com/citi/coding-workshop-participant
 ```
 
 Change the active path to the project's directory.
