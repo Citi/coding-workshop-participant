@@ -1,35 +1,43 @@
-import { useState } from 'react'
-import reactLogo from '/react.svg'
-import viteLogo from '/vite.svg'
-import './App.css'
+import { useEffect } from "react";
+
+import "./App.css";
+
+import Navbar from "./components/navbar";
+import DeliverablesPage from "./pages/deliverablesPage";
+import ProjectsPage from "./pages/projectsPage";
+import PeoplePage from "./pages/peoplePage";
+import { initializeSchema } from "./services/schemaService";
+
+import { Routes, Route } from "react-router-dom";
 
 function App() {
-  const [count, setCount] = useState(0)
+  useEffect(() => {
+    async function bootstrapSchema() {
+      try {
+        await initializeSchema();
+      } catch (error) {
+        console.error(
+          "Failed to initialize database schema:",
+          error
+        );
+      }
+    }
+
+    bootstrapSchema();
+  }, []);
 
   return (
     <>
-      <div>
-        <a href="https://vite.dev" target="_blank">
-          <img src={viteLogo} className="logo" alt="Vite logo" />
-        </a>
-        <a href="https://react.dev" target="_blank">
-          <img src={reactLogo} className="logo react" alt="React logo" />
-        </a>
-      </div>
-      <h1>Vite + React</h1>
-      <div className="card">
-        <button onClick={() => setCount((count) => count + 1)}>
-          count is {count}
-        </button>
-        <p>
-          Edit <code>src/App.jsx</code> and save to test HMR
-        </p>
-      </div>
-      <p className="read-the-docs">
-        Click on the Vite and React logos to learn more
-      </p>
+      <Navbar />
+      <Routes>
+        <Route path="/" element={<ProjectsPage />} />
+        <Route path="/projects" element={<ProjectsPage />} />
+        <Route path="/people" element={<PeoplePage />} />
+        <Route path="/deliverables" element={<DeliverablesPage />} />
+      </Routes>
     </>
-  )
+  );
 }
 
-export default App
+
+export default App;

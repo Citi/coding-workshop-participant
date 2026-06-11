@@ -1,0 +1,178 @@
+{
+    "Functions": [
+        {
+            "FunctionName": "coding-workshop-resource-service-050ad733",
+            "FunctionArn": "arn:aws:lambda:us-east-1:000000000000:function:coding-workshop-resource-service-050ad733",
+            "Runtime": "python3.11",
+            "Role": "arn:aws:iam::000000000000:role/service-role/coding-workshop-resource-service-050ad733",
+            "Handler": "function.handler",
+            "CodeSize": 0,
+            "Description": "",
+            "Timeout": 300,
+            "MemorySize": 128,
+            "LastModified": "2026-06-10T13:06:01.651256+0000",
+            "CodeSha256": "hot-reloading-hash-not-available",
+            "Version": "$LATEST",
+            "VpcConfig": {
+                "SubnetIds": [],
+                "SecurityGroupIds": [],
+                "VpcId": ""
+            },
+            "DeadLetterConfig": {
+                "TargetArn": "arn:aws:sqs:us-east-1:000000000000:coding-workshop-resource-service-dlq-050ad733"
+            },
+            "Environment": {
+                "Variables": {
+                    "POSTGRES_PASS": "postgres123",
+                    "MONGO_HOST": "172.17.0.1",
+                    "MONGO_NAME": "mongo",
+                    "POSTGRES_PORT": "5432",
+                    "APP_NAME": "coding-workshop-050ad733",
+                    "POSTGRES_HOST": "172.17.0.1",
+                    "POSTGRES_USER": "postgres",
+                    "APP_REGION": "us-east-1",
+                    "IS_LOCAL": "true",
+                    "APP_ID": "050ad733",
+                    "MONGO_PORT": "27017",
+                    "APP_ROLE": "arn:aws:iam::000000000000:role/coding-workshop-assume-us-east-1-050ad733",
+                    "POSTGRES_NAME": "postgres"
+                }
+            },
+            "TracingConfig": {
+                "Mode": "PassThrough"
+            },
+            "RevisionId": "457e7a52-9b4f-43ac-a6f2-42a2776fc1d5",
+            "PackageType": "Zip",
+            "Architectures": [
+                "x86_64"
+            ],
+            "EphemeralStorage": {
+                "Size": 512
+            },
+            "SnapStart": {
+                "ApplyOn": "None",
+                "OptimizationStatus": "Off"
+            },
+            "LoggingConfig": {
+                "LogFormat": "Text",
+                "LogGroup": "/aws/lambda/coding-workshop-resource-service-050ad733"
+            }
+        },
+        {
+            "FunctionName": "coding-workshop-projects-service-050ad733",
+            "FunctionArn": "arn:aws:lambda:us-east-1:000000000000:function:coding-workshop-projects-service-050ad733",
+            "Runtime": "python3.11",
+            "Role": "arn:aws:iam::000000000000:role/service-role/coding-workshop-projects-service-050ad733",
+            "Handler": "function.handler",
+            "CodeSize": 0,
+            "Description": "",
+            "Timeout": 300,
+            "MemorySize": 128,
+            "LastModified": "2026-06-10T13:06:01.709249+0000",
+            "CodeSha256": "hot-reloading-hash-not-available",
+            "Version": "$LATEST",
+            "VpcConfig": {
+                "SubnetIds": [],
+                "SecurityGroupIds": [],
+                "VpcId": ""
+            },
+            "DeadLetterConfig": {
+                "TargetArn": "arn:aws:sqs:us-east-1:000000000000:coding-workshop-projects-service-dlq-050ad733"
+            },
+            "Environment": {
+                "Variables": {
+                    "POSTGRES_NAME": "postgres",
+                    "APP_ROLE": "arn:aws:iam::000000000000:role/coding-workshop-assume-us-east-1-050ad733",
+                    "IS_LOCAL": "true",
+                    "APP_REGION": "us-east-1",
+                    "POSTGRES_PASS": "postgres123",
+                    "MONGO_HOST": "172.17.0.1",
+                    "APP_NAME": "coding-workshop-050ad733",
+                    "MONGO_NAME": "mongo",
+                    "POSTGRES_HOST": "172.17.0.1",
+                    "POSTGRES_PORT": "5432",
+                    "MONGO_PORT": "27017",
+                    "APP_ID": "050ad733",
+                    "POSTGRES_USER": "postgres"
+                }
+            },
+            "TracingConfig": {
+                "Mode": "PassThrough"
+            },
+            "RevisionId": "97536c6c-c315-48bb-985d-6d2453437209",
+            "PackageType": "Zip",
+            "Architectures": [
+                "x86_64"
+            ],
+            "EphemeralStorage": {
+                "Size": 512
+            },
+            "SnapStart": {
+                "ApplyOn": "None",
+                "OptimizationStatus": "Off"
+            },
+            "LoggingConfig": {
+                "LogFormat": "Text",
+                "LogGroup": "/aws/lambda/coding-workshop-projects-service-050ad733"
+            }
+        },
+        {
+            "FunctionName": "coding-workshop-people-service-050ad733",
+            "FunctionArn": "arn:aws:lambda:us-east-1:000000000000:function:coding-workshop-people-service-050ad733",
+            "Runtime": "python3.11",
+            "Role": "arn:aws:iam::000000000000:role/service-role/coding-workshop-people-service-050ad733",
+            "Handler": "function.handler",
+            "CodeSize": 0,
+            "Description": "",
+            "Timeout": 300,
+            "MemorySize": 128,
+            "LastModified": "2026-06-10T13:06:01.452400+0000",
+            "CodeSha256": "hot-reloading-hash-not-available",
+            "Version": "$LATEST",
+            "VpcConfig": {
+                "SubnetIds": [],
+                "SecurityGroupIds": [],
+                "VpcId": ""
+            },
+            "DeadLetterConfig": {
+                "TargetArn": "arn:aws:sqs:us-east-1:000000000000:coding-workshop-people-service-dlq-050ad733"
+            },
+            "Environment": {
+                "Variables": {
+                    "APP_ROLE": "arn:aws:iam::000000000000:role/coding-workshop-assume-us-east-1-050ad733",
+                    "MONGO_NAME": "mongo",
+                    "IS_LOCAL": "true",
+                    "APP_REGION": "us-east-1",
+                    "APP_ID": "050ad733",
+                    "POSTGRES_PASS": "postgres123",
+                    "POSTGRES_NAME": "postgres",
+                    "MONGO_PORT": "27017",
+                    "POSTGRES_PORT": "5432",
+                    "POSTGRES_HOST": "172.17.0.1",
+                    "MONGO_HOST": "172.17.0.1",
+                    "APP_NAME": "coding-workshop-050ad733",
+                    "POSTGRES_USER": "postgres"
+                }
+            },
+            "TracingConfig": {
+                "Mode": "PassThrough"
+            },
+            "RevisionId": "b609b260-f66e-4c44-a933-4ea8c6d8f732",
+            "PackageType": "Zip",
+            "Architectures": [
+                "x86_64"
+            ],
+            "EphemeralStorage": {
+                "Size": 512
+            },
+            "SnapStart": {
+                "ApplyOn": "None",
+                "OptimizationStatus": "Off"
+            },
+            "LoggingConfig": {
+                "LogFormat": "Text",
+                "LogGroup": "/aws/lambda/coding-workshop-people-service-050ad733"
+            }
+        }
+    ]
+}

@@ -1,0 +1,30 @@
+{
+  "version": "2.0",
+  "routeKey": "$default",
+  "rawPath": "/api/people-service",
+  "rawQueryString": "",
+  "headers": {
+    "accept": "*/*",
+    "content-type": "application/json",
+    "host": "localhost"
+  },
+  "requestContext": {
+    "accountId": "local",
+    "apiId": "local",
+    "domainName": "localhost",
+    "domainPrefix": "local",
+    "http": {
+      "method": "GET",
+      "path": "/",
+      "protocol": "HTTP/1.1",
+      "sourceIp": "127.0.0.1",
+      "userAgent": "curl"
+    },
+    "requestId": "test-request",
+    "routeKey": "$default",
+    "stage": "$default",
+    "time": "09/Jun/2026:00:00:00 +0000",
+    "timeEpoch": 1710000000000
+  },
+  "isBase64Encoded": false
+}

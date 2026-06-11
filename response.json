@@ -1,0 +1,1 @@
+{"errorMessage": "'requestContext'", "errorType": "KeyError", "requestId": "093d51dd-42f1-4c01-a10f-bddb2ca6b189", "stackTrace": ["  File \"/var/task/function.py\", line 8, in handler\n    if event[\"requestContext\"][\"http\"][\"method\"] == \"GET\":\n"]}
