@@ -62,6 +62,6 @@ else
 fi
 
 # Clean up infrastructure
-cd $INFRA_DIR
-terraform init -reconfigure -backend-config="bucket=$AWS_S3_BUCKET"
-terraform destroy -auto-approve
+#cd $INFRA_DIR
+#terraform init -reconfigure -backend-config="bucket=$AWS_S3_BUCKET"
+#terraform destroy -auto-approve
