@@ -48,7 +48,7 @@ if [ -f "$ENVIRONMENT_CONFIG" ]; then
     echo "INFO: Loading participant environment configuration..."
     source $ENVIRONMENT_CONFIG
 else
-    echo "WARNING: $ENVIRONMENT_CONFIG is missing"
+    echo "WARN: $ENVIRONMENT_CONFIG is missing"
 fi
 
 # Backup everything under PROJECT_ROOT
@@ -58,7 +58,7 @@ if [ -n "$AWS_S3_BUCKET" ] && [ -z "$CODEBUILD_BUILD_ID" ]; then
     zip -r $BACKUP_FILE . -x ".git*" "node_modules*" "**/node_modules*" ".venv*" "**/.venv*" "*py*cache*" "**/*py*cache*" "**/.terraform*" "**/builds*" "*.zip"
     aws s3 mv $BACKUP_FILE s3://$AWS_S3_BUCKET/backup/backup-$PARTICIPANT_ID.zip
 else
-    echo "WARNING: AWS_S3_BUCKET not set, skipping backup"
+    echo "WARN: AWS_S3_BUCKET not set, skipping backup"
 fi
 
 # Clean up infrastructure

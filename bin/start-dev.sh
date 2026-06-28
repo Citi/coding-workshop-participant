@@ -270,8 +270,8 @@ if [ "$LOCALSTACK_OK" = false ]; then
     # Check if LocalStack docker container is already running
     if docker ps | grep -q localstack-main; then
         echo -e "  ⚠ Stopping existing LocalStack container..."
-        localstack stop || echo "WARNING: localstack stop didn't work"
-        docker stop localstack-main || echo "WARNING: docker stop localstack-main didn't work"
+        localstack stop || echo "WARN: localstack stop didn't work"
+        docker stop localstack-main || echo "WARN: docker stop localstack-main didn't work"
         sleep 10
     fi
 
@@ -490,7 +490,7 @@ echo -e "  Generating frontend environment configuration..."
 
 # Restart proxy so it picks up the newly generated .env.local
 if [ -f /tmp/proxy-server.pid ]; then
-    kill "$(cat /tmp/proxy-server.pid)" || echo "WARNING: no process found"
+    kill "$(cat /tmp/proxy-server.pid)" || echo "WARN: no process found"
     rm -f /tmp/proxy-server.pid
 elif lsof -iTCP:3001 -sTCP:LISTEN > /dev/null 2>&1; then
     lsof -ti:3001 | xargs kill 2>/dev/null

@@ -62,7 +62,7 @@ deploy code:
 * Version Control: Git, GitHub
 * Infrastructure: Terraform
 * Deployment Mode: Shell Scripts
-* Deployment Target: AWS Serverless (e.g., S3, CloudFront, Lambda, DocumentDB)
+* Deployment Target: AWS Serverless (e.g., S3, CloudFront, Lambda, RDS)
 
 ### Expectations: Value-Based Outcomes
 

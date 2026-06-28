@@ -68,7 +68,7 @@ if [ "$ENVIRONMENT" = "aws" ]; then
         echo "INFO: Loading participant environment configuration..."
         source $ENVIRONMENT_CONFIG
     else
-        echo "WARNING: $ENVIRONMENT_CONFIG is missing"
+        echo "WARN: $ENVIRONMENT_CONFIG is missing"
     fi
 else
     # Local development configuration

@@ -77,7 +77,7 @@ ALL_OUTPUTS=$(terraform output -json 2>/dev/null || echo "{}")
 API_BASE_URL=$(echo "$ALL_OUTPUTS" | grep -o '"api_base_url":{[^}]*}' | grep -o '"value":"[^"]*"' | cut -d'"' -f4 || echo "")
 
 if [ -z "$ALL_OUTPUTS" ] || [ "$ALL_OUTPUTS" = "{}" ]; then
-    echo "WARNING: Could not get outputs from Terraform"
+    echo "WARN: Could not get outputs from Terraform"
     echo "Make sure infrastructure is deployed first with: ./bin/deploy-backend.sh"
     exit 1
 fi

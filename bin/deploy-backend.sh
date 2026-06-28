@@ -68,7 +68,7 @@ if [ "$ENVIRONMENT" = "aws" ]; then
         echo "INFO: Loading participant environment configuration..."
         source $ENVIRONMENT_CONFIG
     else
-        echo "WARNING: $ENVIRONMENT_CONFIG is missing"
+        echo "WARN: $ENVIRONMENT_CONFIG is missing"
     fi
 else
     # Local development configuration — override credentials for LocalStack
@@ -90,7 +90,7 @@ if [ -n "$PARTICIPANT_ID" ]; then
     echo "INFO: Using custom backend configuration..."
     terraform init -reconfigure -backend-config="bucket=coding-workshop-tfstate-${PARTICIPANT_ID:-abcd1234}" -backend-config="region=${AWS_REGION:-us-east-1}"
 else
-    echo "WARNING: No backend.config found. Using default backend configuration."
+    echo "WARN: No backend.config found. Using default backend configuration."
     echo "INFO: For multi-participant workshops, run: ./bin/setup-participant.sh"
     terraform init -reconfigure
 fi
