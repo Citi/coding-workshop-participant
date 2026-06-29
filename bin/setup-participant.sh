@@ -120,6 +120,14 @@ fi
 echo "  ✓ AWS profile configured"
 echo ""
 
+############################################################
+# Configure SSH
+############################################################
+
+"$SCRIPT_DIR/configure-ssh.sh"
+
+echo ""
+
 # Create environment configuration file for deployment scripts
 ENVIRONMENT_CONFIG="$PROJECT_ROOT/ENVIRONMENT.config"
 cat > "$ENVIRONMENT_CONFIG" <<EOF
