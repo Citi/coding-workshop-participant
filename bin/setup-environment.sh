@@ -58,7 +58,7 @@ MONGODB_VERSION="7.0"
 COMPASS_VERSION="1.43.0"
 MONGO_USER="${MONGO_USER:-mongo}"
 MONGO_PASS="${MONGO_PASS:-mongo123}"
-SPARK_VERSION="3.5.0"
+SPARK_VERSION="3.5.6"
 SCALA_VERSION="2.12"
 TRINO_VERSION="449"
 JUPYTER_PORT="${JUPYTER_PORT:-8888}"
@@ -1211,7 +1211,14 @@ install_apache_spark() {
     print_section "Apache Spark $SPARK_VERSION"
 
     local spark_home="$ACTUAL_HOME/.local/spark"
-    local spark_download_url="https://archive.apache.org/dist/spark/spark-${SPARK_VERSION}/spark-${SPARK_VERSION}-bin-hadoop3-scala${SCALA_VERSION}.tgz"
+    local spark_filename="spark-${SPARK_VERSION}-bin-hadoop3-scala${SCALA_VERSION}.tgz"
+
+    # Multiple mirror URLs in fallback order
+    local -a spark_mirrors=(
+        "https://archive.apache.org/dist/spark/spark-${SPARK_VERSION}/$spark_filename"
+        "https://dlcdn.apache.org/spark/spark-${SPARK_VERSION}/$spark_filename"
+        "https://downloads.apache.org/spark/spark-${SPARK_VERSION}/$spark_filename"
+    )
 
     if is_dry_run; then
         print_dry_run_header "SPARK" "Apache Spark $SPARK_VERSION"
@@ -1219,7 +1226,7 @@ install_apache_spark() {
             print_dry_run_status "Already installed at: $spark_home"
         else
             print_dry_run_missing "Not installed"
-            print_dry_run_action "Would download: Spark $SPARK_VERSION"
+            print_dry_run_action "Would download: Spark $SPARK_VERSION (with fallback mirrors)"
             print_dry_run_action "Would extract to: $spark_home"
             print_dry_run_action "Would add SPARK_HOME to PATH in ~/.bashrc"
         fi
@@ -1242,7 +1249,20 @@ install_apache_spark() {
     cd "$tmp_dir"
 
     print_info "Downloading Spark ${SPARK_VERSION}..."
-    if wget -q "$spark_download_url" -O spark.tgz; then
+    local download_success=false
+
+    for mirror_url in "${spark_mirrors[@]}"; do
+        print_info "Trying mirror: $mirror_url"
+        if wget -q --timeout=30 "$mirror_url" -O spark.tgz 2>/dev/null; then
+            download_success=true
+            print_status "Download successful"
+            break
+        else
+            print_info "Mirror failed, trying next..."
+        fi
+    done
+
+    if [ "$download_success" = true ] && tar -tzf spark.tgz >/dev/null 2>&1; then
         if tar -xzf spark.tgz && [ -d "spark-${SPARK_VERSION}-bin-hadoop3-scala${SCALA_VERSION}" ]; then
             # Remove old spark directory if exists
             rm -rf "$spark_home"
@@ -1270,7 +1290,8 @@ EOF
             add_failure "Failed to extract Apache Spark"
         fi
     else
-        add_failure "Failed to download Apache Spark from $spark_download_url"
+        add_failure "Failed to download Apache Spark ${SPARK_VERSION} from all available mirrors"
+        print_info "Spark is optional and can be installed later manually if needed"
     fi
 
     cd - > /dev/null
