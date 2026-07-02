@@ -124,7 +124,7 @@ echo ""
 # Configure SSH
 ############################################################
 
-"$SCRIPT_DIR/configure-ssh.sh"
+bash "${SCRIPT_DIR}/configure-ssh.sh"
 
 echo ""
 
