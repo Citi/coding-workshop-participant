@@ -14,7 +14,7 @@ SSHD_CONFIG="/etc/ssh/sshd_config"
 
 # Verify sudo access
 if ! sudo -n true 2>/dev/null; then
-    echo "INFO: sudo password may be required..."
+    echo "INFO: enter the SAME password you used to log in to this WorkSpace..."
 fi
 
 # Backup sshd_config once
