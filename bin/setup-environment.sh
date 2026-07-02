@@ -58,8 +58,7 @@ MONGODB_VERSION="7.0"
 COMPASS_VERSION="1.43.0"
 MONGO_USER="${MONGO_USER:-mongo}"
 MONGO_PASS="${MONGO_PASS:-mongo123}"
-SPARK_VERSION="3.5.6"
-SCALA_VERSION="2.12"
+SPARK_VERSION="4.1.2"
 TRINO_VERSION="449"
 JUPYTER_PORT="${JUPYTER_PORT:-8888}"
 
@@ -1211,7 +1210,7 @@ install_apache_spark() {
     print_section "Apache Spark $SPARK_VERSION"
 
     local spark_home="$ACTUAL_HOME/.local/spark"
-    local spark_filename="spark-${SPARK_VERSION}-bin-hadoop3-scala${SCALA_VERSION}.tgz"
+    local spark_filename="spark-${SPARK_VERSION}-bin-hadoop3.tgz"
 
     # Multiple mirror URLs in fallback order
     local -a spark_mirrors=(
@@ -1263,12 +1262,12 @@ install_apache_spark() {
     done
 
     if [ "$download_success" = true ] && tar -tzf spark.tgz >/dev/null 2>&1; then
-        if tar -xzf spark.tgz && [ -d "spark-${SPARK_VERSION}-bin-hadoop3-scala${SCALA_VERSION}" ]; then
+        if tar -xzf spark.tgz && [ -d "spark-${SPARK_VERSION}-bin-hadoop3" ]; then
             # Remove old spark directory if exists
             rm -rf "$spark_home"
 
             # Move to final location
-            mv "spark-${SPARK_VERSION}-bin-hadoop3-scala${SCALA_VERSION}" "$spark_home"
+            mv "spark-${SPARK_VERSION}-bin-hadoop3" "$spark_home"
             print_status "Apache Spark extracted to: $spark_home"
 
             # Add to PATH and set SPARK_HOME
