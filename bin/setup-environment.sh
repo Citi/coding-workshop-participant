@@ -1545,8 +1545,60 @@ EOF
 }
 
 # ============================================================================
-# SECTION 13: DNSMASQ CONFIGURATION (OPTIONAL)
+# SECTION 13: SSHD AND DNSMASQ CONFIGURATION
 # ============================================================================
+
+configure_sshd() {
+    # Verify sudo access
+    if ! sudo -n true 2>/dev/null; then
+        echo "INFO: enter the SAME password you used to log in to this WorkSpace..."
+    fi
+
+    # Backup sshd_config once (idempotent)
+    SSHD_CONFIG="/etc/ssh/sshd_config"
+    if [ ! -f "${SSHD_CONFIG}.bak" ]; then
+        sudo cp "$SSHD_CONFIG" "${SSHD_CONFIG}.bak"
+    fi
+
+    # Helper function to safely set/update sshd config options
+    # Sets value idempotently without duplicating lines
+    set_sshd_option() {
+        local option="$1"
+        local value="$2"
+
+        # Check if option exists and has correct value (idempotent check)
+        if grep -q "^${option}[[:space:]]*${value}" "$SSHD_CONFIG"; then
+            # Already set correctly, nothing to do
+            return 0
+        fi
+
+        # Remove any commented or incorrectly set instances
+        sudo sed -i "/^#*[[:space:]]*${option}[[:space:]]/d" "$SSHD_CONFIG"
+
+        # Add the correct setting
+        echo "${option} ${value}" | sudo tee -a "$SSHD_CONFIG" >/dev/null
+    }
+
+    # Enable PasswordAuthentication (idempotent)
+    set_sshd_option "PasswordAuthentication" "yes"
+
+    # Enable PAM (idempotent)
+    set_sshd_option "UsePAM" "yes"
+
+    # Verify configuration syntax before restart
+    if ! sudo sshd -t >/dev/null 2>&1; then
+        print_error "SSH configuration syntax error. Restoring backup."
+        sudo cp "${SSHD_CONFIG}.bak" "$SSHD_CONFIG"
+        return 1
+    fi
+
+    # Restart SSH service (safe restart - won't drop existing connections)
+    if systemctl list-unit-files | grep -q "^ssh.service"; then
+        sudo systemctl restart ssh
+    else
+        sudo systemctl restart sshd
+    fi
+}
 
 configure_dnsmasq() {
     if [ "$INSTALL_DNSMASQ" != true ]; then
@@ -2018,6 +2070,7 @@ main() {
     install_apache_trino
     install_jupyter_notebook
     install_localstack
+    configure_sshd
     configure_dnsmasq
 
     # Verification and summary
