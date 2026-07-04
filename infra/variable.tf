@@ -45,3 +45,9 @@ variable "aws_mongo_host" {
   type        = string
   default     = null
 }
+
+variable "aws_sagemaker_enabled" {
+  description = "Enable or disable Jupyter Notebook (AWS SageMaker). Default: false (set to 'true' to enable it)."
+  type        = bool
+  default     = false
+}

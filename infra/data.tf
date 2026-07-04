@@ -59,6 +59,13 @@ data "aws_security_groups" "this" {
   }
 }
 
+data "aws_iam_roles" "this" {
+  count       = data.aws_caller_identity.this.id != "000000000000" ? 1 : 0
+  name_regex  = "^sagemaker_DefaultRole$"
+  path_prefix = "/"
+}
+
+
 data "aws_service_principal" "cloudfront" {
   service_name = "cloudfront"
   region       = data.aws_region.this.region

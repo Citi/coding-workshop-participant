@@ -56,7 +56,7 @@ locals {
     for name in local.python_dirs : name => {
       name             = name
       arch             = "x86_64"
-      runtime          = "python3.11"
+      runtime          = "python3.13"
       handler          = "function.handler"
       path             = abspath(format("%s/../backend/%s", path.module, name))
       patterns         = ["!__pycache__/.*", "!\\..*"]

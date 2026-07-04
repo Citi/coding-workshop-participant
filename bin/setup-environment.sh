@@ -1397,7 +1397,7 @@ install_jupyter_notebook() {
 
     if is_dry_run; then
         print_dry_run_header "JUPYTER" "Jupyter Notebook"
-        if command -v jupyter &> /dev/null || python3.11 -m pip show jupyter &>/dev/null 2>&1; then
+        if command -v jupyter &> /dev/null || python3.13 -m pip show jupyter &>/dev/null 2>&1; then
             print_dry_run_status "Already installed"
         else
             print_dry_run_missing "Not installed"
@@ -1422,12 +1422,12 @@ install_jupyter_notebook() {
     local packages="jupyter notebook jupyterlab pandas numpy matplotlib scikit-learn scipy plotly"
 
     print_info "Installing Jupyter and data science packages via pip..."
-    if python3.11 -m pip install --user $packages; then
+    if python3.13 -m pip install --user $packages; then
         print_status "Jupyter Notebook and data science packages installed"
 
         # Verify installation
-        if python3.11 -m pip show jupyter &>/dev/null 2>&1; then
-            local jupyter_version=$(python3.11 -m pip show jupyter 2>/dev/null | grep Version | awk '{print $2}')
+        if python3.13 -m pip show jupyter &>/dev/null 2>&1; then
+            local jupyter_version=$(python3.13 -m pip show jupyter 2>/dev/null | grep Version | awk '{print $2}')
             print_status "Jupyter Notebook verified: $jupyter_version"
         fi
 
@@ -1478,7 +1478,7 @@ install_localstack() {
         print_info "LocalStack already installed: $(localstack --version)"
     else
         sudo rm -f /usr/bin/aws /usr/bin/python3
-        sudo ln -s /usr/bin/python3.11 /usr/bin/python3
+        sudo ln -s /usr/bin/python3.13 /usr/bin/python3
         python3 -m pip install -U pip botocore boto3
 
         if python3 -m pip install localstack==$LOCALSTACK_VERSION; then
@@ -1754,7 +1754,7 @@ run_verification() {
     # Data Tools
     verify_tool_path "Apache Spark" "$ACTUAL_HOME/.local/spark/bin/spark-submit"
     verify_tool_path "Apache Trino" "$ACTUAL_HOME/.local/bin/trino"
-    verify_tool "Jupyter Notebook" "python3.11 -m pip show jupyter" "grep Version"
+    verify_tool "Jupyter Notebook" "python3.13 -m pip show jupyter" "grep Version"
 
     # Utilities
     verify_tool "jq" "jq --version"
@@ -1891,7 +1891,7 @@ command -v localstack &>/dev/null && echo "  LocalStack: $(localstack --version 
 command -v java &>/dev/null && echo "  Java: $(java -version 2>&1 | head -n1)"
 command -v spark-submit &>/dev/null && echo "  Apache Spark $(spark-submit --version 2>&1 | head -n1)"
 command -v trino &>/dev/null && echo "  Apache Trino $(trino --version 2>&1)"
-python3.11 -m pip show jupyter &>/dev/null && echo "  Jupyter: $(python3.11 -m pip show jupyter 2>/dev/null | grep Version | awk '{print $2}')"
+python3.13 -m pip show jupyter &>/dev/null && echo "  Jupyter: $(python3.13 -m pip show jupyter 2>/dev/null | grep Version | awk '{print $2}')"
 command -v jq &>/dev/null && echo "  jq: $(jq --version 2>&1)"
 
 echo ""
