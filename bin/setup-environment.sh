@@ -937,12 +937,15 @@ EOF
 }
 
 configure_sshd() {
-    print_section "SSHD Configuration"
+    print_section "SSH Server Configuration"
 
     if is_dry_run; then
-        print_info "[DRY RUN] Would ensure sshd is installed and configured"
+        print_info "[DRY RUN] Would ensure SSH server is installed and configured for password authentication"
         return
     fi
+
+    local sshd_config="/etc/ssh/sshd_config"
+    local sshd_config_backup="${sshd_config}.backup-$(date +%Y%m%d-%H%M%S)"
 
     # Ensure openssh-server is installed
     if ! command_exists sshd; then
@@ -957,13 +960,84 @@ configure_sshd() {
         print_info "openssh-server already installed"
     fi
 
-    # Start and enable sshd
-    if sudo systemctl start ssh && sudo systemctl enable ssh; then
-        print_status "SSH service started and enabled"
-        print_info "SSH accessible on port 22"
-    else
-        add_failure "Failed to start SSH service"
+    # Backup existing configuration
+    if [ -f "$sshd_config" ] && [ ! -f "${sshd_config}.backup-original" ]; then
+        sudo cp "$sshd_config" "${sshd_config}.backup-original"
+        print_status "Backed up original SSH configuration"
     fi
+
+    print_info "Configuring SSH for password authentication..."
+
+    # Create backup for this specific change
+    sudo cp "$sshd_config" "$sshd_config_backup"
+
+    # Enable password authentication
+    if sudo grep -q "^PasswordAuthentication" "$sshd_config"; then
+        sudo sed -i 's/^PasswordAuthentication.*/PasswordAuthentication yes/' "$sshd_config"
+    else
+        echo "PasswordAuthentication yes" | sudo tee -a "$sshd_config" > /dev/null
+    fi
+
+    # Enable PAM authentication (required for password auth)
+    if sudo grep -q "^UsePAM" "$sshd_config"; then
+        sudo sed -i 's/^UsePAM.*/UsePAM yes/' "$sshd_config"
+    else
+        echo "UsePAM yes" | sudo tee -a "$sshd_config" > /dev/null
+    fi
+
+    # Ensure PubkeyAuthentication is also enabled (best practice)
+    if sudo grep -q "^PubkeyAuthentication" "$sshd_config"; then
+        sudo sed -i 's/^PubkeyAuthentication.*/PubkeyAuthentication yes/' "$sshd_config"
+    else
+        echo "PubkeyAuthentication yes" | sudo tee -a "$sshd_config" > /dev/null
+    fi
+
+    # Optional: Allow root login with password (commented out for security)
+    # If you need this, uncomment the following lines:
+    # if sudo grep -q "^PermitRootLogin" "$sshd_config"; then
+    #     sudo sed -i 's/^PermitRootLogin.*/PermitRootLogin yes/' "$sshd_config"
+    # fi
+
+    print_status "SSH configuration updated"
+
+    # Test SSH configuration
+    if sudo sshd -t 2>/dev/null; then
+        print_status "SSH configuration syntax is valid"
+    else
+        print_error "SSH configuration syntax check failed"
+        print_info "Restoring from backup..."
+        sudo cp "$sshd_config_backup" "$sshd_config"
+        add_failure "Failed to configure SSH - configuration restored"
+        return
+    fi
+
+    # Start and enable SSH service
+    if sudo systemctl restart sshd || sudo systemctl restart ssh; then
+        print_status "SSH service restarted with new configuration"
+    else
+        add_failure "Failed to restart SSH service"
+        return
+    fi
+
+    if sudo systemctl enable sshd 2>/dev/null || sudo systemctl enable ssh 2>/dev/null; then
+        print_status "SSH service enabled to start on boot"
+    fi
+
+    # Display connection information
+    print_info "SSH Configuration Summary:"
+    print_info "  - Password authentication: ENABLED"
+    print_info "  - Public key authentication: ENABLED"
+    print_info "  - Service status: $(sudo systemctl is-active sshd ssh 2>/dev/null | head -n1)"
+    print_info "  - SSH port: 22 (default)"
+
+    # Get IP addresses
+    local ip_addresses=$(hostname -I 2>/dev/null | tr ' ' '\n' | grep -E '^[0-9]+\.' | head -3 | tr '\n' ' ')
+    if [ -n "$ip_addresses" ]; then
+        print_info "  - Connect with: ssh ${ACTUAL_USER}@<IP_ADDRESS>"
+        print_info "  - Available IPs: $ip_addresses"
+    fi
+
+    print_status "SSH server is ready for password-based connections"
 }
 
 configure_dnsmasq() {
