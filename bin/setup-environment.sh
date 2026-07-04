@@ -1172,8 +1172,8 @@ configure_python() {
     if is_dry_run; then
         print_dry_run_header "PYTHON-CONFIG" "Python Configuration"
         print_dry_run_action "Would remove existing python/python3 alternatives"
-        print_dry_run_action "Would register all Python versions with update-alternatives"
-        print_dry_run_action "Would set Python 3.13 as default (priority 413)"
+        print_dry_run_action "Would register all Python versions with equal low priorities"
+        print_dry_run_action "Would explicitly set Python 3.13 as default using --set"
         return
     fi
 
@@ -1187,6 +1187,7 @@ configure_python() {
     sudo update-alternatives --remove-all python3 2>/dev/null || true
 
     # Register each Python version with update-alternatives for both 'python' and 'python3'
+    # Use lower priorities for all versions
     for version in "${versions[@]}"; do
         local binary_name="python$version"
 
@@ -1196,13 +1197,15 @@ configure_python() {
             continue
         fi
 
-        # Calculate priority: 3.11 -> 311, 3.12 -> 312, 3.13 -> 413, 3.14 -> 314
-        local priority=$((300 + ${version//./}))
-
-        # Python 3.13 gets highest priority to be the default
-        if [ "$version" = "3.13" ]; then
-            priority=413
-        fi
+        # Use low priorities for non-3.13 versions (100-103)
+        # This ensures they don't interfere with 3.13
+        local priority=100
+        case "$version" in
+            3.11) priority=101 ;;
+            3.12) priority=102 ;;
+            3.13) priority=100 ;;  # Lowest gets set first, we'll override later
+            3.14) priority=103 ;;
+        esac
 
         # Register for 'python' command
         if sudo update-alternatives --install /usr/bin/python python /usr/bin/"$binary_name" "$priority"; then
@@ -1218,6 +1221,26 @@ configure_python() {
             add_failure "Failed to register $binary_name for 'python3' in update-alternatives"
         fi
     done
+
+    # Now set Python 3.13 as the absolute default by explicitly selecting it
+    if command -v python3.13 &> /dev/null; then
+        print_info "Setting Python 3.13 as the default..."
+
+        # Use update-alternatives --set to force 3.13 as default
+        if sudo update-alternatives --set python /usr/bin/python3.13 2>/dev/null; then
+            print_status "Set 'python' -> python3.13"
+        else
+            print_info "Note: Could not set python alternative (may already be correct)"
+        fi
+
+        if sudo update-alternatives --set python3 /usr/bin/python3.13 2>/dev/null; then
+            print_status "Set 'python3' -> python3.13"
+        else
+            print_info "Note: Could not set python3 alternative (may already be correct)"
+        fi
+    else
+        add_failure "Python 3.13 not found - cannot set as default"
+    fi
 
     print_status "Python 3.13 set as DEFAULT for both 'python' and 'python3' commands"
     print_info "Current Python version: $(python --version 2>&1)"
