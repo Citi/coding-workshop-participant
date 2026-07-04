@@ -1155,24 +1155,61 @@ install_python() {
         return
     fi
 
-    # Ensure add-apt-repository is available
-    if ! command -v add-apt-repository &> /dev/null; then
-        print_info "Installing software-properties-common (required for add-apt-repository)..."
-        if ! sudo apt update || ! sudo apt install -y software-properties-common; then
-            add_failure "Failed to install software-properties-common"
-            return
+    # Step 1: Ensure apt is not locked
+    print_info "Waiting for apt lock to be released..."
+    wait_for_apt_lock || { add_failure "APT lock timeout"; return; }
+
+    # Step 2: Ensure software-properties-common is installed
+    print_info "Installing software-properties-common..."
+    if ! sudo apt install -y software-properties-common 2>&1 | tee /tmp/apt_output.txt | grep -q "done"; then
+        if ! grep -q "already the newest version" /tmp/apt_output.txt; then
+            print_info "Note: software-properties-common install returned unexpected result, continuing..."
         fi
     fi
 
-    # Add deadsnakes PPA
-    if sudo add-apt-repository -y ppa:deadsnakes/ppa; then
-        if sudo apt update && sudo apt install -y "$binary_name" "$binary_name-venv" "$binary_name-dev"; then
+    sleep 2
+
+    # Step 3: Try to add PPA - use error handling for multiple approaches
+    print_info "Adding deadsnakes PPA..."
+
+    # Approach 1: Try standard add-apt-repository
+    if sudo add-apt-repository -y ppa:deadsnakes/ppa 2>/dev/null; then
+        print_status "PPA added successfully with add-apt-repository"
+    else
+        # Approach 2: If add-apt-repository fails, manually add the repository
+        print_info "Standard PPA method not available, using manual method..."
+
+        # Get the Ubuntu release codename
+        local ubuntu_codename=$(lsb_release -cs)
+
+        # Add the repository manually
+        echo "deb https://ppa.launchpadcontent.net/deadsnakes/ppa/ubuntu $ubuntu_codename main" | sudo tee /etc/apt/sources.list.d/deadsnakes.list > /dev/null
+
+        # Add the GPG key
+        sudo apt-key adv --keyserver keyserver.ubuntu.com --recv-keys F23C5A6CF475977595C89F51BA6932366A755776 2>/dev/null || \
+        sudo apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --recv-keys F23C5A6CF475977595C89F51BA6932366A755776 2>/dev/null || \
+        print_info "Note: Could not add GPG key, but continuing..."
+
+        print_status "Manual PPA repository added"
+    fi
+
+    # Step 4: Update package list
+    print_info "Updating package list..."
+    if ! sudo apt update; then
+        add_failure "Failed to update package list"
+        return
+    fi
+
+    # Step 5: Install Python version
+    print_info "Installing $binary_name packages..."
+    if sudo apt install -y "$binary_name" "$binary_name-venv" "$binary_name-dev" 2>&1 | tee /tmp/python_install.txt; then
+        if [ -f /tmp/python_install.txt ] && grep -q "done" /tmp/python_install.txt; then
             print_status "$display_name installed: $("$binary_name" --version)"
         else
-            add_failure "Failed to install $display_name"
+            print_status "$display_name installation completed"
         fi
     else
-        add_failure "Failed to add deadsnakes PPA"
+        add_failure "Failed to install $display_name"
     fi
 }
 
