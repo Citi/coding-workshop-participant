@@ -59,7 +59,7 @@ COMPASS_VERSION="1.43.0"
 MONGO_USER="${MONGO_USER:-mongo}"
 MONGO_PASS="${MONGO_PASS:-mongo123}"
 SPARK_VERSION="4.1.2"
-TRINO_VERSION="449"
+TRINO_VERSION="476"
 JUPYTER_PORT="${JUPYTER_PORT:-8888}"
 
 # ============================================================================
