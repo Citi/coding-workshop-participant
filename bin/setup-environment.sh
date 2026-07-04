@@ -416,8 +416,41 @@ install_docker() {
             print_status "User $ACTUAL_USER added to docker group"
         fi
 
-        sudo systemctl start docker && sudo systemctl enable docker
-        print_status "Docker service started and enabled"
+        # Ensure Docker service is started and enabled
+        if ! sudo systemctl is-active --quiet docker; then
+            print_info "Starting Docker service..."
+            if sudo systemctl start docker; then
+                print_status "Docker service started"
+            else
+                add_failure "Failed to start Docker service"
+                return
+            fi
+        fi
+
+        if ! sudo systemctl is-enabled --quiet docker; then
+            sudo systemctl enable docker &>/dev/null
+        fi
+
+        # Wait for Docker socket to be ready
+        local max_wait=10
+        local waited=0
+        while [ $waited -lt $max_wait ]; do
+            if sudo docker info &>/dev/null; then
+                print_status "Docker service is running and responsive"
+
+                # Test Docker functionality
+                if sudo docker run --rm hello-world &>/dev/null; then
+                    print_status "Docker verified with test container"
+                else
+                    print_info "Docker is running but test container failed (may require group activation)"
+                fi
+                return
+            fi
+            sleep 1
+            ((waited++))
+        done
+
+        print_info "Docker service started but may need a moment to be fully ready"
     fi
 }
 
@@ -1186,6 +1219,13 @@ main() {
     echo "CONNECTION INFO"
     command_exists psql && echo -e "  ${GREEN}✓${NC} PostgreSQL: postgresql://localhost:5432 (user: $POSTGRES_USER)"
     command_exists mongod && echo -e "  ${GREEN}✓${NC} MongoDB: mongodb://localhost:27017 (user: $MONGO_USER)"
+    if command_exists docker; then
+        if sudo systemctl is-active --quiet docker && sudo docker info &>/dev/null; then
+            echo -e "  ${GREEN}✓${NC} Docker: running and responsive"
+        else
+            echo -e "  ${RED}✗${NC} Docker: installed but not running (run: sudo systemctl start docker)"
+        fi
+    fi
     [ -x "$ACTUAL_HOME/.local/bin/localstack" ] && echo -e "  ${GREEN}✓${NC} LocalStack: http://localhost:4566"
     command_exists jupyter && echo -e "  ${GREEN}✓${NC} Jupyter: localhost:$JUPYTER_PORT"
     [ -d "$ACTUAL_HOME/.local/spark" ] && echo -e "  ${GREEN}✓${NC} Spark: $ACTUAL_HOME/.local/spark"
@@ -1196,6 +1236,7 @@ main() {
         print_info "Note: Run 'source ~/.bashrc' or start a new terminal to update PATH"
         if ! groups | grep -q docker; then
             print_info "Note: Docker group changes require logout/login to take effect"
+            print_info "      Until then, use 'sudo docker' or run: newgrp docker"
         fi
     fi
 
