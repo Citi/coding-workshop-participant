@@ -1387,7 +1387,7 @@ install_apache_spark() {
     # Idempotency check - check both directory and spark-submit executable
     if [ -d "$spark_home" ] && [ -f "$spark_home/bin/spark-submit" ] && [ -x "$spark_home/bin/spark-submit" ]; then
         print_info "Apache Spark already installed at: $spark_home"
-        
+
         # Verify it's working
         if "$spark_home/bin/spark-submit" --version &>/dev/null; then
             print_status "Apache Spark $SPARK_VERSION is installed and working"
@@ -1479,16 +1479,22 @@ install_apache_trino() {
 
     print_info "Installing Apache Trino $TRINO_VERSION..."
 
+    # Define paths
+    local trino_cli_path="$ACTUAL_HOME/.local/bin/trino"
+
     # Idempotency check for Trino Server
     local trino_server_installed=false
-    if [ -d "$trino_home" ] && [ -f "$trino_home/bin/launcher.py" ] && [ -f "$trino_home/etc/config.properties" ]; then
+    if [ -d "$trino_home" ] && [ -f "$trino_home/bin/launcher" ] && [ -f "$trino_home/etc/config.properties" ]; then
         print_info "Apache Trino Server already installed at: $trino_home"
+        trino_server_installed=true
+    elif [ -d "$trino_home" ] && [ -d "$trino_home/bin" ]; then
+        # Directory exists but may be incomplete - treat as installed to avoid overwrite
+        print_info "Apache Trino Server directory exists at: $trino_home (assuming installed)"
         trino_server_installed=true
     fi
 
     # Idempotency check for Trino CLI
     local trino_cli_installed=false
-    local trino_cli_path="$ACTUAL_HOME/.local/bin/trino"
     if [ -f "$trino_cli_path" ] && [ -x "$trino_cli_path" ]; then
         print_info "Trino CLI already installed at: $trino_cli_path"
         trino_cli_installed=true
@@ -1547,6 +1553,8 @@ EOF
 
         cd - > /dev/null
         rm -rf "$tmp_dir"
+    else
+        print_info "Skipping Trino Server download (already installed)"
     fi
 
     # Download Trino CLI only if not installed
@@ -1564,6 +1572,8 @@ EOF
         else
             add_failure "Failed to download Trino CLI from $trino_cli_url"
         fi
+    else
+        print_info "Skipping Trino CLI download (already installed)"
     fi
 }
 
