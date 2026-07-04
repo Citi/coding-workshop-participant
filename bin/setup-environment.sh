@@ -1143,6 +1143,9 @@ install_python() {
             print_dry_run_action "Would add PPA: ppa:deadsnakes/ppa"
             print_dry_run_action "Would install: $binary_name, $binary_name-venv, $binary_name-dev"
         fi
+        if [ "$version" = "3.13" ]; then
+            print_dry_run_action "Would set as default: update-alternatives --install /usr/bin/python python $binary_name 313"
+        fi
         return
     fi
 
@@ -1151,18 +1154,37 @@ install_python() {
     # Idempotency check
     if command -v "$binary_name" &> /dev/null; then
         print_info "$display_name already installed: $("$binary_name" --version)"
-        return
+    else
+        # Add deadsnakes PPA
+        if sudo add-apt-repository -y ppa:deadsnakes/ppa; then
+            if sudo apt update && sudo apt install -y "$binary_name" "$binary_name-venv" "$binary_name-dev"; then
+                print_status "$display_name installed: $("$binary_name" --version)"
+            else
+                add_failure "Failed to install $display_name"
+                return
+            fi
+        else
+            add_failure "Failed to add deadsnakes PPA"
+            return
+        fi
     fi
 
-    # Add deadsnakes PPA
-    if sudo add-apt-repository -y ppa:deadsnakes/ppa; then
-        if sudo apt update && sudo apt install -y "$binary_name" "$binary_name-venv" "$binary_name-dev"; then
-            print_status "$display_name installed: $("$binary_name" --version)"
-        else
-            add_failure "Failed to install $display_name"
+    # Register python version with update-alternatives
+    local priority=$((300 + ${version//./}))
+
+    # For Python 3.13, set priority highest (413) to make it default
+    if [ "$version" = "3.13" ]; then
+        priority=413
+    fi
+
+    if sudo update-alternatives --install /usr/bin/python python /usr/bin/"$binary_name" "$priority"; then
+        print_status "Registered $binary_name in update-alternatives with priority $priority"
+
+        if [ "$version" = "3.13" ]; then
+            print_status "Python 3.13 set as DEFAULT Python version"
         fi
     else
-        add_failure "Failed to add deadsnakes PPA"
+        add_failure "Failed to register $binary_name in update-alternatives"
     fi
 }
 
