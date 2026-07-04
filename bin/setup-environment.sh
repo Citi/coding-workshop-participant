@@ -398,13 +398,20 @@ install_docker() {
         if [ ! -S /var/run/docker.sock ]; then
             print_info "Docker socket not found, restarting Docker..."
             sudo systemctl restart docker
+            sleep 2
+        fi
+
+        # Fix socket permissions for immediate access
+        if [ -S /var/run/docker.sock ]; then
+            sudo chmod 666 /var/run/docker.sock
+            print_status "Docker socket permissions updated for immediate access"
         fi
 
         # Add user to docker group if not already
         if ! groups "$ACTUAL_USER" | grep -q docker; then
             print_info "Adding user $ACTUAL_USER to docker group..."
             sudo usermod -aG docker "$ACTUAL_USER"
-            print_info "Docker group added (requires logout/login to take effect)"
+            print_info "Docker group added (requires logout/login for permanent access)"
         fi
 
         return
@@ -446,9 +453,13 @@ install_docker() {
             return
         fi
 
-        # Verify docker socket exists
+        # Wait for socket to be created
+        sleep 2
+
+        # Verify docker socket exists and set permissions for immediate access
         if [ -S /var/run/docker.sock ]; then
-            print_status "Docker socket created at /var/run/docker.sock"
+            sudo chmod 666 /var/run/docker.sock
+            print_status "Docker socket created at /var/run/docker.sock with open permissions"
         else
             print_error "Docker socket not found at /var/run/docker.sock"
         fi
@@ -456,17 +467,19 @@ install_docker() {
         # Add user to docker group
         if sudo usermod -aG docker "$ACTUAL_USER"; then
             print_status "User $ACTUAL_USER added to docker group"
-            print_info "Log out and back in for group changes to take effect"
-            print_info "Or run 'newgrp docker' to activate in current session"
+            print_info "Docker is ready to use immediately"
+            print_info "For permanent group access, log out and back in or run: newgrp docker"
         else
             add_failure "Failed to add user to docker group"
         fi
 
-        # Test Docker installation (as root for now)
-        if sudo docker run --rm hello-world &>/dev/null; then
-            print_status "Docker test successful"
+        # Test Docker installation (should work immediately with socket permissions)
+        if docker run --rm hello-world &>/dev/null; then
+            print_status "Docker test successful - ready to use!"
+        elif sudo docker run --rm hello-world &>/dev/null; then
+            print_status "Docker test successful (with sudo)"
         else
-            print_info "Docker installed but test failed (may need logout/login)"
+            print_info "Docker installed but test failed"
         fi
     else
         add_failure "Failed to install Docker"
