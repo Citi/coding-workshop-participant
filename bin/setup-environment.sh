@@ -1171,6 +1171,7 @@ configure_python() {
 
     if is_dry_run; then
         print_dry_run_header "PYTHON-CONFIG" "Python Configuration"
+        print_dry_run_action "Would remove existing python/python3 alternatives"
         print_dry_run_action "Would register all Python versions with update-alternatives"
         print_dry_run_action "Would set Python 3.13 as default (priority 413)"
         return
@@ -1180,7 +1181,12 @@ configure_python() {
 
     local versions=("3.11" "3.12" "3.13" "3.14")
 
-    # Register each Python version with update-alternatives
+    # Remove existing python and python3 alternatives to start fresh
+    print_info "Cleaning up existing Python alternatives..."
+    sudo update-alternatives --remove-all python 2>/dev/null || true
+    sudo update-alternatives --remove-all python3 2>/dev/null || true
+
+    # Register each Python version with update-alternatives for both 'python' and 'python3'
     for version in "${versions[@]}"; do
         local binary_name="python$version"
 
@@ -1198,15 +1204,27 @@ configure_python() {
             priority=413
         fi
 
+        # Register for 'python' command
         if sudo update-alternatives --install /usr/bin/python python /usr/bin/"$binary_name" "$priority"; then
-            print_status "Registered $binary_name with priority $priority"
+            print_status "Registered $binary_name for 'python' with priority $priority"
         else
-            add_failure "Failed to register $binary_name in update-alternatives"
+            add_failure "Failed to register $binary_name for 'python' in update-alternatives"
+        fi
+
+        # Register for 'python3' command
+        if sudo update-alternatives --install /usr/bin/python3 python3 /usr/bin/"$binary_name" "$priority"; then
+            print_status "Registered $binary_name for 'python3' with priority $priority"
+        else
+            add_failure "Failed to register $binary_name for 'python3' in update-alternatives"
         fi
     done
 
-    print_status "Python 3.13 set as DEFAULT Python version"
-    print_info "Users can switch versions anytime with: update-alternatives --config python"
+    print_status "Python 3.13 set as DEFAULT for both 'python' and 'python3' commands"
+    print_info "Current Python version: $(python --version 2>&1)"
+    print_info "Current Python3 version: $(python3 --version 2>&1)"
+    print_info "Users can switch versions anytime with:"
+    print_info "  update-alternatives --config python"
+    print_info "  update-alternatives --config python3"
 }
 
 install_java_openjdk() {
