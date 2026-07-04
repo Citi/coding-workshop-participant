@@ -11,6 +11,8 @@ set +e
 # ============================================================================
 
 PYENV_VERSION="3.13"
+JAVA_VERSION="21"
+NODEJS_VERSION="22"
 LOCALSTACK_VERSION="2026.6.0"
 JUPYTER_PORT="${JUPYTER_PORT:-8888}"
 POSTGRES_VERSION="16"
@@ -282,20 +284,20 @@ configure_python() {
 }
 
 install_nodejs() {
-    print_section "Node.js 22"
+    print_section "Node.js $NODEJS_VERSION"
 
     if is_dry_run; then
-        command_exists node && node --version | grep -q "^v22\." && print_status "Already installed" || print_info "Would install Node.js 22"
+        command_exists node && node --version | grep -q "^v$NODEJS_VERSION\." && print_status "Already installed" || print_info "Would install Node.js $NODEJS_VERSION"
         return
     fi
 
-    if command_exists node && node --version | grep -q "^v22\."; then
-        print_info "Node.js 22 already installed: $(node --version)"
+    if command_exists node && node --version | grep -q "^v$NODEJS_VERSION\."; then
+        print_info "Node.js $NODEJS_VERSION already installed: $(node --version)"
         return
     fi
 
-    print_info "Installing Node.js 22..."
-    if curl -fsSL https://deb.nodesource.com/setup_22.x | sudo -E bash - && \
+    print_info "Installing Node.js $NODEJS_VERSION..."
+    if curl -fsSL https://deb.nodesource.com/setup_$NODEJS_VERSION.x | sudo -E bash - && \
        safe_apt_install nodejs -o Dpkg::Options::="--force-overwrite"; then
         print_status "Node.js installed: $(node --version)"
     else
@@ -375,32 +377,6 @@ install_pycharm() {
     fi
 }
 
-install_vscode() {
-    print_section "Visual Studio Code"
-
-    if is_dry_run; then
-        command_exists code && print_status "Already installed" || print_info "Would install VS Code"
-        return
-    fi
-
-    if command_exists code; then
-        print_info "VS Code already installed: $(code --version | head -n1)"
-        return
-    fi
-
-    print_info "Installing Visual Studio Code..."
-    if wget -qO- https://packages.microsoft.com/keys/microsoft.asc | gpg --dearmor > /tmp/packages.microsoft.gpg && \
-       sudo install -D -o root -g root -m 644 /tmp/packages.microsoft.gpg /etc/apt/keyrings/packages.microsoft.gpg && \
-       rm /tmp/packages.microsoft.gpg && \
-       echo "deb [arch=amd64,arm64,armhf signed-by=/etc/apt/keyrings/packages.microsoft.gpg] https://packages.microsoft.com/repos/code stable main" | \
-           sudo tee /etc/apt/sources.list.d/vscode.list > /dev/null && \
-       sudo apt update && safe_apt_install code; then
-        print_status "VS Code installed: $(code --version | head -n1)"
-    else
-        add_failure "Failed to install VS Code"
-    fi
-}
-
 install_docker() {
     print_section "Docker"
 
@@ -446,30 +422,30 @@ install_docker() {
 }
 
 install_java_openjdk() {
-    print_section "Java OpenJDK 21"
+    print_section "Java OpenJDK $JAVA_VERSION"
 
     if is_dry_run; then
-        command_exists java && java -version 2>&1 | grep -q "21" && print_status "Already installed" || print_info "Would install OpenJDK 21"
+        command_exists java && java -version 2>&1 | grep -q "$JAVA_VERSION" && print_status "Already installed" || print_info "Would install OpenJDK $JAVA_VERSION"
         return
     fi
 
-    if command_exists java && java -version 2>&1 | grep -q "21"; then
-        print_info "Java OpenJDK 21 already installed: $(java -version 2>&1 | head -n1)"
+    if command_exists java && java -version 2>&1 | grep -q "$JAVA_VERSION"; then
+        print_info "Java OpenJDK $JAVA_VERSION already installed: $(java -version 2>&1 | head -n1)"
         return
     fi
 
-    print_info "Installing Java OpenJDK 21..."
-    if safe_apt_install openjdk-21-jdk-headless; then
-        print_status "Java OpenJDK 21 installed: $(java -version 2>&1 | head -n1)"
+    print_info "Installing Java OpenJDK $JAVA_VERSION..."
+    if safe_apt_install openjdk-$JAVA_VERSION-jdk-headless; then
+        print_status "Java OpenJDK $JAVA_VERSION installed: $(java -version 2>&1 | head -n1)"
 
         # Set JAVA_HOME if not already set
         if ! grep -q "export JAVA_HOME=" "$ACTUAL_HOME/.bashrc" 2>/dev/null; then
-            echo 'export JAVA_HOME=/usr/lib/jvm/java-21-openjdk-amd64' >> "$ACTUAL_HOME/.bashrc"
-            export JAVA_HOME=/usr/lib/jvm/java-21-openjdk-amd64
+            echo 'export JAVA_HOME=/usr/lib/jvm/java-$JAVA_VERSION-openjdk-amd64' >> "$ACTUAL_HOME/.bashrc"
+            export JAVA_HOME=/usr/lib/jvm/java-$JAVA_VERSION-openjdk-amd64
             print_info "Set JAVA_HOME in ~/.bashrc"
         fi
     else
-        add_failure "Failed to install Java OpenJDK 21"
+        add_failure "Failed to install Java OpenJDK $JAVA_VERSION"
     fi
 }
 
@@ -483,7 +459,7 @@ install_postgres() {
 
     if command_exists psql && psql --version 2>/dev/null | grep -q "$POSTGRES_VERSION"; then
         print_info "PostgreSQL $POSTGRES_VERSION already installed: $(psql --version)"
-        
+
         # Ensure service is running
         if ! sudo systemctl is-active --quiet postgresql; then
             sudo systemctl start postgresql && sudo systemctl enable postgresql
@@ -965,102 +941,6 @@ EOF
     fi
 }
 
-install_postgres() {
-    print_section "PostgreSQL $POSTGRES_VERSION"
-
-    if is_dry_run; then
-        command_exists psql && psql --version 2>/dev/null | grep -q "$POSTGRES_VERSION" && print_status "Already installed" || print_info "Would install PostgreSQL $POSTGRES_VERSION"
-        return
-    fi
-
-    if command_exists psql && psql --version 2>/dev/null | grep -q "$POSTGRES_VERSION"; then
-        print_info "PostgreSQL $POSTGRES_VERSION already installed: $(psql --version)"
-
-        # Ensure service is running
-        if ! sudo systemctl is-active --quiet postgresql; then
-            sudo systemctl start postgresql && sudo systemctl enable postgresql
-        fi
-        return
-    fi
-
-    print_info "Installing PostgreSQL $POSTGRES_VERSION..."
-
-    # Add PostgreSQL APT repository
-    if curl -fsSL https://www.postgresql.org/media/keys/ACCC4CF8.asc | \
-       sudo gpg --dearmor -o /usr/share/keyrings/postgresql-keyring.gpg && \
-       echo "deb [arch=amd64 signed-by=/usr/share/keyrings/postgresql-keyring.gpg] http://apt.postgresql.org/pub/repos/apt jammy-pgdg main" | \
-           sudo tee /etc/apt/sources.list.d/pgdg.list > /dev/null && \
-       sudo apt update && safe_apt_install "postgresql-${POSTGRES_VERSION}" "postgresql-client-${POSTGRES_VERSION}"; then
-        print_status "PostgreSQL $POSTGRES_VERSION installed: $(psql --version)"
-
-        # Start and enable service
-        if sudo systemctl start postgresql && sudo systemctl enable postgresql; then
-            print_status "PostgreSQL service started and enabled"
-
-            # Set password for postgres user
-            sudo -u postgres psql -c "ALTER USER ${POSTGRES_USER} WITH PASSWORD '${POSTGRES_PASS}';" 2>/dev/null || true
-            print_info "PostgreSQL accessible at: localhost:5432"
-        else
-            add_failure "Failed to start PostgreSQL service"
-        fi
-    else
-        add_failure "Failed to install PostgreSQL"
-    fi
-}
-
-install_mongodb() {
-    print_section "MongoDB $MONGODB_VERSION"
-
-    if is_dry_run; then
-        command_exists mongod && print_status "Already installed" || print_info "Would install MongoDB $MONGODB_VERSION"
-        return
-    fi
-
-    if command_exists mongod; then
-        print_info "MongoDB already installed: $(mongod --version | grep 'db version')"
-
-        # Ensure service is running
-        if ! sudo systemctl is-active --quiet mongod; then
-            sudo systemctl start mongod && sudo systemctl enable mongod
-        fi
-        return
-    fi
-
-    print_info "Installing MongoDB $MONGODB_VERSION..."
-
-    # Add MongoDB GPG key and repository
-    if curl -fsSL https://www.mongodb.org/static/pgp/server-${MONGODB_VERSION}.asc | \
-       sudo gpg --dearmor -o /usr/share/keyrings/mongodb-keyring.gpg && \
-       echo "deb [arch=amd64,arm64 signed-by=/usr/share/keyrings/mongodb-keyring.gpg] https://repo.mongodb.org/apt/ubuntu jammy/mongodb-org/${MONGODB_VERSION} multiverse" | \
-           sudo tee /etc/apt/sources.list.d/mongodb-org-${MONGODB_VERSION}.list > /dev/null && \
-       sudo apt update && safe_apt_install mongodb-org; then
-        print_status "MongoDB installed: $(mongod --version | grep 'db version')"
-
-        # Start and enable service
-        if sudo systemctl start mongod && sudo systemctl enable mongod; then
-            print_status "MongoDB service started and enabled"
-            print_info "MongoDB accessible at: mongodb://localhost:27017"
-
-            # Create admin user
-            sleep 2  # Wait for MongoDB to start
-            mongosh --quiet --eval "
-                db = db.getSiblingDB('admin');
-                if (db.getUser('${MONGO_USER}') === null) {
-                    db.createUser({
-                        user: '${MONGO_USER}',
-                        pwd: '${MONGO_PASS}',
-                        roles: [{ role: 'root', db: 'admin' }]
-                    });
-                }
-            " 2>/dev/null || true
-        else
-            add_failure "Failed to start MongoDB service"
-        fi
-    else
-        add_failure "Failed to install MongoDB"
-    fi
-}
-
 install_terraform() {
     print_section "Terraform"
 
@@ -1271,7 +1151,7 @@ main() {
     configure_dnsmasq
 
     # Summary
-    print_section "Installation Summary"
+    print_section "INSTALATION SUMMARY"
     echo ""
 
     if [ ${#FAILURES[@]} -eq 0 ]; then
@@ -1284,7 +1164,7 @@ main() {
     fi
 
     echo ""
-    echo "CONNECTION INFO:"
+    echo "CONNECTION INFO"
     command_exists psql && echo -e "  ${GREEN}✓${NC} PostgreSQL: postgresql://localhost:5432 (user: $POSTGRES_USER)"
     command_exists mongod && echo -e "  ${GREEN}✓${NC} MongoDB: mongodb://localhost:27017 (user: $MONGO_USER)"
     command_exists localstack && echo -e "  ${GREEN}✓${NC} LocalStack: http://localhost:4566"
