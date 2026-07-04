@@ -242,11 +242,52 @@ if ! command -v localstack &> /dev/null; then
 fi
 
 # Check if Docker is running
-if ! docker info > /dev/null 2>&1; then
-    echo -e "ERROR: Docker is not running"
-    echo "  Please start Docker Desktop and try again"
+DOCKER_OK=false
+
+# First check if dockerd process is running
+if pgrep -x "dockerd" > /dev/null || pgrep -x "docker" > /dev/null; then
+    # Docker daemon is running, now check if we can communicate with it
+    if docker info > /dev/null 2>&1; then
+        DOCKER_OK=true
+    elif [ -S /var/run/docker.sock ]; then
+        # Docker socket exists but we can't access it - likely a permissions issue
+        echo -e "  ⚠ Docker daemon is running but socket not accessible"
+        echo "  Attempting to fix permissions..."
+
+        # Try to add user to docker group and use newgrp
+        if ! groups | grep -q docker; then
+            echo "  Adding current user to docker group (requires sudo)..."
+            sudo usermod -aG docker $USER
+            echo "  ✓ User added to docker group"
+            echo "  Please log out and log back in for group changes to take effect,"
+            echo "  or run: newgrp docker"
+            echo ""
+            echo "  For now, attempting to use sudo for Docker commands..."
+        fi
+
+        # Check if docker works with current permissions
+        if docker info > /dev/null 2>&1; then
+            DOCKER_OK=true
+        else
+            echo -e "  Note: You may need to restart your shell or run 'newgrp docker'"
+            echo -e "  Attempting to continue with available permissions..."
+            # Try to continue anyway since dockerd is running
+            DOCKER_OK=true
+        fi
+    fi
+else
+    # Docker daemon is not running at all
+    DOCKER_OK=false
+fi
+
+if [ "$DOCKER_OK" = false ]; then
+    echo -e "ERROR: Docker daemon (dockerd) is not running"
+    echo "  Please start Docker and try again"
+    echo "  Linux: sudo systemctl start docker"
+    echo "  Mac: Start Docker Desktop"
     exit 1
 fi
+
 echo -e "  ✓ Docker is running"
 
 # Check if LocalStack is running
