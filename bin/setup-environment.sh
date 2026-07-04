@@ -945,13 +945,14 @@ configure_sshd() {
     fi
 
     local sshd_config="/etc/ssh/sshd_config"
-    local sshd_config_backup="${sshd_config}.backup-$(date +%Y%m%d-%H%M%S)"
+    local config_changed=false
 
     # Ensure openssh-server is installed
     if ! command_exists sshd; then
         print_info "Installing openssh-server..."
         if safe_apt_install openssh-server; then
             print_status "openssh-server installed"
+            config_changed=true
         else
             add_failure "Failed to install openssh-server"
             return
@@ -960,67 +961,133 @@ configure_sshd() {
         print_info "openssh-server already installed"
     fi
 
-    # Backup existing configuration
+    # Backup original configuration only once
     if [ -f "$sshd_config" ] && [ ! -f "${sshd_config}.backup-original" ]; then
         sudo cp "$sshd_config" "${sshd_config}.backup-original"
         print_status "Backed up original SSH configuration"
     fi
 
+    # Check if configuration already has the required settings
+    local pw_auth_correct=$(sudo grep -q "^PasswordAuthentication yes$" "$sshd_config" && echo "true" || echo "false")
+    local pam_correct=$(sudo grep -q "^UsePAM yes$" "$sshd_config" && echo "true" || echo "false")
+    local pubkey_correct=$(sudo grep -q "^PubkeyAuthentication yes$" "$sshd_config" && echo "true" || echo "false")
+
+    # If all settings are already correct, no changes needed
+    if [ "$pw_auth_correct" = "true" ] && [ "$pam_correct" = "true" ] && [ "$pubkey_correct" = "true" ]; then
+        print_info "SSH configuration already properly configured"
+
+        # Verify service is running and enabled
+        if ! sudo systemctl is-active --quiet sshd 2>/dev/null && ! sudo systemctl is-active --quiet ssh 2>/dev/null; then
+            print_info "Starting SSH service..."
+            if sudo systemctl start sshd 2>/dev/null || sudo systemctl start ssh 2>/dev/null; then
+                print_status "SSH service started"
+            else
+                add_failure "Failed to start SSH service"
+                return
+            fi
+        fi
+
+        # Verify service is enabled
+        if ! sudo systemctl is-enabled sshd 2>/dev/null && ! sudo systemctl is-enabled ssh 2>/dev/null; then
+            if sudo systemctl enable sshd 2>/dev/null || sudo systemctl enable ssh 2>/dev/null; then
+                print_status "SSH service enabled to start on boot"
+            fi
+        fi
+
+        print_status "SSH server is properly configured for password-based connections"
+        return
+    fi
+
     print_info "Configuring SSH for password authentication..."
 
-    # Create backup for this specific change
-    sudo cp "$sshd_config" "$sshd_config_backup"
+    # Create temporary backup for this change
+    local temp_backup=$(mktemp)
+    sudo cp "$sshd_config" "$temp_backup"
 
     # Enable password authentication
-    if sudo grep -q "^PasswordAuthentication" "$sshd_config"; then
-        sudo sed -i 's/^PasswordAuthentication.*/PasswordAuthentication yes/' "$sshd_config"
-    else
-        echo "PasswordAuthentication yes" | sudo tee -a "$sshd_config" > /dev/null
+    if ! sudo grep -q "^PasswordAuthentication yes$" "$sshd_config"; then
+        if sudo grep -q "^PasswordAuthentication" "$sshd_config"; then
+            # Replace existing line
+            sudo sed -i 's/^PasswordAuthentication.*/PasswordAuthentication yes/' "$sshd_config"
+        elif sudo grep -q "^#PasswordAuthentication" "$sshd_config"; then
+            # Uncomment existing commented line
+            sudo sed -i 's/^#PasswordAuthentication.*/PasswordAuthentication yes/' "$sshd_config"
+        else
+            # Add new line
+            echo "PasswordAuthentication yes" | sudo tee -a "$sshd_config" > /dev/null
+        fi
+        config_changed=true
     fi
 
     # Enable PAM authentication (required for password auth)
-    if sudo grep -q "^UsePAM" "$sshd_config"; then
-        sudo sed -i 's/^UsePAM.*/UsePAM yes/' "$sshd_config"
-    else
-        echo "UsePAM yes" | sudo tee -a "$sshd_config" > /dev/null
+    if ! sudo grep -q "^UsePAM yes$" "$sshd_config"; then
+        if sudo grep -q "^UsePAM" "$sshd_config"; then
+            sudo sed -i 's/^UsePAM.*/UsePAM yes/' "$sshd_config"
+        elif sudo grep -q "^#UsePAM" "$sshd_config"; then
+            sudo sed -i 's/^#UsePAM.*/UsePAM yes/' "$sshd_config"
+        else
+            echo "UsePAM yes" | sudo tee -a "$sshd_config" > /dev/null
+        fi
+        config_changed=true
     fi
 
     # Ensure PubkeyAuthentication is also enabled (best practice)
-    if sudo grep -q "^PubkeyAuthentication" "$sshd_config"; then
-        sudo sed -i 's/^PubkeyAuthentication.*/PubkeyAuthentication yes/' "$sshd_config"
-    else
-        echo "PubkeyAuthentication yes" | sudo tee -a "$sshd_config" > /dev/null
+    if ! sudo grep -q "^PubkeyAuthentication yes$" "$sshd_config"; then
+        if sudo grep -q "^PubkeyAuthentication" "$sshd_config"; then
+            sudo sed -i 's/^PubkeyAuthentication.*/PubkeyAuthentication yes/' "$sshd_config"
+        elif sudo grep -q "^#PubkeyAuthentication" "$sshd_config"; then
+            sudo sed -i 's/^#PubkeyAuthentication.*/PubkeyAuthentication yes/' "$sshd_config"
+        else
+            echo "PubkeyAuthentication yes" | sudo tee -a "$sshd_config" > /dev/null
+        fi
+        config_changed=true
     fi
 
-    # Optional: Allow root login with password (commented out for security)
-    # If you need this, uncomment the following lines:
-    # if sudo grep -q "^PermitRootLogin" "$sshd_config"; then
-    #     sudo sed -i 's/^PermitRootLogin.*/PermitRootLogin yes/' "$sshd_config"
-    # fi
-
-    print_status "SSH configuration updated"
+    if [ "$config_changed" = "true" ]; then
+        print_status "SSH configuration updated"
+    else
+        print_info "SSH configuration already correct"
+    fi
 
     # Test SSH configuration
-    if sudo sshd -t 2>/dev/null; then
-        print_status "SSH configuration syntax is valid"
-    else
+    if ! sudo sshd -t 2>/dev/null; then
         print_error "SSH configuration syntax check failed"
         print_info "Restoring from backup..."
-        sudo cp "$sshd_config_backup" "$sshd_config"
+        sudo cp "$temp_backup" "$sshd_config"
+        rm -f "$temp_backup"
         add_failure "Failed to configure SSH - configuration restored"
         return
     fi
 
-    # Start and enable SSH service
-    if sudo systemctl restart sshd || sudo systemctl restart ssh; then
-        print_status "SSH service restarted with new configuration"
+    rm -f "$temp_backup"
+
+    # Restart SSH service only if configuration was changed
+    if [ "$config_changed" = "true" ]; then
+        print_info "Restarting SSH service..."
+        if sudo systemctl restart sshd 2>/dev/null || sudo systemctl restart ssh 2>/dev/null; then
+            print_status "SSH service restarted with new configuration"
+        else
+            add_failure "Failed to restart SSH service"
+            return
+        fi
     else
-        add_failure "Failed to restart SSH service"
-        return
+        # Ensure service is running
+        if ! sudo systemctl is-active --quiet sshd 2>/dev/null && ! sudo systemctl is-active --quiet ssh 2>/dev/null; then
+            print_info "Starting SSH service..."
+            if sudo systemctl start sshd 2>/dev/null || sudo systemctl start ssh 2>/dev/null; then
+                print_status "SSH service started"
+            else
+                add_failure "Failed to start SSH service"
+                return
+            fi
+        fi
     fi
 
-    if sudo systemctl enable sshd 2>/dev/null || sudo systemctl enable ssh 2>/dev/null; then
-        print_status "SSH service enabled to start on boot"
+    # Enable SSH service on boot
+    if ! sudo systemctl is-enabled sshd 2>/dev/null && ! sudo systemctl is-enabled ssh 2>/dev/null; then
+        if sudo systemctl enable sshd 2>/dev/null || sudo systemctl enable ssh 2>/dev/null; then
+            print_status "SSH service enabled to start on boot"
+        fi
     fi
 
     # Display connection information
