@@ -408,12 +408,15 @@ install_docker() {
     if [ "$docker_installed" = true ]; then
         # Configure docker group
         if ! getent group docker > /dev/null 2>&1; then
+            print_info "Creating docker group..."
             sudo groupadd docker
         fi
 
         if ! groups "$ACTUAL_USER" | grep -q docker; then
+            print_info "Adding user $ACTUAL_USER to docker group..."
             sudo usermod -aG docker "$ACTUAL_USER"
             print_status "User $ACTUAL_USER added to docker group"
+            print_info "Note: You may need to log out and log back in for group changes to take effect"
         fi
 
         # Ensure Docker service is started and enabled
@@ -431,26 +434,67 @@ install_docker() {
             sudo systemctl enable docker &>/dev/null
         fi
 
-        # Wait for Docker socket to be ready
-        local max_wait=10
+        # Wait for Docker socket to be ready at unix:///var/run/docker.sock
+        print_info "Verifying Docker socket at unix:///var/run/docker.sock..."
+        local max_wait=15
         local waited=0
         while [ $waited -lt $max_wait ]; do
-            if sudo docker info &>/dev/null; then
-                print_status "Docker service is running and responsive"
+            # Check if socket file exists
+            if [ -S /var/run/docker.sock ]; then
+                print_status "Docker socket exists at /var/run/docker.sock"
 
-                # Test Docker functionality
-                if sudo docker run --rm hello-world &>/dev/null; then
-                    print_status "Docker verified with test container"
-                else
-                    print_info "Docker is running but test container failed (may require group activation)"
+                # Check socket permissions
+                local socket_perms=$(stat -c "%a" /var/run/docker.sock 2>/dev/null || echo "000")
+                local socket_group=$(stat -c "%G" /var/run/docker.sock 2>/dev/null || echo "unknown")
+                print_info "Socket permissions: $socket_perms, group: $socket_group"
+
+                # Ensure socket has correct permissions
+                if [ "$socket_perms" != "660" ] && [ "$socket_perms" != "666" ]; then
+                    print_info "Fixing Docker socket permissions..."
+                    sudo chmod 666 /var/run/docker.sock || true
                 fi
-                return
+
+                # Test Docker daemon responsiveness
+                if sudo docker info &>/dev/null; then
+                    print_status "Docker daemon is running and responsive"
+
+                    # Test without sudo if user is in docker group
+                    if groups "$ACTUAL_USER" | grep -q docker; then
+                        if docker info &>/dev/null; then
+                            print_status "Docker accessible without sudo"
+                        else
+                            print_info "Docker group membership exists but not yet active in this shell"
+                            print_info "Run 'newgrp docker' or log out and back in to activate"
+                        fi
+                    fi
+
+                    # Test Docker functionality with a simple container
+                    if sudo docker run --rm hello-world &>/dev/null; then
+                        print_status "Docker verified with test container"
+                    else
+                        print_info "Docker is running but test container failed (may require group activation)"
+                    fi
+                    return
+                fi
             fi
             sleep 1
             ((waited++))
         done
 
-        print_info "Docker service started but may need a moment to be fully ready"
+        print_error "Docker socket not available after ${max_wait}s"
+        print_info "Attempting to diagnose..."
+
+        # Diagnostic information
+        if [ -S /var/run/docker.sock ]; then
+            print_info "Socket exists but daemon not responding"
+            sudo systemctl status docker --no-pager -l | head -20
+        else
+            print_error "Docker socket file /var/run/docker.sock does not exist"
+            print_info "Check Docker service status:"
+            sudo systemctl status docker --no-pager -l | head -20
+        fi
+
+        add_failure "Docker socket not properly configured"
     fi
 }
 
