@@ -1384,9 +1384,16 @@ install_apache_spark() {
 
     print_info "Installing Apache Spark $SPARK_VERSION..."
 
-    # Idempotency check
-    if [ -d "$spark_home/bin" ] && [ -f "$spark_home/bin/spark-submit" ]; then
+    # Idempotency check - check both directory and spark-submit executable
+    if [ -d "$spark_home" ] && [ -f "$spark_home/bin/spark-submit" ] && [ -x "$spark_home/bin/spark-submit" ]; then
         print_info "Apache Spark already installed at: $spark_home"
+        
+        # Verify it's working
+        if "$spark_home/bin/spark-submit" --version &>/dev/null; then
+            print_status "Apache Spark $SPARK_VERSION is installed and working"
+        else
+            print_info "Apache Spark found but may need verification"
+        fi
         return
     fi
 
@@ -1472,33 +1479,50 @@ install_apache_trino() {
 
     print_info "Installing Apache Trino $TRINO_VERSION..."
 
-    # Idempotency check
-    if [ -d "$trino_home/bin" ] && [ -f "$trino_home/bin/launcher.py" ]; then
-        print_info "Apache Trino already installed at: $trino_home"
+    # Idempotency check for Trino Server
+    local trino_server_installed=false
+    if [ -d "$trino_home" ] && [ -f "$trino_home/bin/launcher.py" ] && [ -f "$trino_home/etc/config.properties" ]; then
+        print_info "Apache Trino Server already installed at: $trino_home"
+        trino_server_installed=true
+    fi
+
+    # Idempotency check for Trino CLI
+    local trino_cli_installed=false
+    local trino_cli_path="$ACTUAL_HOME/.local/bin/trino"
+    if [ -f "$trino_cli_path" ] && [ -x "$trino_cli_path" ]; then
+        print_info "Trino CLI already installed at: $trino_cli_path"
+        trino_cli_installed=true
+    fi
+
+    # If both are installed, we're done
+    if [ "$trino_server_installed" = true ] && [ "$trino_cli_installed" = true ]; then
+        print_status "Apache Trino $TRINO_VERSION is fully installed"
         return
     fi
 
     # Create local directories
     mkdir -p "$ACTUAL_HOME/.local"
+    mkdir -p "$ACTUAL_HOME/.local/bin"
     mkdir -p "$trino_data_dir"
 
-    # Download and extract server
-    local tmp_dir=$(mktemp -d)
-    cd "$tmp_dir"
+    # Download and extract server only if not installed
+    if [ "$trino_server_installed" = false ]; then
+        local tmp_dir=$(mktemp -d)
+        cd "$tmp_dir"
 
-    print_info "Downloading Trino Server ${TRINO_VERSION}..."
-    if wget -q "$trino_download_url" -O trino-server.tar.gz; then
-        if tar -xzf trino-server.tar.gz && [ -d "trino-server-${TRINO_VERSION}" ]; then
-            # Remove old trino directory if exists
-            rm -rf "$trino_home"
+        print_info "Downloading Trino Server ${TRINO_VERSION}..."
+        if wget -q "$trino_download_url" -O trino-server.tar.gz; then
+            if tar -xzf trino-server.tar.gz && [ -d "trino-server-${TRINO_VERSION}" ]; then
+                # Remove old trino directory if exists
+                rm -rf "$trino_home"
 
-            # Move to final location
-            mv "trino-server-${TRINO_VERSION}" "$trino_home"
-            print_status "Apache Trino Server extracted to: $trino_home"
+                # Move to final location
+                mv "trino-server-${TRINO_VERSION}" "$trino_home"
+                print_status "Apache Trino Server extracted to: $trino_home"
 
-            # Create basic configuration
-            mkdir -p "$trino_home/etc"
-            cat > "$trino_home/etc/config.properties" << EOF
+                # Create basic configuration
+                mkdir -p "$trino_home/etc"
+                cat > "$trino_home/etc/config.properties" << EOF
 coordinator=true
 node-scheduler.include-coordinator=true
 http-server.http.port=8080
@@ -1507,39 +1531,40 @@ discovery-server.enabled=true
 discovery.uri=http://localhost:8080
 EOF
 
-            # Create node.properties
-            cat > "$trino_home/etc/node.properties" << EOF
+                # Create node.properties
+                cat > "$trino_home/etc/node.properties" << EOF
 node.environment=production
 node.data_dir=$trino_data_dir
 EOF
 
-            print_status "Trino configuration files created"
+                print_status "Trino configuration files created"
+            else
+                add_failure "Failed to extract Apache Trino Server"
+            fi
         else
-            add_failure "Failed to extract Apache Trino Server"
+            add_failure "Failed to download Apache Trino Server from $trino_download_url"
         fi
-    else
-        add_failure "Failed to download Apache Trino Server from $trino_download_url"
+
+        cd - > /dev/null
+        rm -rf "$tmp_dir"
     fi
 
-    # Download Trino CLI
-    print_info "Downloading Trino CLI ${TRINO_VERSION}..."
-    local trino_cli_path="$ACTUAL_HOME/.local/bin/trino"
-    mkdir -p "$ACTUAL_HOME/.local/bin"
+    # Download Trino CLI only if not installed
+    if [ "$trino_cli_installed" = false ]; then
+        print_info "Downloading Trino CLI ${TRINO_VERSION}..."
 
-    if wget -q "$trino_cli_url" -O "$trino_cli_path"; then
-        chmod +x "$trino_cli_path"
-        print_status "Trino CLI downloaded and installed to: $trino_cli_path"
+        if wget -q "$trino_cli_url" -O "$trino_cli_path"; then
+            chmod +x "$trino_cli_path"
+            print_status "Trino CLI downloaded and installed to: $trino_cli_path"
 
-        # Add ~/.local/bin to PATH if not already there
-        if ! grep -q 'export PATH="\$HOME/.local/bin' "$ACTUAL_HOME/.bashrc" 2>/dev/null; then
-            echo 'export PATH="$HOME/.local/bin:$PATH"' >> "$ACTUAL_HOME/.bashrc"
+            # Add ~/.local/bin to PATH if not already there
+            if ! grep -q 'export PATH="\$HOME/.local/bin' "$ACTUAL_HOME/.bashrc" 2>/dev/null; then
+                echo 'export PATH="$HOME/.local/bin:$PATH"' >> "$ACTUAL_HOME/.bashrc"
+            fi
+        else
+            add_failure "Failed to download Trino CLI from $trino_cli_url"
         fi
-    else
-        add_failure "Failed to download Trino CLI from $trino_cli_url"
     fi
-
-    cd - > /dev/null
-    rm -rf "$tmp_dir"
 }
 
 install_jupyter_notebook() {
