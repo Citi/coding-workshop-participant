@@ -1079,11 +1079,11 @@ Ubuntu 22.04 Developer Workstation Setup
 Usage: ./setup-environment.sh [OPTIONS]
 
 Options:
-  -n                     Dry run
-  -d                     Install dnsmasq
-  -h, --help             Show help
-  --intellij-ultimate    Install IntelliJ Ultimate
-  --pycharm-professional Install PyCharm Professional
+  -n                       Dry run
+  -d                       Install dnsmasq
+  -h, --help               Show help
+  --intellij-ultimate      Install IntelliJ Ultimate
+  --pycharm-professional   Install PyCharm Professional
 HELP
 }
 
