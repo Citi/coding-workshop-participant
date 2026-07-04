@@ -1209,7 +1209,12 @@ install_python() {
 
     # Step 5: Install Python version
     print_info "Installing $binary_name packages..."
-    if sudo apt install -y "$binary_name" "$binary_name-venv" "$binary_name-dev" "$binary_name-distutils" 2>&1 | tee /tmp/python_install.txt; then
+
+    # For Python 3.12+, distutils is not available as a separate package
+    local packages="$binary_name $binary_name-venv $binary_name-dev"
+
+    # Try to install the packages
+    if sudo apt install -y $packages 2>&1 | tee /tmp/python_install.txt; then
         if [ -f /tmp/python_install.txt ] && grep -q "done" /tmp/python_install.txt; then
             print_status "$display_name installed: $("$binary_name" --version)"
         else
@@ -1217,21 +1222,27 @@ install_python() {
         fi
 
         # Ensure pip is installed and working for this Python version
-        print_info "Ensuring pip is available for $binary_name..."
+        print_info "Ensuring pip and setuptools are available for $binary_name..."
         if ! "$binary_name" -m pip --version &>/dev/null; then
             print_info "Installing pip for $binary_name..."
             sudo apt install -y "python3-pip" 2>/dev/null || true
 
             # Try to bootstrap pip if still not available
             if ! "$binary_name" -m pip --version &>/dev/null; then
+                print_info "Bootstrapping pip for $binary_name..."
                 wget -q https://bootstrap.pypa.io/get-pip.py -O /tmp/get-pip.py 2>/dev/null || true
-                "$binary_name" /tmp/get-pip.py --user 2>/dev/null || print_info "Note: pip bootstrap attempted"
-                rm -f /tmp/get-pip.py
+                if [ -f /tmp/get-pip.py ]; then
+                    "$binary_name" /tmp/get-pip.py --user 2>/dev/null || print_info "Note: pip bootstrap attempted"
+                    rm -f /tmp/get-pip.py
+                fi
             fi
         fi
 
+        # Install setuptools and wheel (replaces distutils for Python 3.12+)
         if "$binary_name" -m pip --version &>/dev/null; then
-            print_status "pip is available for $binary_name"
+            print_info "Installing setuptools and wheel for $binary_name..."
+            "$binary_name" -m pip install --user --upgrade setuptools wheel 2>/dev/null || print_info "Note: setuptools install attempted"
+            print_status "pip and setuptools are available for $binary_name"
         else
             print_info "Note: pip may need manual setup for $binary_name"
         fi
