@@ -1597,6 +1597,7 @@ install_jupyter_notebook() {
             print_dry_run_status "Already installed"
         else
             print_dry_run_missing "Not installed"
+            print_dry_run_action "Would ensure pip is working for python3.13"
             print_dry_run_action "Would install via pip: jupyter notebook"
             print_dry_run_action "Would install common data science packages: pandas, numpy, matplotlib, scikit-learn"
         fi
@@ -1614,11 +1615,40 @@ install_jupyter_notebook() {
         return
     fi
 
+    # Ensure pip is working properly for python3.13
+    print_info "Ensuring pip is properly set up for python3.13..."
+
+    # Check if python3.13 has pip
+    if ! python3.13 -m pip --version &>/dev/null 2>&1; then
+        print_info "Installing pip for python3.13..."
+
+        # Download and run get-pip.py
+        wget -q https://bootstrap.pypa.io/get-pip.py -O /tmp/get-pip-jupyter.py 2>/dev/null
+        if [ -f /tmp/get-pip-jupyter.py ]; then
+            python3.13 /tmp/get-pip-jupyter.py --user --force-reinstall 2>&1 | grep -v "WARNING" || true
+            rm -f /tmp/get-pip-jupyter.py
+            print_status "pip installed for python3.13"
+        else
+            add_failure "Failed to download get-pip.py"
+            return
+        fi
+    fi
+
+    # Verify pip is now working
+    if ! python3.13 -m pip --version &>/dev/null 2>&1; then
+        add_failure "pip is not available for python3.13"
+        return
+    fi
+
+    # Upgrade pip, setuptools, and wheel to ensure compatibility
+    print_info "Upgrading pip, setuptools, and wheel..."
+    python3.13 -m pip install --user --upgrade pip setuptools wheel 2>&1 | grep -v "WARNING" || true
+
     # Install jupyter and data science packages
     local packages="jupyter notebook jupyterlab pandas numpy matplotlib scikit-learn scipy plotly"
 
     print_info "Installing Jupyter and data science packages via pip..."
-    if python3.13 -m pip install --user $packages; then
+    if python3.13 -m pip install --user $packages 2>&1 | grep -E "Successfully installed|Requirement already satisfied"; then
         print_status "Jupyter Notebook and data science packages installed"
 
         # Verify installation
