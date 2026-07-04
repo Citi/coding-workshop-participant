@@ -1228,6 +1228,7 @@ configure_python() {
         print_dry_run_action "Would remove existing python/python3 alternatives"
         print_dry_run_action "Would register all Python versions with equal low priorities"
         print_dry_run_action "Would explicitly set Python 3.13 as default using --set"
+        print_dry_run_action "Would fix command-not-found apt_pkg issues"
         return
     fi
 
@@ -1294,6 +1295,23 @@ configure_python() {
         fi
     else
         add_failure "Python 3.13 not found - cannot set as default"
+    fi
+
+    # Fix command-not-found apt_pkg issue caused by Python alternatives change
+    print_info "Fixing command-not-found apt_pkg compatibility..."
+    if [ -f /usr/lib/cnf-update-db ]; then
+        # Disable the command-not-found APT hook temporarily to prevent errors
+        sudo rm -f /etc/apt/apt.conf.d/50command-not-found 2>/dev/null || true
+
+        # Try to reinstall python3-apt to fix apt_pkg issues
+        sudo apt install -y --reinstall python3-apt 2>/dev/null || print_info "Note: Could not reinstall python3-apt"
+
+        # Re-enable command-not-found if it was disabled
+        if ! [ -f /etc/apt/apt.conf.d/50command-not-found ]; then
+            sudo apt install -y --reinstall command-not-found 2>/dev/null || print_info "Note: command-not-found remains disabled"
+        fi
+
+        print_status "Fixed command-not-found apt_pkg compatibility"
     fi
 
     print_status "Python 3.13 set as DEFAULT for both 'python' and 'python3' commands"
