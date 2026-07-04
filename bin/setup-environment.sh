@@ -555,7 +555,8 @@ install_pgadmin() {
     fi
 
     if is_package_installed "pgadmin4"; then
-        print_info "pgAdmin already installed"
+        local version=$(dpkg -l pgadmin4 2>/dev/null | grep '^ii' | awk '{print $3}')
+        print_info "pgAdmin already installed: ${version:-version unknown}"
         return
     fi
 
@@ -567,7 +568,8 @@ install_pgadmin() {
        echo "deb [arch=amd64 signed-by=/usr/share/keyrings/pgadmin-keyring.gpg] https://ftp.postgresql.org/pub/pgadmin/pgadmin4/apt/jammy pgadmin4 main" | \
            sudo tee /etc/apt/sources.list.d/pgadmin4.list > /dev/null && \
        sudo apt update && safe_apt_install pgadmin4-desktop; then
-        print_status "pgAdmin installed"
+        local version=$(dpkg -l pgadmin4 2>/dev/null | grep '^ii' | awk '{print $3}')
+        print_status "pgAdmin installed: ${version:-version unknown}"
         print_info "Launch pgAdmin from the application menu"
     else
         add_failure "Failed to install pgAdmin"
