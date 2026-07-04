@@ -1143,9 +1143,6 @@ install_python() {
             print_dry_run_action "Would add PPA: ppa:deadsnakes/ppa"
             print_dry_run_action "Would install: $binary_name, $binary_name-venv, $binary_name-dev"
         fi
-        if [ "$version" = "3.13" ]; then
-            print_dry_run_action "Would set as default: update-alternatives --install /usr/bin/python python $binary_name 313"
-        fi
         return
     fi
 
@@ -1154,38 +1151,62 @@ install_python() {
     # Idempotency check
     if command -v "$binary_name" &> /dev/null; then
         print_info "$display_name already installed: $("$binary_name" --version)"
-    else
-        # Add deadsnakes PPA
-        if sudo add-apt-repository -y ppa:deadsnakes/ppa; then
-            if sudo apt update && sudo apt install -y "$binary_name" "$binary_name-venv" "$binary_name-dev"; then
-                print_status "$display_name installed: $("$binary_name" --version)"
-            else
-                add_failure "Failed to install $display_name"
-                return
-            fi
+        return
+    fi
+
+    # Add deadsnakes PPA
+    if sudo add-apt-repository -y ppa:deadsnakes/ppa; then
+        if sudo apt update && sudo apt install -y "$binary_name" "$binary_name-venv" "$binary_name-dev"; then
+            print_status "$display_name installed: $("$binary_name" --version)"
         else
-            add_failure "Failed to add deadsnakes PPA"
-            return
-        fi
-    fi
-
-    # Register python version with update-alternatives
-    local priority=$((300 + ${version//./}))
-
-    # For Python 3.13, set priority highest (413) to make it default
-    if [ "$version" = "3.13" ]; then
-        priority=413
-    fi
-
-    if sudo update-alternatives --install /usr/bin/python python /usr/bin/"$binary_name" "$priority"; then
-        print_status "Registered $binary_name in update-alternatives with priority $priority"
-
-        if [ "$version" = "3.13" ]; then
-            print_status "Python 3.13 set as DEFAULT Python version"
+            add_failure "Failed to install $display_name"
         fi
     else
-        add_failure "Failed to register $binary_name in update-alternatives"
+        add_failure "Failed to add deadsnakes PPA"
     fi
+}
+
+configure_python() {
+    print_section "Python Configuration"
+
+    if is_dry_run; then
+        print_dry_run_header "PYTHON-CONFIG" "Python Configuration"
+        print_dry_run_action "Would register all Python versions with update-alternatives"
+        print_dry_run_action "Would set Python 3.13 as default (priority 413)"
+        return
+    fi
+
+    print_info "Configuring Python versions..."
+
+    local versions=("3.11" "3.12" "3.13" "3.14")
+
+    # Register each Python version with update-alternatives
+    for version in "${versions[@]}"; do
+        local binary_name="python$version"
+
+        # Skip if binary doesn't exist
+        if ! command -v "$binary_name" &> /dev/null; then
+            print_info "Skipping $binary_name - not installed"
+            continue
+        fi
+
+        # Calculate priority: 3.11 -> 311, 3.12 -> 312, 3.13 -> 413, 3.14 -> 314
+        local priority=$((300 + ${version//./}))
+
+        # Python 3.13 gets highest priority to be the default
+        if [ "$version" = "3.13" ]; then
+            priority=413
+        fi
+
+        if sudo update-alternatives --install /usr/bin/python python /usr/bin/"$binary_name" "$priority"; then
+            print_status "Registered $binary_name with priority $priority"
+        else
+            add_failure "Failed to register $binary_name in update-alternatives"
+        fi
+    done
+
+    print_status "Python 3.13 set as DEFAULT Python version"
+    print_info "Users can switch versions anytime with: update-alternatives --config python"
 }
 
 install_java_openjdk() {
@@ -2072,6 +2093,7 @@ main() {
     install_python "3.12"
     install_python "3.13"
     install_python "3.14"
+    configure_python
     install_nodejs
     install_java_openjdk
     install_vscode
