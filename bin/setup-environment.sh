@@ -385,116 +385,91 @@ install_docker() {
         return
     fi
 
-    local docker_installed=false
-
     if command_exists docker; then
         print_info "Docker already installed: $(docker --version)"
-        docker_installed=true
-    else
-        print_info "Installing Docker..."
-        sudo install -m 0755 -d /etc/apt/keyrings
-        if curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo gpg --dearmor --yes -o /etc/apt/keyrings/docker.gpg && \
-           sudo chmod a+r /etc/apt/keyrings/docker.gpg && \
-           echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable" | \
-               sudo tee /etc/apt/sources.list.d/docker.list > /dev/null && \
-           sudo apt update && safe_apt_install docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin; then
-            print_status "Docker installed: $(docker --version)"
-            docker_installed=true
-        else
-            add_failure "Failed to install Docker"
-        fi
-    fi
 
-    if [ "$docker_installed" = true ]; then
-        # Configure docker group
-        if ! getent group docker > /dev/null 2>&1; then
-            print_info "Creating docker group..."
-            sudo groupadd docker
+        # Ensure service is running and enabled
+        if ! sudo systemctl is-active --quiet docker; then
+            print_info "Starting Docker service..."
+            sudo systemctl start docker && sudo systemctl enable docker
         fi
 
+        # Ensure docker socket exists
+        if [ ! -S /var/run/docker.sock ]; then
+            print_info "Docker socket not found, restarting Docker..."
+            sudo systemctl restart docker
+        fi
+
+        # Add user to docker group if not already
         if ! groups "$ACTUAL_USER" | grep -q docker; then
             print_info "Adding user $ACTUAL_USER to docker group..."
             sudo usermod -aG docker "$ACTUAL_USER"
-            print_status "User $ACTUAL_USER added to docker group"
-            print_info "Note: You may need to log out and log back in for group changes to take effect"
+            print_info "Docker group added (requires logout/login to take effect)"
         fi
 
-        # Ensure Docker service is started and enabled
-        if ! sudo systemctl is-active --quiet docker; then
-            print_info "Starting Docker service..."
-            if sudo systemctl start docker; then
-                print_status "Docker service started"
-            else
-                add_failure "Failed to start Docker service"
-                return
-            fi
-        fi
+        return
+    fi
 
-        if ! sudo systemctl is-enabled --quiet docker; then
-            sudo systemctl enable docker &>/dev/null
-        fi
+    print_info "Installing Docker..."
 
-        # Wait for Docker socket to be ready at unix:///var/run/docker.sock
-        print_info "Verifying Docker socket at unix:///var/run/docker.sock..."
-        local max_wait=15
-        local waited=0
-        while [ $waited -lt $max_wait ]; do
-            # Check if socket file exists
-            if [ -S /var/run/docker.sock ]; then
-                print_status "Docker socket exists at /var/run/docker.sock"
+    # Remove old Docker packages if they exist
+    sudo apt remove -y docker docker-engine docker.io containerd runc 2>/dev/null || true
 
-                # Check socket permissions
-                local socket_perms=$(stat -c "%a" /var/run/docker.sock 2>/dev/null || echo "000")
-                local socket_group=$(stat -c "%G" /var/run/docker.sock 2>/dev/null || echo "unknown")
-                print_info "Socket permissions: $socket_perms, group: $socket_group"
+    # Install prerequisites
+    if ! safe_apt_install ca-certificates curl gnupg lsb-release; then
+        add_failure "Failed to install Docker prerequisites"
+        return
+    fi
 
-                # Ensure socket has correct permissions
-                if [ "$socket_perms" != "660" ] && [ "$socket_perms" != "666" ]; then
-                    print_info "Fixing Docker socket permissions..."
-                    sudo chmod 666 /var/run/docker.sock || true
-                fi
+    # Add Docker's official GPG key
+    sudo install -m 0755 -d /etc/apt/keyrings
+    if ! curl -fsSL https://download.docker.com/linux/ubuntu/gpg | \
+         sudo gpg --dearmor --yes -o /etc/apt/keyrings/docker.gpg; then
+        add_failure "Failed to add Docker GPG key"
+        return
+    fi
+    sudo chmod a+r /etc/apt/keyrings/docker.gpg
 
-                # Test Docker daemon responsiveness
-                if sudo docker info &>/dev/null; then
-                    print_status "Docker daemon is running and responsive"
+    # Add Docker repository
+    echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable" | \
+        sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
 
-                    # Test without sudo if user is in docker group
-                    if groups "$ACTUAL_USER" | grep -q docker; then
-                        if docker info &>/dev/null; then
-                            print_status "Docker accessible without sudo"
-                        else
-                            print_info "Docker group membership exists but not yet active in this shell"
-                            print_info "Run 'newgrp docker' or log out and back in to activate"
-                        fi
-                    fi
+    # Install Docker Engine
+    if sudo apt update && safe_apt_install docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin; then
+        print_status "Docker installed: $(docker --version)"
 
-                    # Test Docker functionality with a simple container
-                    if sudo docker run --rm hello-world &>/dev/null; then
-                        print_status "Docker verified with test container"
-                    else
-                        print_info "Docker is running but test container failed (may require group activation)"
-                    fi
-                    return
-                fi
-            fi
-            sleep 1
-            ((waited++))
-        done
-
-        print_error "Docker socket not available after ${max_wait}s"
-        print_info "Attempting to diagnose..."
-
-        # Diagnostic information
-        if [ -S /var/run/docker.sock ]; then
-            print_info "Socket exists but daemon not responding"
-            sudo systemctl status docker --no-pager -l | head -20
+        # Start and enable Docker service
+        if sudo systemctl start docker && sudo systemctl enable docker; then
+            print_status "Docker service started and enabled"
         else
-            print_error "Docker socket file /var/run/docker.sock does not exist"
-            print_info "Check Docker service status:"
-            sudo systemctl status docker --no-pager -l | head -20
+            add_failure "Failed to start Docker service"
+            return
         fi
 
-        add_failure "Docker socket not properly configured"
+        # Verify docker socket exists
+        if [ -S /var/run/docker.sock ]; then
+            print_status "Docker socket created at /var/run/docker.sock"
+        else
+            print_error "Docker socket not found at /var/run/docker.sock"
+        fi
+
+        # Add user to docker group
+        if sudo usermod -aG docker "$ACTUAL_USER"; then
+            print_status "User $ACTUAL_USER added to docker group"
+            print_info "Log out and back in for group changes to take effect"
+            print_info "Or run 'newgrp docker' to activate in current session"
+        else
+            add_failure "Failed to add user to docker group"
+        fi
+
+        # Test Docker installation (as root for now)
+        if sudo docker run --rm hello-world &>/dev/null; then
+            print_status "Docker test successful"
+        else
+            print_info "Docker installed but test failed (may need logout/login)"
+        fi
+    else
+        add_failure "Failed to install Docker"
     fi
 }
 
