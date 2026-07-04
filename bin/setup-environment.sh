@@ -1221,80 +1221,54 @@ install_python() {
 }
 
 configure_python() {
+    local default_version="${1:-3.13}"
+    local default_binary="python${default_version}"
+
     print_section "Python Configuration"
 
     if is_dry_run; then
-        print_dry_run_header "PYTHON-CONFIG" "Python Configuration"
-        print_dry_run_action "Would remove existing python/python3 alternatives"
-        print_dry_run_action "Would register all Python versions with equal low priorities"
-        print_dry_run_action "Would explicitly set Python 3.13 as default using --set"
+        print_dry_run_header "PYTHON-CONFIG" "Python Configuration (default: $default_version)"
+        print_dry_run_action "Would remove existing python/python3 symlinks/alternatives"
+        print_dry_run_action "Would set $default_binary as python and python3"
         print_dry_run_action "Would fix command-not-found apt_pkg issues"
         return
     fi
 
-    print_info "Configuring Python versions..."
+    print_info "Configuring Python $default_version as default..."
 
-    local versions=("3.11" "3.12" "3.13" "3.14")
+    # Check if the specified Python version exists
+    if ! command -v "$default_binary" &> /dev/null; then
+        add_failure "Python $default_version not found - cannot set as default"
+        return
+    fi
 
-    # Remove existing python and python3 alternatives to start fresh
-    print_info "Cleaning up existing Python alternatives..."
+    # Remove existing python and python3 alternatives
+    print_info "Removing existing Python alternatives..."
     sudo update-alternatives --remove-all python 2>/dev/null || true
     sudo update-alternatives --remove-all python3 2>/dev/null || true
 
-    # Register each Python version with update-alternatives for both 'python' and 'python3'
-    # Use lower priorities for all versions
-    for version in "${versions[@]}"; do
-        local binary_name="python$version"
-
-        # Skip if binary doesn't exist
-        if ! command -v "$binary_name" &> /dev/null; then
-            print_info "Skipping $binary_name - not installed"
-            continue
-        fi
-
-        # Use low priorities for non-3.13 versions (100-103)
-        # This ensures they don't interfere with 3.13
-        local priority=100
-        case "$version" in
-            3.11) priority=101 ;;
-            3.12) priority=102 ;;
-            3.13) priority=100 ;;  # Lowest gets set first, we'll override later
-            3.14) priority=103 ;;
-        esac
-
-        # Register for 'python' command
-        if sudo update-alternatives --install /usr/bin/python python /usr/bin/"$binary_name" "$priority"; then
-            print_status "Registered $binary_name for 'python' with priority $priority"
+    # Set up python alternative pointing to the specified version
+    print_info "Setting up python -> $default_binary..."
+    if sudo update-alternatives --install /usr/bin/python python /usr/bin/"$default_binary" 100; then
+        if sudo update-alternatives --set python /usr/bin/"$default_binary" 2>/dev/null; then
+            print_status "Set 'python' -> $default_binary"
         else
-            add_failure "Failed to register $binary_name for 'python' in update-alternatives"
-        fi
-
-        # Register for 'python3' command
-        if sudo update-alternatives --install /usr/bin/python3 python3 /usr/bin/"$binary_name" "$priority"; then
-            print_status "Registered $binary_name for 'python3' with priority $priority"
-        else
-            add_failure "Failed to register $binary_name for 'python3' in update-alternatives"
-        fi
-    done
-
-    # Now set Python 3.13 as the absolute default by explicitly selecting it
-    if command -v python3.13 &> /dev/null; then
-        print_info "Setting Python 3.13 as the default..."
-
-        # Use update-alternatives --set to force 3.13 as default
-        if sudo update-alternatives --set python /usr/bin/python3.13 2>/dev/null; then
-            print_status "Set 'python' -> python3.13"
-        else
-            print_info "Note: Could not set python alternative (may already be correct)"
-        fi
-
-        if sudo update-alternatives --set python3 /usr/bin/python3.13 2>/dev/null; then
-            print_status "Set 'python3' -> python3.13"
-        else
-            print_info "Note: Could not set python3 alternative (may already be correct)"
+            print_info "Note: Could not set python alternative"
         fi
     else
-        add_failure "Python 3.13 not found - cannot set as default"
+        add_failure "Failed to set up python alternative"
+    fi
+
+    # Set up python3 alternative pointing to the specified version
+    print_info "Setting up python3 -> $default_binary..."
+    if sudo update-alternatives --install /usr/bin/python3 python3 /usr/bin/"$default_binary" 100; then
+        if sudo update-alternatives --set python3 /usr/bin/"$default_binary" 2>/dev/null; then
+            print_status "Set 'python3' -> $default_binary"
+        else
+            print_info "Note: Could not set python3 alternative"
+        fi
+    else
+        add_failure "Failed to set up python3 alternative"
     fi
 
     # Fix command-not-found apt_pkg issue caused by Python alternatives change
@@ -1314,12 +1288,12 @@ configure_python() {
         print_status "Fixed command-not-found apt_pkg compatibility"
     fi
 
-    print_status "Python 3.13 set as DEFAULT for both 'python' and 'python3' commands"
+    print_status "Python $default_version set as DEFAULT for both 'python' and 'python3' commands"
     print_info "Current Python version: $(python --version 2>&1)"
     print_info "Current Python3 version: $(python3 --version 2>&1)"
-    print_info "Users can switch versions anytime with:"
-    print_info "  update-alternatives --config python"
-    print_info "  update-alternatives --config python3"
+    print_info ""
+    print_info "Other Python versions can still be accessed directly:"
+    print_info "  python3.11, python3.12, python3.13, python3.14"
 }
 
 install_java_openjdk() {
@@ -2206,7 +2180,7 @@ main() {
     install_python "3.12"
     install_python "3.13"
     install_python "3.14"
-    configure_python
+    configure_python "3.13"
     install_nodejs
     install_java_openjdk
     install_vscode
