@@ -1209,11 +1209,31 @@ install_python() {
 
     # Step 5: Install Python version
     print_info "Installing $binary_name packages..."
-    if sudo apt install -y "$binary_name" "$binary_name-venv" "$binary_name-dev" 2>&1 | tee /tmp/python_install.txt; then
+    if sudo apt install -y "$binary_name" "$binary_name-venv" "$binary_name-dev" "$binary_name-distutils" 2>&1 | tee /tmp/python_install.txt; then
         if [ -f /tmp/python_install.txt ] && grep -q "done" /tmp/python_install.txt; then
             print_status "$display_name installed: $("$binary_name" --version)"
         else
             print_status "$display_name installation completed"
+        fi
+
+        # Ensure pip is installed and working for this Python version
+        print_info "Ensuring pip is available for $binary_name..."
+        if ! "$binary_name" -m pip --version &>/dev/null; then
+            print_info "Installing pip for $binary_name..."
+            sudo apt install -y "python3-pip" 2>/dev/null || true
+
+            # Try to bootstrap pip if still not available
+            if ! "$binary_name" -m pip --version &>/dev/null; then
+                wget -q https://bootstrap.pypa.io/get-pip.py -O /tmp/get-pip.py 2>/dev/null || true
+                "$binary_name" /tmp/get-pip.py --user 2>/dev/null || print_info "Note: pip bootstrap attempted"
+                rm -f /tmp/get-pip.py
+            fi
+        fi
+
+        if "$binary_name" -m pip --version &>/dev/null; then
+            print_status "pip is available for $binary_name"
+        else
+            print_info "Note: pip may need manual setup for $binary_name"
         fi
     else
         add_failure "Failed to install $display_name"
