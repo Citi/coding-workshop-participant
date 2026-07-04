@@ -1159,6 +1159,10 @@ install_python() {
     print_info "Waiting for apt lock to be released..."
     wait_for_apt_lock || { add_failure "APT lock timeout"; return; }
 
+    # Clean up any malformed PPA sources from previous failed attempts
+    print_info "Cleaning up any malformed PPA sources..."
+    sudo rm -f /etc/apt/sources.list.d/deadsnakes* 2>/dev/null || true
+
     # Step 2: Ensure software-properties-common is installed
     print_info "Installing software-properties-common..."
     if ! sudo apt install -y software-properties-common 2>&1 | tee /tmp/apt_output.txt | grep -q "done"; then
@@ -1181,6 +1185,9 @@ install_python() {
 
         # Get the Ubuntu release codename
         local ubuntu_codename=$(lsb_release -cs)
+
+        # Clean up any malformed entry first
+        sudo rm -f /etc/apt/sources.list.d/deadsnakes.list 2>/dev/null
 
         # Add the repository manually
         echo "deb https://ppa.launchpadcontent.net/deadsnakes/ppa/ubuntu $ubuntu_codename main" | sudo tee /etc/apt/sources.list.d/deadsnakes.list > /dev/null
