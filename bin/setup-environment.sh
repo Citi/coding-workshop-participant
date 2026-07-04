@@ -1140,6 +1140,7 @@ install_python() {
             print_dry_run_status "Already installed: $("$binary_name" --version 2>/dev/null)"
         else
             print_dry_run_missing "Not installed"
+            print_dry_run_action "Would ensure software-properties-common is installed"
             print_dry_run_action "Would add PPA: ppa:deadsnakes/ppa"
             print_dry_run_action "Would install: $binary_name, $binary_name-venv, $binary_name-dev"
         fi
@@ -1152,6 +1153,15 @@ install_python() {
     if command -v "$binary_name" &> /dev/null; then
         print_info "$display_name already installed: $("$binary_name" --version)"
         return
+    fi
+
+    # Ensure add-apt-repository is available
+    if ! command -v add-apt-repository &> /dev/null; then
+        print_info "Installing software-properties-common (required for add-apt-repository)..."
+        if ! sudo apt update || ! sudo apt install -y software-properties-common; then
+            add_failure "Failed to install software-properties-common"
+            return
+        fi
     fi
 
     # Add deadsnakes PPA
