@@ -975,9 +975,18 @@ install_awscli() {
         return
     fi
 
-    if command_exists aws && aws --version | grep -q "aws-cli/2"; then
+    # Check if AWS CLI v2 is already installed and working
+    if command_exists aws && aws --version 2>/dev/null | grep -q "aws-cli/2"; then
         print_info "AWS CLI v2 already installed: $(aws --version)"
         return
+    fi
+
+    # Remove old AWS CLI v1 package if it exists (incompatible with Python 3.13+)
+    if is_package_installed "awscli"; then
+        print_info "Removing incompatible AWS CLI v1 package..."
+        if sudo apt remove -y awscli 2>/dev/null; then
+            print_status "AWS CLI v1 package removed"
+        fi
     fi
 
     print_info "Installing AWS CLI v2..."
@@ -1000,23 +1009,33 @@ install_awscli() {
 install_localstack() {
     print_section "LocalStack $LOCALSTACK_VERSION"
 
+    local localstack_bin="$ACTUAL_HOME/.local/bin/localstack"
+
     if is_dry_run; then
-        command_exists localstack && print_status "Already installed" || print_info "Would install LocalStack $LOCALSTACK_VERSION"
+        [ -x "$localstack_bin" ] && print_status "Already installed" || print_info "Would install LocalStack $LOCALSTACK_VERSION"
         return
     fi
 
-    if command_exists localstack; then
-        print_info "LocalStack already installed: $(localstack --version)"
+    if [ -x "$localstack_bin" ]; then
+        print_info "LocalStack already installed: $("$localstack_bin" --version 2>/dev/null || echo "$LOCALSTACK_VERSION")"
         return
     fi
 
     print_info "Installing LocalStack $LOCALSTACK_VERSION..."
 
+    # Ensure ~/.local/bin exists and is in PATH
+    mkdir -p "$ACTUAL_HOME/.local/bin"
+    export PATH="$ACTUAL_HOME/.local/bin:$PATH"
+
     # Install via pip
     if python3 -m pip install --user "localstack==${LOCALSTACK_VERSION}"; then
-        print_status "LocalStack installed: $(localstack --version)"
+        if [ -x "$localstack_bin" ]; then
+            print_status "LocalStack installed: $("$localstack_bin" --version 2>/dev/null || echo "$LOCALSTACK_VERSION")"
+        else
+            print_status "LocalStack installed: $LOCALSTACK_VERSION"
+        fi
 
-        # Ensure ~/.local/bin is in PATH
+        # Ensure ~/.local/bin is in PATH for future sessions
         if ! grep -q 'export PATH="$HOME/.local/bin:$PATH"' "$ACTUAL_HOME/.bashrc" 2>/dev/null; then
             echo 'export PATH="$HOME/.local/bin:$PATH"' >> "$ACTUAL_HOME/.bashrc"
         fi
@@ -1167,7 +1186,7 @@ main() {
     echo "CONNECTION INFO"
     command_exists psql && echo -e "  ${GREEN}✓${NC} PostgreSQL: postgresql://localhost:5432 (user: $POSTGRES_USER)"
     command_exists mongod && echo -e "  ${GREEN}✓${NC} MongoDB: mongodb://localhost:27017 (user: $MONGO_USER)"
-    command_exists localstack && echo -e "  ${GREEN}✓${NC} LocalStack: http://localhost:4566"
+    [ -x "$ACTUAL_HOME/.local/bin/localstack" ] && echo -e "  ${GREEN}✓${NC} LocalStack: http://localhost:4566"
     command_exists jupyter && echo -e "  ${GREEN}✓${NC} Jupyter: localhost:$JUPYTER_PORT"
     [ -d "$ACTUAL_HOME/.local/spark" ] && echo -e "  ${GREEN}✓${NC} Spark: $ACTUAL_HOME/.local/spark"
     [ -f "$ACTUAL_HOME/.local/bin/trino" ] && echo -e "  ${GREEN}✓${NC} Trino: $ACTUAL_HOME/.local/bin/trino"
