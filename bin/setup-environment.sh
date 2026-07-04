@@ -319,7 +319,7 @@ install_vscode() {
     fi
 
     print_info "Installing Visual Studio Code..."
-    if wget -qO- https://packages.microsoft.com/keys/microsoft.asc | gpg --dearmor > /tmp/packages.microsoft.gpg && \
+    if wget -qO- https://packages.microsoft.com/keys/microsoft.asc | gpg --dearmor --yes > /tmp/packages.microsoft.gpg && \
        sudo install -D -o root -g root -m 644 /tmp/packages.microsoft.gpg /etc/apt/keyrings/packages.microsoft.gpg && \
        rm /tmp/packages.microsoft.gpg && \
        echo "deb [arch=amd64,arm64,armhf signed-by=/etc/apt/keyrings/packages.microsoft.gpg] https://packages.microsoft.com/repos/code stable main" | \
@@ -393,7 +393,7 @@ install_docker() {
     else
         print_info "Installing Docker..."
         sudo install -m 0755 -d /etc/apt/keyrings
-        if curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo gpg --dearmor -o /etc/apt/keyrings/docker.gpg && \
+        if curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo gpg --dearmor --yes -o /etc/apt/keyrings/docker.gpg && \
            sudo chmod a+r /etc/apt/keyrings/docker.gpg && \
            echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable" | \
                sudo tee /etc/apt/sources.list.d/docker.list > /dev/null && \
@@ -471,7 +471,7 @@ install_postgres() {
 
     # Add PostgreSQL APT repository
     if curl -fsSL https://www.postgresql.org/media/keys/ACCC4CF8.asc | \
-       sudo gpg --dearmor -o /usr/share/keyrings/postgresql-keyring.gpg && \
+       sudo gpg --dearmor --yes -o /usr/share/keyrings/postgresql-keyring.gpg && \
        echo "deb [arch=amd64 signed-by=/usr/share/keyrings/postgresql-keyring.gpg] http://apt.postgresql.org/pub/repos/apt jammy-pgdg main" | \
            sudo tee /etc/apt/sources.list.d/pgdg.list > /dev/null && \
        sudo apt update && safe_apt_install "postgresql-${POSTGRES_VERSION}" "postgresql-client-${POSTGRES_VERSION}"; then
@@ -530,7 +530,7 @@ install_pgadmin() {
 
     # Add pgAdmin repository
     if curl -fsSL https://www.pgadmin.org/static/packages_pgadmin_org.pub | \
-       sudo gpg --dearmor -o /usr/share/keyrings/pgadmin-keyring.gpg && \
+       sudo gpg --dearmor --yes -o /usr/share/keyrings/pgadmin-keyring.gpg && \
        echo "deb [arch=amd64 signed-by=/usr/share/keyrings/pgadmin-keyring.gpg] https://ftp.postgresql.org/pub/pgadmin/pgadmin4/apt/jammy pgadmin4 main" | \
            sudo tee /etc/apt/sources.list.d/pgadmin4.list > /dev/null && \
        sudo apt update && safe_apt_install pgadmin4-desktop; then
@@ -563,7 +563,7 @@ install_mongodb() {
 
     # Add MongoDB GPG key and repository
     if curl -fsSL https://www.mongodb.org/static/pgp/server-${MONGODB_VERSION}.asc | \
-       sudo gpg --dearmor -o /usr/share/keyrings/mongodb-keyring.gpg && \
+       sudo gpg --dearmor --yes -o /usr/share/keyrings/mongodb-keyring.gpg && \
        echo "deb [arch=amd64,arm64 signed-by=/usr/share/keyrings/mongodb-keyring.gpg] https://repo.mongodb.org/apt/ubuntu jammy/mongodb-org/${MONGODB_VERSION} multiverse" | \
            sudo tee /etc/apt/sources.list.d/mongodb-org-${MONGODB_VERSION}.list > /dev/null && \
        sudo apt update && safe_apt_install mongodb-org; then
@@ -957,7 +957,7 @@ install_terraform() {
     print_info "Installing Terraform..."
 
     # Add HashiCorp GPG key and repository
-    if wget -O- https://apt.releases.hashicorp.com/gpg | sudo gpg --dearmor -o /usr/share/keyrings/hashicorp-archive-keyring.gpg && \
+    if wget -O- https://apt.releases.hashicorp.com/gpg | sudo gpg --dearmor --yes -o /usr/share/keyrings/hashicorp-archive-keyring.gpg && \
        echo "deb [signed-by=/usr/share/keyrings/hashicorp-archive-keyring.gpg] https://apt.releases.hashicorp.com $(lsb_release -cs) main" | \
            sudo tee /etc/apt/sources.list.d/hashicorp.list > /dev/null && \
        sudo apt update && safe_apt_install terraform; then
