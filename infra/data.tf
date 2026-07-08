@@ -10,8 +10,8 @@ data "aws_vpcs" "this" {
 }
 
 data "aws_vpc" "this" {
-  id      = try(element(data.aws_vpcs.this.ids, 0), null)
-  default = try(element(data.aws_vpcs.this.ids, 0), null) != null ? false : true
+  id      = try(one(data.aws_vpcs.this.ids), null)
+  default = try(one(data.aws_vpcs.this.ids), null) != null ? false : true
 }
 
 data "aws_availability_zones" "this" {
@@ -65,9 +65,13 @@ data "aws_iam_roles" "this" {
   path_prefix = "/"
 }
 
-
 data "aws_service_principal" "cloudfront" {
   service_name = "cloudfront"
+  region       = data.aws_region.this.region
+}
+
+data "aws_service_principal" "glue" {
+  service_name = "glue"
   region       = data.aws_region.this.region
 }
 

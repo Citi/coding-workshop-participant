@@ -1,6 +1,6 @@
-# Coding Workshop - Implementation Guide
+# Coding Workshop - Full Stack Guide
 
-> [Main Guide](./README.md) | [Validation Guide](./validation.md) | [Evaluation Guide](./evaluation.md) | [Testing Guide](./testing.md) | **Implementation Guide**
+> [Main Guide](./README.md) | [Validation Guide](./validation.md) | [Evaluation Guide](./evaluation.md) | [Testing Guide](./testing.md) | **Full Stack Guide** [Data Engineer Guide](./data-engineer.md)
 
 ## Overview
 
@@ -8,6 +8,33 @@ This guide provides directions and guidelines on implementation expectations
 but you are free to exercise your creativity to showcase your technical skills
 combined with soft skills such as curiosity, observability, and ability to
 drive / deliver value.
+
+## Architecture Diagram
+
+```mermaid
+graph TD
+    Client["Client Browser"]
+
+    subgraph Frontend Interfaces
+        CF["AWS CloudFront <br/> (Local: Port 3000)"]
+        S3Web["Amazon S3 Website <br/> (Local: Port 4556 - LocalStack)"]
+    end
+
+    subgraph Backend Services
+        Lambda["AWS Lambda <br/> (Local: Port 3001)"]
+    end
+
+    subgraph Persistent Database
+        DB_PG["Amazon Aurora RDS <br/> (Local: Port 5432 - PostgreSQL)"]
+        DB_Mongo["Amazon DocumentDB <br/> (Local: Port 27017 - MongoDB)"]
+    end
+
+    Client -->|UI Requests| CF
+    CF -->|Frontend Proxy| S3Web
+    Client -->|API Requests| Lambda
+    Lambda -->|Reads/Writes| DB_PG
+    Lambda -->|Reads/Writes| DB_Mongo
+```
 
 ## Implementation Expectations
 
@@ -236,6 +263,7 @@ Secure access is essential to protect data and ensure users only perform permitt
     <li><a href="./validation.md">Validation Guide</a></li>
     <li><a href="./evaluation.md">Evaluation Guide</a></li>
     <li><a href="./testing.md">Testing Guide</a></li>
-    <li aria-current="page">Implementation Guide</li>
+    <li aria-current="page">Full Stack Guide</li>
+    <li><a href="./data-engineer.md">Data Engineer Guide</a></li>
   </ol>
 </nav>

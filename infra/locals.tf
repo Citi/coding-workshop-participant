@@ -1,7 +1,7 @@
 locals {
   app_id = try(trimspace(var.aws_app_code), "") != "" ? trimspace(var.aws_app_code) : random_id.this.hex
   app_tags = merge(
-    try(element(data.aws_servicecatalogappregistry_application.this.*.application_tag, 0), {}),
+    try(one(data.aws_servicecatalogappregistry_application.this.*.application_tag), {}),
     { participant = local.app_id, event = random_id.this.hex }
   )
   public_route_table_ids = [
@@ -15,20 +15,20 @@ locals {
     ]
   ])))
   private_subnet_ids = sort(tolist(setsubtract(data.aws_subnets.this.ids, local.public_subnet_ids)))
-  java_dirs = [
+  backend_dirs_java = [
     for file in fileset(format("%s/../backend", path.module), "*/pom.xml") :
     dirname(file) if !startswith(dirname(file), "_") && !startswith(dirname(file), ".")
   ]
-  nodejs_dirs = [
+  backend_dirs_nodejs = [
     for file in fileset(format("%s/../backend", path.module), "*/package.json") :
     dirname(file) if !startswith(dirname(file), "_") && !startswith(dirname(file), ".")
   ]
-  python_dirs = [
-    for file in fileset(format("%s/../backend", path.module), "*/function.py") :
+  backend_dirs_python = [
+    for file in fileset(format("%s/../backend", path.module), "*/requirements.txt") :
     dirname(file) if !startswith(dirname(file), "_") && !startswith(dirname(file), ".")
   ]
-  java_names = {
-    for name in local.java_dirs : name => {
+  backend_names_java = {
+    for name in local.backend_dirs_java : name => {
       name    = name
       arch    = "x86_64"
       runtime = "java25"
@@ -41,8 +41,8 @@ locals {
       ]
     }
   }
-  nodejs_names = {
-    for name in local.nodejs_dirs : name => {
+  backend_names_nodejs = {
+    for name in local.backend_dirs_nodejs : name => {
       name             = name
       arch             = "x86_64"
       runtime          = "nodejs24.x"
@@ -52,8 +52,8 @@ locals {
       npm_requirements = true
     }
   }
-  python_names = {
-    for name in local.python_dirs : name => {
+  backend_names_python = {
+    for name in local.backend_dirs_python : name => {
       name             = name
       arch             = "x86_64"
       runtime          = "python3.13"
@@ -63,7 +63,36 @@ locals {
       pip_requirements = true
     }
   }
-  function_names = merge(local.java_names, local.nodejs_names, local.python_names)
+  data_dirs_python = [
+    for file in fileset(format("%s/../data", path.module), "*/requirements.txt") :
+    dirname(file) if !startswith(dirname(file), "_") && !startswith(dirname(file), ".")
+  ]
+  data_dirs_java = [
+    for file in fileset(format("%s/../data", path.module), "*/pom.xml") :
+    dirname(file) if !startswith(dirname(file), "_") && !startswith(dirname(file), ".")
+  ]
+  data_names_python = {
+    for name in local.data_dirs_python : name => {
+      name           = name
+      runtime        = "python"
+      glue_version   = "5.0"
+      python_version = "3.11"
+      path           = abspath(format("%s/../data/", path.module))
+      file           = "job.py"
+      modules        = "pandas,requests,beautifulsoup4"
+    }
+  }
+  data_names_java = {
+    for name in local.data_dirs_java : name => {
+      name         = name
+      runtime      = "scala"
+      glue_version = "5.0"
+      path         = abspath(format("%s/../data/", path.module))
+      file         = "Job.java"
+    }
+  }
+  job_names      = merge(local.data_names_python, local.data_names_java)
+  function_names = merge(local.backend_names_java, local.backend_names_nodejs, local.backend_names_python)
   function_origins = [
     for name, func in local.function_names : {
       name        = func.name
@@ -78,18 +107,21 @@ locals {
     APP_ROLE      = format("arn:%s:iam::%s:role/%s-assume-%s-%s", data.aws_partition.this.partition, data.aws_caller_identity.this.account_id, var.aws_project, data.aws_region.this.region, local.app_id)
     APP_REGION    = data.aws_region.this.region
     IS_LOCAL      = data.aws_caller_identity.this.id == "000000000000" ? "true" : "false"
-    POSTGRES_HOST = data.aws_caller_identity.this.id == "000000000000" ? coalesce(try(trimspace(var.aws_postgres_host), ""), "172.17.0.1") : try(element(aws_rds_cluster.this.*.endpoint, 0), "")
-    POSTGRES_PORT = data.aws_caller_identity.this.id == "000000000000" ? "5432" : try(element(aws_rds_cluster.this.*.port, 0), "")
-    POSTGRES_NAME = data.aws_caller_identity.this.id == "000000000000" ? "postgres" : try(element(aws_rds_cluster.this.*.database_name, 0), "")
-    POSTGRES_USER = data.aws_caller_identity.this.id == "000000000000" ? "postgres" : try(element(aws_rds_cluster.this.*.master_username, 0), "")
-    POSTGRES_PASS = data.aws_caller_identity.this.id == "000000000000" ? "postgres123" : try(element(aws_rds_cluster.this.*.master_password, 0), "")
-    MONGO_HOST    = data.aws_caller_identity.this.id == "000000000000" ? coalesce(try(trimspace(var.aws_mongo_host), ""), "172.17.0.1") : try(element(aws_docdb_cluster.this.*.endpoint, 0), "")
-    MONGO_PORT    = data.aws_caller_identity.this.id == "000000000000" ? "27017" : try(element(aws_docdb_cluster.this.*.port, 0), "")
-    MONGO_NAME    = data.aws_caller_identity.this.id == "000000000000" ? "mongo" : try(element(aws_docdb_cluster.this.*.database_name, 0), "")
-    MONGO_USER    = data.aws_caller_identity.this.id == "000000000000" ? "" : try(element(aws_docdb_cluster.this.*.master_username, 0), "")
-    MONGO_PASS    = data.aws_caller_identity.this.id == "000000000000" ? "" : try(element(aws_docdb_cluster.this.*.master_password, 0), "")
+    POSTGRES_HOST = data.aws_caller_identity.this.id == "000000000000" ? coalesce(try(trimspace(var.aws_postgres_host), ""), "172.17.0.1") : try(one(aws_rds_cluster.this.*.endpoint), "")
+    POSTGRES_PORT = data.aws_caller_identity.this.id == "000000000000" ? "5432" : try(one(aws_rds_cluster.this.*.port), "")
+    POSTGRES_NAME = data.aws_caller_identity.this.id == "000000000000" ? "postgres" : try(one(aws_rds_cluster.this.*.database_name), "")
+    POSTGRES_USER = data.aws_caller_identity.this.id == "000000000000" ? "postgres" : try(one(aws_rds_cluster.this.*.master_username), "")
+    POSTGRES_PASS = data.aws_caller_identity.this.id == "000000000000" ? "postgres123" : try(one(aws_rds_cluster.this.*.master_password), "")
+    MONGO_HOST    = data.aws_caller_identity.this.id == "000000000000" ? coalesce(try(trimspace(var.aws_mongo_host), ""), "172.17.0.1") : try(one(aws_docdb_cluster.this.*.endpoint), "")
+    MONGO_PORT    = data.aws_caller_identity.this.id == "000000000000" ? "27017" : try(one(aws_docdb_cluster.this.*.port), "")
+    MONGO_NAME    = data.aws_caller_identity.this.id == "000000000000" ? "mongo" : try(one(aws_docdb_cluster.this.*.database_name), "")
+    MONGO_USER    = data.aws_caller_identity.this.id == "000000000000" ? "" : try(one(aws_docdb_cluster.this.*.master_username), "")
+    MONGO_PASS    = data.aws_caller_identity.this.id == "000000000000" ? "" : try(one(aws_docdb_cluster.this.*.master_password), "")
   }
-  iam_arns = [
+  lambda_iam_arns = [
     format("arn:%s:iam::aws:policy/service-role/AWSLambdaVPCAccessExecutionRole", data.aws_partition.this.partition),
+  ]
+  glue_iam_arns = [
+    format("arn:%s:iam::aws:policy/service-role/AWSGlueServiceRole", data.aws_partition.this.partition),
   ]
 }

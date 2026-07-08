@@ -1,6 +1,6 @@
 # Coding Workshop - Main Guide
 
-> **Main Guide** | [Validation Guide](./validation.md) | [Evaluation Guide](./evaluation.md) | [Testing Guide](./testing.md) | [Implementation Guide](./implementation.md)
+> **Main Guide** | [Validation Guide](./validation.md) | [Evaluation Guide](./evaluation.md) | [Testing Guide](./testing.md) | [Full Stack Guide](./full-stack.md) | [Data Engineer Guide](./data-engineer.md)
 
 This folder contains a comprehensive set of documentation to guide you through building a complete web application that meets all specifications and requirements. The goal is to evaluate your effectiveness in delivering a fully working application. Your implementation will be assessed against expected deliverables and milestones.
 
@@ -44,6 +44,7 @@ Before starting, ensure you have:
     <li><a href="./validation.md">Validation Guide</a></li>
     <li><a href="./evaluation.md">Evaluation Guide</a></li>
     <li><a href="./testing.md">Testing Guide</a></li>
-    <li><a href="./implementation.md">Implementation Guide</a></li>
+    <li><a href="./full-stack.md">Full Stack Guide</a></li>
+    <li><a href="./data-engineer.md">Data Engineer Guide</a></li>
   </ol>
 </nav>

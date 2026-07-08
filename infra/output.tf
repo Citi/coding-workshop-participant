@@ -1,6 +1,6 @@
 output "api_base_url" {
   description = "Base URL for API calls (for frontend REACT_APP_API_URL)"
-  value       = data.aws_caller_identity.this.id == "000000000000" ? "" : try("https://${element(aws_cloudfront_distribution.this.*.domain_name, 0)}", "")
+  value       = data.aws_caller_identity.this.id == "000000000000" ? "" : try("https://${one(aws_cloudfront_distribution.this.*.domain_name)}", "")
 }
 
 output "api_endpoints" {
@@ -13,12 +13,12 @@ output "api_endpoints" {
 
 output "cloudfront_distribution_id" {
   description = "The ID of the CloudFront distribution"
-  value       = try(element(aws_cloudfront_distribution.this.*.id, 0), null)
+  value       = try(one(aws_cloudfront_distribution.this.*.id), null)
 }
 
 output "cloudfront_distribution_url" {
   description = "The URL of the CloudFront distribution"
-  value       = try(element(aws_cloudfront_distribution.this.*.domain_name, 0), null)
+  value       = try(one(aws_cloudfront_distribution.this.*.domain_name), null)
 }
 
 output "lambda_urls" {
@@ -38,5 +38,5 @@ output "s3_bucket_name" {
 
 output "website_url" {
   description = "The URL of the website"
-  value       = data.aws_caller_identity.this.id == "000000000000" ? "http://${aws_s3_bucket.this.bucket}.s3-website.localhost.localstack.cloud:4566" : try("https://${element(aws_cloudfront_distribution.this.*.domain_name, 0)}", null)
+  value       = data.aws_caller_identity.this.id == "000000000000" ? "http://${aws_s3_bucket.this.bucket}.s3-website.localhost.localstack.cloud:4566" : try("https://${one(aws_cloudfront_distribution.this.*.domain_name)}", null)
 }

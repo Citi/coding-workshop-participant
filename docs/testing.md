@@ -1,6 +1,6 @@
 # Coding Workshop - Testing Guide
 
-> [Main Guide](./README.md) | [Validation Guide](./validation.md) | [Evaluation Guide](./evaluation.md) | **Testing Guide** | [Implementation Guide](./implementation.md)
+> [Main Guide](./README.md) | [Validation Guide](./validation.md) | [Evaluation Guide](./evaluation.md) | **Testing Guide** | [Full Stack Guide](./full-stack.md) | [Data Engineer Guide](./data-engineer.md)
 
 ## Overview
 
@@ -91,6 +91,7 @@ Replace `{{function-name}}` with corresponding service name
     <li><a href="./validation.md">Validation Guide</a></li>
     <li><a href="./evaluation.md">Evaluation Guide</a></li>
     <li aria-current="page">Testing Guide</li>
-    <li><a href="./implementation.md">Implementation Guide</a></li>
+    <li><a href="./full-stack.md">Full Stack Guide</a></li>
+    <li><a href="./data-engineer.md">Data Engineer Guide</a></li>
   </ol>
 </nav>

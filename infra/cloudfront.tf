@@ -136,7 +136,8 @@ resource "aws_s3_bucket_policy" "this" {
         Condition = {
           StringEquals = {
             "AWS:SourceArn" = format(
-              "arn:aws:cloudfront::%s:distribution/%s",
+              "arn:%s:cloudfront::%s:distribution/%s",
+              data.aws_partition.this.partition,
               data.aws_caller_identity.this.account_id,
               element(aws_cloudfront_distribution.this.*.id, count.index)
             )

@@ -1,6 +1,6 @@
 # Coding Workshop - Validation Guide
 
-> [Main Guide](./README.md) | **Validation Guide** | [Evaluation Guide](./evaluation.md) | [Testing Guide](./testing.md) | [Implementation Guide](./implementation.md)
+> [Main Guide](./README.md) | **Validation Guide** | [Evaluation Guide](./evaluation.md) | [Testing Guide](./testing.md) | [Full Stack Guide](./full-stack.md) | [Data Engineer Guide](./data-engineer.md)
 
 ## Overview
 
@@ -167,6 +167,7 @@ Now continue reading the other docs we have prepared for you and familiarize you
     <li aria-current="page">Validation Guide</li>
     <li><a href="./evaluation.md">Evaluation Guide</a></li>
     <li><a href="./testing.md">Testing Guide</a></li>
-    <li><a href="./implementation.md">Implementation Guide</a></li>
+    <li><a href="./full-stack.md">Full Stack Guide</a></li>
+    <li><a href="./data-engineer.md">Data Engineer Guide</a></li>
   </ol>
 </nav>

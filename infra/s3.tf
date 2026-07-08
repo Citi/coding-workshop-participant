@@ -6,6 +6,8 @@ resource "aws_s3_bucket" "hot_reload" {
   lifecycle {
     prevent_destroy = false
   }
+
+  tags = local.app_tags
 }
 
 resource "aws_s3_bucket" "this" {
@@ -33,12 +35,6 @@ resource "aws_s3_bucket_acl" "this" {
 
   depends_on = [aws_s3_bucket_ownership_controls.this]
 }
-
-# resource "aws_s3_bucket_logging" "this" {
-#   bucket        = aws_s3_bucket.this.id
-#   target_bucket = var.aws_bucket
-#   target_prefix = "s3_website_logs/"
-# }
 
 resource "aws_s3_bucket_website_configuration" "this" {
   bucket = aws_s3_bucket.this.id

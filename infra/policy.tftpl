@@ -33,7 +33,7 @@
         "ec2:RevokeSecurityGroupEgress",
         "ec2:RevokeSecurityGroupIngress"
       ],
-      "Resource": "arn:aws:ec2:*:*:security-group/*"
+      "Resource": "arn:${partition}:ec2:*:*:security-group/*"
     },
     {
       "Effect": "Deny",
@@ -45,7 +45,7 @@
         "ec2:RevokeSecurityGroupIngress",
         "ec2:RevokeSecurityGroupEgress"
       ],
-      "Resource": "arn:aws:ec2:*:*:security-group/*",
+      "Resource": "arn:${partition}:ec2:*:*:security-group/*",
       "Condition": {
         "StringNotEquals": {
           "aws:ResourceTag/identifier": "${app_id}"
@@ -56,54 +56,54 @@
       "Effect": "Allow",
       "Action": ["s3:*"],
       "Resource": [
-        "arn:aws:s3:::${app_name}*${app_id}*",
-        "arn:aws:s3:::${app_name}*${app_id}*/*"
+        "arn:${partition}:s3:::${app_name}*${app_id}*",
+        "arn:${partition}:s3:::${app_name}*${app_id}*/*"
       ]
     },
     {
       "Effect": "Allow",
       "Action": ["sqs:*", "sns:*"],
-      "Resource": "arn:aws:sqs:*:*:${app_name}*${app_id}*"
+      "Resource": "arn:${partition}:sqs:*:*:${app_name}*${app_id}*"
     },
     {
       "Effect": "Allow",
       "Action": ["lambda:*"],
-      "Resource": "arn:aws:lambda:*:*:function:${app_name}*${app_id}*"
+      "Resource": "arn:${partition}:lambda:*:*:function:${app_name}*${app_id}*"
     },
     {
       "Effect": "Allow",
       "Action": ["rds:*"],
       "Resource": [
-        "arn:aws:rds:*:*:cluster:${app_name}*${app_id}*",
-        "arn:aws:rds:*:*:db:${app_name}*${app_id}*",
-        "arn:aws:rds:*:*:secgrp:${app_name}*${app_id}*",
-        "arn:aws:rds:*:*:subgrp:${app_name}*${app_id}*"
+        "arn:${partition}:rds:*:*:cluster:${app_name}*${app_id}*",
+        "arn:${partition}:rds:*:*:db:${app_name}*${app_id}*",
+        "arn:${partition}:rds:*:*:secgrp:${app_name}*${app_id}*",
+        "arn:${partition}:rds:*:*:subgrp:${app_name}*${app_id}*"
       ]
     },
     {
       "Effect": "Allow",
       "Action": ["logs:*"],
       "Resource": [
-        "arn:aws:logs:*:*:log-group:/aws/lambda/${app_name}*${app_id}*:*:*",
-        "arn:aws:logs:*:*:log-group:/aws/lambda/${app_name}*${app_id}*:*",
-        "arn:aws:logs:*:*:log-group:/aws/rds/cluster/${app_name}*${app_id}*:*:*",
-        "arn:aws:logs:*:*:log-group:/aws/rds/cluster/${app_name}*${app_id}*:*"
+        "arn:${partition}:logs:*:*:log-group:/aws/lambda/${app_name}*${app_id}*:*:*",
+        "arn:${partition}:logs:*:*:log-group:/aws/lambda/${app_name}*${app_id}*:*",
+        "arn:${partition}:logs:*:*:log-group:/aws/rds/cluster/${app_name}*${app_id}*:*:*",
+        "arn:${partition}:logs:*:*:log-group:/aws/rds/cluster/${app_name}*${app_id}*:*"
       ]
     },
     {
       "Effect": "Allow",
       "Action": ["secretsmanager:*"],
-      "Resource": "arn:aws:secretsmanager:*:*:secret:${app_name}*${app_id}*"
+      "Resource": "arn:${partition}:secretsmanager:*:*:secret:${app_name}*${app_id}*"
     },
     {
       "Effect": "Allow",
       "Action": ["iam:*"],
-      "Resource": "arn:aws:iam::*:role/${app_name}*${app_id}*"
+      "Resource": "arn:${partition}:iam::*:role/${app_name}*${app_id}*"
     },
     {
       "Effect": "Allow",
       "Action": "iam:CreateServiceLinkedRole",
-      "Resource": "arn:aws:iam::*:role/aws-service-role/rds.amazonaws.com/AWSServiceRoleForRDS",
+      "Resource": "arn:${partition}:iam::*:role/aws-service-role/rds.amazonaws.com/AWSServiceRoleForRDS",
       "Condition": {
         "StringLike": {
           "iam:AWSServiceName": "rds.amazonaws.com"

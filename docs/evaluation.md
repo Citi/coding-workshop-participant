@@ -1,6 +1,6 @@
 # Coding Workshop - Evaluation Guide
 
-> [Main Guide](./README.md) | [Validation Guide](./validation.md) | **Evaluation Guide** | [Testing Guide](./testing.md) | [Implementation Guide](./implementation.md)
+> [Main Guide](./README.md) | [Validation Guide](./validation.md) | **Evaluation Guide** | [Testing Guide](./testing.md) | [Full Stack Guide](./full-stack.md) | [Data Engineer Guide](./data-engineer.md)
 
 ## Overview
 
@@ -62,6 +62,7 @@ Excellent user experience | Good user experience | Acceptable user experience | 
     <li><a href="./validation.md">Validation Guide</a></li>
     <li aria-current="page">Evaluation Guide</li>
     <li><a href="./testing.md">Testing Guide</a></li>
-    <li><a href="./implementation.md">Implementation Guide</a></li>
+    <li><a href="./full-stack.md">Full Stack Guide</a></li>
+    <li><a href="./data-engineer.md">Data Engineer Guide</a></li>
   </ol>
 </nav>

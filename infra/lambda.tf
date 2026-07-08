@@ -29,13 +29,17 @@ module "lambda" {
 
   create_package     = true
   create_role        = true
-  role_name          = format("%s-%s-%s", var.aws_project, each.value.name, local.app_id)
+  role_name          = format("%s-lambda-%s-%s", var.aws_project, each.value.name, local.app_id)
   role_path          = "/service-role/"
   attach_policies    = true
-  number_of_policies = length(local.iam_arns)
-  policies           = local.iam_arns
+  number_of_policies = length(local.lambda_iam_arns)
+  policies           = local.lambda_iam_arns
   attach_policy_json = true
-  policy_json        = templatefile("${path.module}/policy.tftpl", { app_id = local.app_id, app_name = var.aws_project })
+  policy_json = templatefile("${path.module}/policy.tftpl", {
+    partition = data.aws_partition.this.partition,
+    app_id    = local.app_id,
+    app_name  = var.aws_project,
+  })
 
   attach_cloudwatch_logs_policy     = true
   attach_dead_letter_policy         = true
@@ -100,7 +104,7 @@ resource "null_resource" "hot_reload" {
 }
 
 resource "null_resource" "java_build" {
-  for_each = local.java_names
+  for_each = local.backend_names_java
 
   triggers = {
     source_code_hash = md5(jsonencode({
