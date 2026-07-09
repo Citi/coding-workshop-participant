@@ -76,10 +76,10 @@ locals {
       name           = name
       runtime        = "python"
       glue_version   = "5.0"
-      python_version = "3.11"
-      path           = abspath(format("%s/../data/", path.module))
+      python_version = "3.9"
+      path           = abspath(format("%s/../data/%s", path.module, name))
       file           = "job.py"
-      modules        = "pandas,requests,beautifulsoup4"
+      modules        = join(",", compact(split("\n", file(abspath(format("%s/../data/%s/requirements.txt", path.module, name))))))
     }
   }
   data_names_java = {
@@ -87,7 +87,7 @@ locals {
       name         = name
       runtime      = "scala"
       glue_version = "5.0"
-      path         = abspath(format("%s/../data/", path.module))
+      path         = abspath(format("%s/../data/%s", path.module, name))
       file         = "Job.java"
     }
   }

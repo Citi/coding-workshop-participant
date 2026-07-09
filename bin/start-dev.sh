@@ -388,7 +388,6 @@ terraform init -reconfigure \
     exit 1
 }
 
-
 # Count services on disk vs deployed
 SERVICES_ON_DISK=$(find "$PROJECT_ROOT/backend" -mindepth 2 -maxdepth 2 \( -name "function.py" -o -name "package.json" -o -name "pom.xml" \) -not -path "*/_*" -not -path "*/\.*" | wc -l)
 SERVICES_DEPLOYED=$(terraform output -json lambda_urls 2>/dev/null | grep -o 'http://[^"]*' | wc -l)

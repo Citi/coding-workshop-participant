@@ -1,6 +1,6 @@
 # Coding Workshop - Full Stack Guide
 
-> [Main Guide](./README.md) | [Validation Guide](./validation.md) | [Evaluation Guide](./evaluation.md) | [Testing Guide](./testing.md) | **Full Stack Guide** [Data Engineer Guide](./data-engineer.md)
+> [Main Guide](./README.md) | [Validation Guide](./validation.md) | [Evaluation Guide](./evaluation.md) | [Testing Guide](./testing.md) | **Full Stack Guide** | [Data Engineer Guide](./data-engineer.md)
 
 ## Overview
 
