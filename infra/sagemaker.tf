@@ -41,17 +41,17 @@ resource "aws_glue_job" "this" {
   }
 
   default_arguments = {
-    "--datalake-formats"                               = "iceberg"
-    "--enable-continuous-cloudwatch-log"               = "true"
-    "--enable-continuous-log-filter"                   = "true"
-    "--enable-metrics"                                 = ""
-    "--job-bookmark-option"                            = "job-bookmark-disable"
-    "--job-language"                                   = each.value.runtime
-    "--additional-python-modules"                      = each.value.modules
-    "--TempDir"                                        = format("s3://%s/spark/_temp/", one(aws_s3_bucket.this.*.id))
-    "--BRONZE_PATH"                                    = format("s3://%s/spark/bronze/", one(aws_s3_bucket.this.*.id))
-    "--SILVER_PATH"                                    = format("s3://%s/spark/silver/", one(aws_s3_bucket.this.*.id))
-    "--GOLD_PATH"                                      = format("s3://%s/spark/gold/", one(aws_s3_bucket.this.*.id))
+    "--datalake-formats"                 = "iceberg"
+    "--enable-continuous-cloudwatch-log" = "true"
+    "--enable-continuous-log-filter"     = "true"
+    "--enable-metrics"                   = ""
+    "--job-bookmark-option"              = "job-bookmark-disable"
+    "--job-language"                     = each.value.runtime
+    "--additional-python-modules"        = each.value.modules
+    "--TempDir"                          = format("s3://%s/spark/_temp/", one(aws_s3_bucket.this.*.id))
+    "--BRONZE_PATH"                      = format("s3://%s/spark/bronze/", one(aws_s3_bucket.this.*.id))
+    "--SILVER_PATH"                      = format("s3://%s/spark/silver/", one(aws_s3_bucket.this.*.id))
+    "--GOLD_PATH"                        = format("s3://%s/spark/gold/", one(aws_s3_bucket.this.*.id))
   }
 
   tags = local.app_tags
