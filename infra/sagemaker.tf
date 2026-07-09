@@ -35,7 +35,7 @@ resource "aws_glue_job" "this" {
   timeout      = 300
 
   command {
-    name            = "pythonshell"
+    name            = "glueetl"
     script_location = format("s3://%s", aws_s3_object.this[each.key].id)
     python_version  = each.value.python_version
   }
