@@ -26,13 +26,13 @@ resource "aws_sagemaker_user_profile" "this" {
 }
 
 resource "aws_glue_job" "this" {
-  for_each     = data.aws_caller_identity.this.id != "000000000000" && var.aws_sagemaker_enabled ? local.job_names : {}
-  name         = format("%s-%s-%s", var.aws_project, each.value.name, local.app_id)
-  role_arn     = one(aws_iam_role.glue.*.arn)
-  glue_version = each.value.glue_version
-  max_capacity = 0.0625 # accepted values: 0.0625 or 1.0
-  max_retries  = 0
-  timeout      = 300
+  for_each          = data.aws_caller_identity.this.id != "000000000000" && var.aws_sagemaker_enabled ? local.job_names : {}
+  name              = format("%s-%s-%s", var.aws_project, each.value.name, local.app_id)
+  role_arn          = one(aws_iam_role.glue.*.arn)
+  glue_version      = each.value.glue_version
+  number_of_workers = 2
+  max_retries       = 0
+  timeout           = 300
 
   command {
     name            = "glueetl"
