@@ -41,21 +41,21 @@ resource "aws_glue_job" "this" {
   }
 
   default_arguments = {
+    "--datalake-formats"                               = "iceberg"
     "--enable-continuous-cloudwatch-log"               = "true"
     "--enable-continuous-log-filter"                   = "true"
     "--enable-metrics"                                 = ""
-    "--job-language"                                   = each.value.runtime
     "--job-bookmark-option"                            = "job-bookmark-disable"
+    "--job-language"                                   = each.value.runtime
     "--additional-python-modules"                      = each.value.modules
-    "--TempDir"                                        = format("s3://%s/glue/temp/", one(aws_s3_bucket.this.*.id))
-    "--BRONZE_PATH"                                    = format("s3://%s/glue/bronze/", one(aws_s3_bucket.this.*.id))
-    "--SILVER_PATH"                                    = format("s3://%s/glue/silver/", one(aws_s3_bucket.this.*.id))
-    "--GOLD_PATH"                                      = format("s3://%s/glue/gold/", one(aws_s3_bucket.this.*.id))
-    "--datalake-formats"                               = "iceberg"
+    "--TempDir"                                        = format("s3://%s/spark/_temp/", one(aws_s3_bucket.this.*.id))
+    "--BRONZE_PATH"                                    = format("s3://%s/spark/bronze/", one(aws_s3_bucket.this.*.id))
+    "--SILVER_PATH"                                    = format("s3://%s/spark/silver/", one(aws_s3_bucket.this.*.id))
+    "--GOLD_PATH"                                      = format("s3://%s/spark/gold/", one(aws_s3_bucket.this.*.id))
     "conf=spark.sql.extensions"                        = "org.apache.iceberg.spark.extensions.IcebergSparkSessionExtensions"
     "conf=spark.sql.catalog.glue_catalog"              = "org.apache.iceberg.spark.SparkCatalog"
-    "conf=spark.sql.catalog.glue_catalog.silver"       = format("s3://%s/glue/silver/", one(aws_s3_bucket.this.*.id))
-    "conf=spark.sql.catalog.glue_catalog.gold"         = format("s3://%s/glue/gold/", one(aws_s3_bucket.this.*.id))
+    "conf=spark.sql.catalog.glue_catalog.silver"       = format("s3://%s/spark/silver/", one(aws_s3_bucket.this.*.id))
+    "conf=spark.sql.catalog.glue_catalog.gold"         = format("s3://%s/spark/gold/", one(aws_s3_bucket.this.*.id))
     "conf=spark.sql.catalog.glue_catalog.catalog-impl" = "org.apache.iceberg.aws.glue.GlueCatalog"
     "conf=spark.sql.catalog.glue_catalog.io-impl"      = "org.apache.iceberg.aws.s3.S3FileIO"
   }
@@ -66,7 +66,7 @@ resource "aws_glue_job" "this" {
 resource "aws_s3_object" "this" {
   for_each = data.aws_caller_identity.this.id != "000000000000" && var.aws_sagemaker_enabled ? local.job_names : {}
   bucket   = one(aws_s3_bucket.this.*.id)
-  key      = format("scripts/%s/%s", each.value.name, each.value.file)
+  key      = format("spark/_scripts/%s/%s", each.value.name, each.value.file)
   source   = format("%s/%s", each.value.path, each.value.file)
   etag     = filemd5(format("%s/%s", each.value.path, each.value.file))
   tags     = local.app_tags
