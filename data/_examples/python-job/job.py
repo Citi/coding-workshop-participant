@@ -6,6 +6,7 @@ from awsglue.job import Job
 
 args = getResolvedOptions(sys.argv, ['JOB_NAME', 'BRONZE_PATH', 'SILVER_PATH', 'GOLD_PATH'])
 
+# ETL - Extract Transform Load
 sc = SparkContext()
 glueContext = GlueContext(sc)
 spark = glueContext.spark_session
@@ -20,7 +21,10 @@ dynamic_frame = glueContext.create_dynamic_frame.from_options(
     format_options={"withHeader": True}
 )
 
-# Load optimized compression layout
+# Transform
+# TODO: implement this
+
+# Load
 glueContext.write_dynamic_frame.from_options(
     connection_type="s3",
     connection_options={"path": args['SILVER_PATH']},
