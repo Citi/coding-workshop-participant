@@ -4,7 +4,7 @@ from pyspark.context import SparkContext
 from awsglue.context import GlueContext
 from awsglue.job import Job
 
-args = getResolvedOptions(sys.argv, ['JOB_NAME', 'BRONZE_PATH', 'SILVER_PATH'])
+args = getResolvedOptions(sys.argv, ['JOB_NAME', 'BRONZE_PATH', 'SILVER_PATH', 'GOLD_PATH'])
 
 sc = SparkContext()
 glueContext = GlueContext(sc)
