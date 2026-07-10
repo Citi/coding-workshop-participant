@@ -49,9 +49,9 @@ resource "aws_glue_job" "this" {
     "--job-language"                     = each.value.runtime
     "--additional-python-modules"        = each.value.modules
     "--TempDir"                          = format("s3://%s/spark/_temp/", one(aws_s3_bucket.this.*.id))
-    "--BRONZE_PATH"                      = format("s3://%s/spark/bronze/", one(aws_s3_bucket.this.*.id))
-    "--SILVER_PATH"                      = format("s3://%s/spark/silver/", one(aws_s3_bucket.this.*.id))
-    "--GOLD_PATH"                        = format("s3://%s/spark/gold/", one(aws_s3_bucket.this.*.id))
+    "--BRONZE_LAYER"                     = format("s3://%s/spark/bronze/", one(aws_s3_bucket.this.*.id))
+    "--SILVER_LAYER"                     = format("s3://%s/spark/silver/", one(aws_s3_bucket.this.*.id))
+    "--GOLD_LAYER"                       = format("s3://%s/spark/gold/", one(aws_s3_bucket.this.*.id))
   }
 
   tags = local.app_tags

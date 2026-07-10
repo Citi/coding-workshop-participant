@@ -4,7 +4,7 @@ from pyspark.sql import SparkSession
 from awsglue.context import GlueContext
 from awsglue.job import Job
 
-args = getResolvedOptions(sys.argv, ['JOB_NAME', 'BRONZE_PATH', 'SILVER_PATH', 'GOLD_PATH'])
+args = getResolvedOptions(sys.argv, ['JOB_NAME', 'BRONZE_LAYER', 'SILVER_LAYER', 'GOLD_LAYER'])
 
 # Configure Spark for Iceberg BEFORE creating GlueContext
 spark = SparkSession.builder \
@@ -25,7 +25,7 @@ job.init(args['JOB_NAME'], args)
 # Extract
 dynamic_frame = glueContext.create_dynamic_frame.from_options(
     connection_type="s3",
-    connection_options={"paths": [args['BRONZE_PATH']]},
+    connection_options={"paths": [args['BRONZE_LAYER']]},
     format="csv",
     format_options={"withHeader": True}
 )
@@ -34,10 +34,10 @@ dynamic_frame = glueContext.create_dynamic_frame.from_options(
 # TODO: implement this
 
 # Load
-if not dynamic_frame.toDF().rdd.isEmpty():
+if not dynamic_frame.toDF().isEmpty():
     glueContext.write_dynamic_frame.from_options(
         connection_type="s3",
-        connection_options={"path": args['SILVER_PATH']},
+        connection_options={"path": args['SILVER_LAYER']},
         frame=dynamic_frame
     )
 
