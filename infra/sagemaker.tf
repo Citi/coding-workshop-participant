@@ -30,6 +30,7 @@ resource "aws_glue_job" "this" {
   name              = format("%s-%s-%s", var.aws_project, each.value.name, local.app_id)
   role_arn          = one(aws_iam_role.glue.*.arn)
   glue_version      = each.value.glue_version
+  worker_type       = "G.1X"
   number_of_workers = 2
   max_retries       = 0
   timeout           = 300
