@@ -12,8 +12,8 @@ spark = SparkSession.builder \
     .config("spark.sql.catalog.glue_catalog", "org.apache.iceberg.spark.SparkCatalog") \
     .config("spark.sql.catalog.glue_catalog.catalog-impl", "org.apache.iceberg.aws.glue.GlueCatalog") \
     .config("spark.sql.catalog.glue_catalog.io-impl", "org.apache.iceberg.aws.s3.S3FileIO") \
-    .config("spark.sql.catalog.glue_catalog.silver", args['SILVER_PATH']) \
-    .config("spark.sql.catalog.glue_catalog.gold", args['GOLD_PATH']) \
+    .config("spark.sql.catalog.glue_catalog.silver", args['SILVER_LAYER']) \
+    .config("spark.sql.catalog.glue_catalog.gold", args['GOLD_LAYER']) \
     .getOrCreate()
 
 # ETL - Extract Transform Load
