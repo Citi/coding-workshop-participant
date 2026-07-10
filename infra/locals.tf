@@ -76,7 +76,7 @@ locals {
       name           = name
       runtime        = "python"
       glue_version   = "5.0"
-      python_version = "3.9"
+      python_version = "3"
       path           = abspath(format("%s/../data/%s", path.module, name))
       file           = "job.py"
       modules        = join(",", compact(split("\n", file(abspath(format("%s/../data/%s/requirements.txt", path.module, name))))))
