@@ -34,10 +34,11 @@ dynamic_frame = glueContext.create_dynamic_frame.from_options(
 # TODO: implement this
 
 # Load
-glueContext.write_dynamic_frame.from_options(
-    connection_type="s3",
-    connection_options={"path": args['SILVER_PATH']},
-    frame=dynamic_frame
-)
+if not dynamic_frame.toDF().rdd.isEmpty():
+    glueContext.write_dynamic_frame.from_options(
+        connection_type="s3",
+        connection_options={"path": args['SILVER_PATH']},
+        frame=dynamic_frame
+    )
 
 job.commit()
