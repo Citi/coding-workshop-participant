@@ -5,10 +5,24 @@ resource "aws_sagemaker_domain" "this" {
   subnet_ids  = local.public_subnet_ids
   vpc_id      = data.aws_vpc.this.id
 
-  default_user_settings {
+  default_space_settings {
     execution_role = one(one(data.aws_iam_roles.this.*.arns))
 
+    jupyter_lab_app_settings {
+      code_repository {
+        repository_url = "https://github.com/citi/coding-workshop-participant"
+      }
+    }
+  }
+
+  default_user_settings {
+    execution_role    = one(one(data.aws_iam_roles.this.*.arns))
+    studio_web_portal = "ENABLED"
+
     jupyter_server_app_settings {
+      code_repository {
+        repository_url = "https://github.com/citi/coding-workshop-participant"
+      }
       default_resource_spec {
         instance_type = "system"
       }
