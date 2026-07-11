@@ -1,7 +1,7 @@
 resource "aws_sagemaker_domain" "this" {
   count                   = data.aws_caller_identity.this.id != "000000000000" && var.aws_sagemaker_enabled ? 1 : 0
   domain_name             = format("%s-sagemaker-domain-%s", var.aws_project, local.app_id)
-  auth_mode               = "SSO"
+  auth_mode               = "IAM"
   subnet_ids              = local.public_subnet_ids
   vpc_id                  = data.aws_vpc.this.id
   app_network_access_type = "PublicInternetOnly"
