@@ -70,11 +70,6 @@ data "aws_service_principal" "cloudfront" {
   region       = data.aws_region.this.region
 }
 
-data "aws_service_principal" "glue" {
-  service_name = "glue"
-  region       = data.aws_region.this.region
-}
-
 data "aws_servicecatalogappregistry_application" "this" {
   count  = data.aws_caller_identity.this.id != "000000000000" && try(var.aws_app_code, null) != null ? 1 : 0
   id     = format("%s-%s", var.aws_project, var.aws_app_code)

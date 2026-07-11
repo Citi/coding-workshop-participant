@@ -1,9 +1,10 @@
 resource "aws_sagemaker_domain" "this" {
-  count       = data.aws_caller_identity.this.id != "000000000000" && var.aws_sagemaker_enabled ? 1 : 0
-  domain_name = format("%s-sagemaker-%s", var.aws_project, local.app_id)
-  auth_mode   = "IAM"
-  subnet_ids  = local.public_subnet_ids
-  vpc_id      = data.aws_vpc.this.id
+  count                   = data.aws_caller_identity.this.id != "000000000000" && var.aws_sagemaker_enabled ? 1 : 0
+  domain_name             = format("%s-sagemaker-domain-%s", var.aws_project, local.app_id)
+  auth_mode               = "SSO"
+  subnet_ids              = local.public_subnet_ids
+  vpc_id                  = data.aws_vpc.this.id
+  app_network_access_type = "PublicInternetOnly"
 
   default_space_settings {
     execution_role = one(one(data.aws_iam_roles.this.*.arns))
@@ -33,16 +34,18 @@ resource "aws_sagemaker_domain" "this" {
 }
 
 resource "aws_sagemaker_user_profile" "this" {
-  count             = data.aws_caller_identity.this.id != "000000000000" && var.aws_sagemaker_enabled ? 1 : 0
-  domain_id         = one(aws_sagemaker_domain.this.*.id)
-  user_profile_name = format("%s-sagemaker-%s", var.aws_project, local.app_id)
-  tags              = local.app_tags
+  count                          = data.aws_caller_identity.this.id != "000000000000" && var.aws_sagemaker_enabled ? 1 : 0
+  domain_id                      = one(aws_sagemaker_domain.this.*.id)
+  user_profile_name              = format("%s-sagemaker-profile-%s", var.aws_project, local.app_id)
+  single_sign_on_user_identifier = "UserName"
+  single_sign_on_user_value      = "john.doe@yourdomain.com"
+  tags                           = local.app_tags
 }
 
 resource "aws_sagemaker_space" "this" {
   count      = data.aws_caller_identity.this.id != "000000000000" && var.aws_sagemaker_enabled ? 1 : 0
   domain_id  = one(aws_sagemaker_domain.this.*.id)
-  space_name = format("%s-sagemaker-%s", var.aws_project, local.app_id)
+  space_name = format("%s-sagemaker-space-%s", var.aws_project, local.app_id)
 
   ownership_settings {
     owner_user_profile_name = one(aws_sagemaker_user_profile.this.*.user_profile_name)
@@ -67,23 +70,28 @@ resource "aws_sagemaker_app" "this" {
   count      = data.aws_caller_identity.this.id != "000000000000" && var.aws_sagemaker_enabled ? 1 : 0
   domain_id  = one(aws_sagemaker_domain.this.*.id)
   space_name = one(aws_sagemaker_space.this.*.space_name)
-  app_name   = format("%s-sagemaker-%s", var.aws_project, local.app_id)
+  app_name   = "default"
   app_type   = "JupyterLab"
 
   resource_spec {
-    instance_type = "ml.t3.medium"
+    instance_type       = "ml.t3.medium"
+    sagemaker_image_arn = "arn:aws:sagemaker:us-east-1:608905634549:image/sagemaker-distribution-cpu"
   }
 }
 
 resource "aws_glue_job" "this" {
   for_each          = data.aws_caller_identity.this.id != "000000000000" && var.aws_sagemaker_enabled ? local.job_names : {}
   name              = format("%s-%s-%s", var.aws_project, each.value.name, local.app_id)
-  role_arn          = one(aws_iam_role.glue.*.arn)
   glue_version      = each.value.glue_version
   worker_type       = "G.1X"
   number_of_workers = 2
   max_retries       = 0
   timeout           = 300
+  role_arn          = format(
+    "arn:%s:iam::%s:role/%s-glue-%s-%s",
+    data.aws_partition.this.partition, data.aws_caller_identity.this.id,
+    var.aws_project, data.aws_region.this.region, local.app_id
+  )
 
   command {
     name            = "glueetl"

@@ -121,7 +121,4 @@ locals {
   lambda_iam_arns = [
     format("arn:%s:iam::aws:policy/service-role/AWSLambdaVPCAccessExecutionRole", data.aws_partition.this.partition),
   ]
-  glue_iam_arns = [
-    format("arn:%s:iam::aws:policy/service-role/AWSGlueServiceRole", data.aws_partition.this.partition),
-  ]
 }
