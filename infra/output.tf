@@ -40,8 +40,3 @@ output "website_url" {
   description = "The URL of the website"
   value       = data.aws_caller_identity.this.id == "000000000000" ? "http://${aws_s3_bucket.this.bucket}.s3-website.localhost.localstack.cloud:4566" : try("https://${one(aws_cloudfront_distribution.this.*.domain_name)}", null)
 }
-
-output "jupyter_url" {
-  description = "The URL of the Jupyter notebook"
-  value = try(one(aws_sagemaker_domain.this.*.url), null)
-}
