@@ -39,6 +39,42 @@ resource "aws_sagemaker_user_profile" "this" {
   tags              = local.app_tags
 }
 
+resource "aws_sagemaker_space" "this" {
+  count      = data.aws_caller_identity.this.id != "000000000000" && var.aws_sagemaker_enabled ? 1 : 0
+  domain_id  = one(aws_sagemaker_domain.this.*.id)
+  space_name = format("%s-sagemaker-%s", var.aws_project, local.app_id)
+
+  ownership_settings {
+    owner_user_profile_name = one(aws_sagemaker_user_profile.this.*.user_profile_name)
+  }
+
+  space_sharing_settings {
+    sharing_type = "Private"
+  }
+
+  space_settings {
+    app_type = "JupyterLab"
+
+    jupyter_lab_app_settings {
+      default_resource_spec {
+        instance_type = "ml.t3.medium"
+      }
+    }
+  }
+}
+
+resource "aws_sagemaker_app" "this" {
+  count      = data.aws_caller_identity.this.id != "000000000000" && var.aws_sagemaker_enabled ? 1 : 0
+  domain_id  = one(aws_sagemaker_domain.this.*.id)
+  space_name = one(aws_sagemaker_space.this.*.space_name)
+  app_name   = format("%s-sagemaker-%s", var.aws_project, local.app_id)
+  app_type   = "JupyterLab"
+
+  resource_spec {
+    instance_type = "ml.t3.medium"
+  }
+}
+
 resource "aws_glue_job" "this" {
   for_each          = data.aws_caller_identity.this.id != "000000000000" && var.aws_sagemaker_enabled ? local.job_names : {}
   name              = format("%s-%s-%s", var.aws_project, each.value.name, local.app_id)
