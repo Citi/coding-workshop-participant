@@ -12,19 +12,23 @@ resource "aws_eks_cluster" "this" {
   tags = local.app_tags
 }
 
-resource "aws_eks_fargate_profile" "this" {
-  count                  = data.aws_caller_identity.this.id != "000000000000" && var.aws_eks_enabled ? 1 : 0
-  cluster_name           = one(aws_eks_cluster.this.*.name)
-  fargate_profile_name   = format("%s-%s", var.aws_project, local.app_id)
-  subnet_ids             = local.public_subnet_ids
-  pod_execution_role_arn = local.eks_role_arn
+resource "aws_eks_node_group" "general" {
+  count           = data.aws_caller_identity.this.id != "000000000000" && var.aws_eks_enabled ? 1 : 0
+  cluster_name    = one(aws_eks_cluster.this.*.name)
+  node_group_name = format("%s-%s", var.aws_project, local.app_id)
+  node_role_arn   = local.eks_role_arn
+  subnet_ids      = local.public_subnet_ids
+  capacity_type   = "SPOT" # Use "SPOT" or "ON_DEMAND"
+  instance_types  = ["t3.medium", "t3a.medium", "t2.medium"]
 
-  selector {
-    namespace = "default"
+  scaling_config {
+    desired_size = 1
+    max_size     = 1
+    min_size     = 1
   }
 
-  selector {
-    namespace = "kube-system"
+  update_config {
+    max_unavailable = 1
   }
 
   tags = local.app_tags
@@ -34,7 +38,7 @@ resource "null_resource" "helm_chart" {
   count = data.aws_caller_identity.this.id != "000000000000" && var.aws_eks_enabled ? 1 : 0
 
   triggers = {
-    source_code_hash = one(aws_eks_fargate_profile.this.*.id)
+    source_code_hash = one(aws_eks_node_group.this.*.id)
   }
 
   provisioner "local-exec" {
