@@ -3,7 +3,7 @@ module "eks" {
   source  = "terraform-aws-modules/eks/aws"
   version = "~> 21.0"
 
-  name       = format("%s-cluster-%s", var.aws_project, local.app_id)
+  name       = format("%s-%s", var.aws_project, local.app_id)
   vpc_id     = data.aws_vpc.this.id
   subnet_ids = local.public_subnet_ids
 
@@ -18,7 +18,7 @@ module "eks" {
 
   fargate_profiles = {
     jupyter = {
-      name      = format("%s-fargate-%s", var.aws_project, local.app_id)
+      name      = format("%s-%s", var.aws_project, local.app_id)
       selectors = [{ namespace = "jupyter"}, { namespace = "kube-system"}]
     }
   }
