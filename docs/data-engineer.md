@@ -17,7 +17,7 @@ graph LR
     subgraph Data Lake
         BronzeLayer["Bronze Layer / Raw Zone<br/>(Ingestion & Storage)"]
         SilverLayer["Silver Layer / Processed Zone<br/>(Cleaning & Validation)"]
-        GoldLayer[Gold Layer / "Curated Zone<br/>(Aggregation & Analytics)"]
+        GoldLayer["Gold Layer / Curated Zone<br/>(Aggregation & Analytics)"]
     end
     Jupyter["Jupyter Notebook<br/>(Analytics & Insights)"]
 
