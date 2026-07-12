@@ -15,16 +15,16 @@ drive / deliver value.
 graph LR
     PG["PostgreSQL<br/>(Data Source)"]
     subgraph Data Lake
-        Bronze["Bronze Layer / Raw Zone<br/>(Ingestion & Storage)"]
-        Silver["Silver Layer / Processed Zone<br/>(Cleaning & Validation)"]
-        Gold[Gold Layer / "Curated Zone<br/>(Aggregation & Analytics)"]
+        BronzeLayer["Bronze Layer / Raw Zone<br/>(Ingestion & Storage)"]
+        SilverLayer["Silver Layer / Processed Zone<br/>(Cleaning & Validation)"]
+        GoldLayer[Gold Layer / "Curated Zone<br/>(Aggregation & Analytics)"]
     end
     Jupyter["Jupyter Notebook<br/>(Analytics & Insights)"]
 
-    PG --> Bronze
-    Bronze --> Silver
-    Silver --> Gold
-    Gold --> Jupyter
+    PG --> BronzeLayer
+    BronzeLayer --> SilverLayer
+    SilverLayer --> GoldLayer
+    GoldLayer --> Jupyter
 ```
 
 ## Implementation Expectations

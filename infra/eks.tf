@@ -23,7 +23,7 @@ resource "aws_eks_node_group" "this" {
   node_group_name = format("%s-%s", var.aws_project, local.app_id)
   node_role_arn   = local.eks_role_arn
   subnet_ids      = local.public_subnet_ids
-  capacity_type   = "SPOT" # Use "SPOT" or "ON_DEMAND"
+  capacity_type   = "ON_DEMAND" # Use "ON_DEMAND" or "SPOT"
   instance_types  = ["t3.medium", "t3a.medium", "t2.medium"]
 
   scaling_config {
