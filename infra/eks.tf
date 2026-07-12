@@ -4,6 +4,11 @@ resource "aws_eks_cluster" "this" {
   version  = "1.36"
   role_arn = local.eks_role_arn
 
+  access_config {
+    authentication_mode                         = "API_AND_CONFIG_MAP"
+    bootstrap_cluster_creator_admin_permissions = true
+  }
+
   vpc_config {
     endpoint_public_access = true
     subnet_ids = local.public_subnet_ids
