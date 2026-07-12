@@ -55,7 +55,7 @@ data "aws_security_groups" "this" {
   }
   filter {
     name   = "group-name"
-    values = [format("*%s*", local.app_id)]
+    values = [format("%s-%s", var.aws_project, local.app_id)]
   }
 }
 
