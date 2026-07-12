@@ -138,7 +138,7 @@ Robust pipelines handle unexpected data and infrastructure issues gracefully.
 | **Database Connection Timeout** | Pipeline fails to read/write. | Implement retry logic with exponential backoff; alert on multiple failures. |
 | **Schema Drift / Mismatch** | Downstream jobs fail due to changed columns. | Use strict schema validation; catch exception, quarantine the file, and notify support. |
 | **Malformed/Truncated Row** | Data corruption. | Drop/quarantine the bad row; write the remaining valid rows; log warning with row details. |
-| **S3 Access Denied** | Ingestion or write fails. | Verify IAM Role permissions (`glue_DefaultRole` or S3 policies). |
+| **S3 Access Denied** | Ingestion or write fails. | Verify IAM Role permissions (Glue or S3 policies). |
 | **Zero Rows Written** | Downstream jobs receive empty datasets. | Check if source dataset was empty; raise warning or halt pipeline depending on SLA. |
 
 ## Navigation Links

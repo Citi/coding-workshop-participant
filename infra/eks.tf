@@ -26,50 +26,21 @@ module "eks" {
   tags = local.app_tags
 }
 
-resource "helm_release" "this" {
-  count           = data.aws_caller_identity.this.id != "000000000000" && var.aws_eks_enabled ? 1 : 0
-  repository      = "https://jupyter.org"
-  name            = "jupyterhub"
-  chart           = "jupyterhub"
-  version         = "2.1.0"
-  namespace       = "jupyter"
-  atomic          = true
-  cleanup_on_fail = true
+resource "null_resource" "helm_chart" {
+  count = data.aws_caller_identity.this.id != "000000000000" && var.aws_eks_enabled ? 1 : 0
 
-  # repository = "https://jupyterhub.github.io/helm-chart/"
-  values = [
-    yamlencode({
-      proxy = {
-        chp = {
-          nodeSelector = { "kubernetes.io/os" = "linux" }
-        }
-      }
-      hub = {
-        cookieSecret = random_pet.this.id
-        nodeSelector = { "kubernetes.io/os" = "linux" }
-        config = {
-          JupyterHub = {
-            authenticator_class = "ldapauthenticator.LDAPAuthenticator"
-          }
-          LDAPAuthenticator = {
-            server_address   = "://yourdomain.com"
-            server_port      = 389
-            bind_dn_template = "CN={username},OU=Users,OU=CORP,DC=corp,DC=codingworkshop,DC=net"
-            user_attribute   = "sAMAccountName"
-            allowed_groups   = ["CN=JupyterUsers,OU=Groups,OU=CORP,DC=corp,DC=codingworkshop,DC=net"]
-          }
-        }
-      }
-      singleuser = {
-        nodeSelector  = { "kubernetes.io/os" = "linux" }
-        cloudMetadata = { blockWithIptables = false }
-        image = {
-          name = "jupyter/datascience-notebook"
-          tag  = "latest"
-        }
-      }
-    })
-  ]
+  triggers = {
+    source_code_hash = module.eks.cluster_arn
+  }
 
-  depends_on = [module.eks]
+  provisioner "local-exec" {
+    command = <<-EOT
+      aws eks update-kubeconfig --region us-east-1 --name ${module.eks.cluster_name} && \
+      helm repo add jupyterhub https://jupyter.org && \
+      helm repo update && \
+      helm upgrade --cleanup-on-fail \
+        --install jupyterhub jupyterhub/jupyterhub \
+        --namespace jupyter --values config.yaml
+    EOT
+  }
 }
