@@ -4,7 +4,7 @@ module "eks" {
   version = "~> 21.0"
 
   name       = format("%s-cluster-%s", var.aws_project, local.app_id)
-  vpc_id     = data.aws_security_groups.this.ids
+  vpc_id     = data.aws_vpc.this.id
   subnet_ids = local.public_subnet_ids
 
   kubernetes_version                       = "1.36"
