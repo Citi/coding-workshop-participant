@@ -30,12 +30,12 @@ resource "null_resource" "helm_chart" {
   count = data.aws_caller_identity.this.id != "000000000000" && var.aws_eks_enabled ? 1 : 0
 
   triggers = {
-    source_code_hash = module.eks.cluster_arn
+    source_code_hash = one(module.eks.*.cluster_arn)
   }
 
   provisioner "local-exec" {
     command = <<-EOT
-      aws eks update-kubeconfig --region us-east-1 --name ${module.eks.cluster_name} && \
+      aws eks update-kubeconfig --region us-east-1 --name ${one(module.eks.*.cluster_name)} && \
       helm repo add jupyterhub https://jupyter.org && \
       helm repo update && \
       helm upgrade --cleanup-on-fail \
