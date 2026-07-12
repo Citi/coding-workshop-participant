@@ -17,14 +17,35 @@ resource "aws_eks_cluster" "this" {
   tags = local.app_tags
 }
 
+resource "aws_launch_template" "this" {
+  count = data.aws_caller_identity.this.id != "000000000000" && var.aws_eks_enabled ? 1 : 0
+  name  = format("%s-%s", var.aws_project, local.app_id)
+
+  block_device_mappings {
+    device_name = "/dev/xvda"
+
+    ebs {
+      volume_size           = 20
+      volume_type           = "gp3"
+      encrypted             = true
+      delete_on_termination = true
+    }
+  }
+}
+
 resource "aws_eks_node_group" "this" {
   count           = data.aws_caller_identity.this.id != "000000000000" && var.aws_eks_enabled ? 1 : 0
   cluster_name    = one(aws_eks_cluster.this.*.name)
   node_group_name = format("%s-%s", var.aws_project, local.app_id)
   node_role_arn   = local.eks_role_arn
   subnet_ids      = local.public_subnet_ids
-  capacity_type   = "ON_DEMAND" # Use "ON_DEMAND" or "SPOT"
+  capacity_type   = "SPOT" # Use "ON_DEMAND" or "SPOT"
   instance_types  = ["t3.medium", "t3a.medium", "t2.medium"]
+
+  launch_template {
+    id      = one(aws_launch_template.eks_nodes.*.id)
+    version = one(aws_launch_template.eks_nodes.*.latest_version)
+  }
 
   scaling_config {
     desired_size = 1
