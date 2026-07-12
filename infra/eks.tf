@@ -11,7 +11,7 @@ resource "aws_eks_cluster" "this" {
 
   vpc_config {
     endpoint_public_access = true
-    subnet_ids = local.public_subnet_ids
+    subnet_ids             = local.public_subnet_ids
   }
 
   tags = local.app_tags
