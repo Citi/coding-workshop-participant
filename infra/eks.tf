@@ -34,17 +34,17 @@ resource "null_resource" "helm_chart" {
   count = data.aws_caller_identity.this.id != "000000000000" && var.aws_eks_enabled ? 1 : 0
 
   triggers = {
-    source_code_hash = one(aws_eks_cluster.this.*.name)
+    source_code_hash = one(aws_eks_fargate_profile.this.*.id)
   }
 
   provisioner "local-exec" {
     command = <<-EOT
       aws eks update-kubeconfig --region us-east-1 --name ${one(aws_eks_cluster.this.*.name)} && \
-      helm repo add jupyterhub https://jupyter.org && \
+      helm repo add jupyterhub https://hub.jupyter.org/helm-chart/ && \
       helm repo update && \
       helm upgrade --cleanup-on-fail \
         --install jupyterhub jupyterhub/jupyterhub \
-        --namespace jupyter --values config.yaml
+        --namespace default --values config.yaml
     EOT
   }
 }
