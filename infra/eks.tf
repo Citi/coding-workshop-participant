@@ -18,8 +18,8 @@ resource "aws_eks_cluster" "this" {
 }
 
 resource "aws_launch_template" "this" {
-  count = data.aws_caller_identity.this.id != "000000000000" && var.aws_eks_enabled ? 1 : 0
-  name  = format("%s-%s", var.aws_project, local.app_id)
+  count       = data.aws_caller_identity.this.id != "000000000000" && var.aws_eks_enabled ? 1 : 0
+  name_prefix = var.aws_project
 
   block_device_mappings {
     device_name = "/dev/xvda"
@@ -27,10 +27,12 @@ resource "aws_launch_template" "this" {
     ebs {
       volume_size           = 20
       volume_type           = "gp3"
-      encrypted             = true
       delete_on_termination = true
+      # encrypted             = true
     }
   }
+
+  tags = local.app_tags
 }
 
 resource "aws_eks_node_group" "this" {
