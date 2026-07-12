@@ -43,8 +43,8 @@ resource "aws_eks_node_group" "this" {
   instance_types  = ["t3.medium", "t3a.medium", "t2.medium"]
 
   launch_template {
-    id      = one(aws_launch_template.eks_nodes.*.id)
-    version = one(aws_launch_template.eks_nodes.*.latest_version)
+    id      = one(aws_launch_template.this.*.id)
+    version = one(aws_launch_template.this.*.latest_version)
   }
 
   scaling_config {
