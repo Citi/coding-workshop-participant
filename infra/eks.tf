@@ -12,7 +12,7 @@ resource "aws_eks_cluster" "this" {
   tags = local.app_tags
 }
 
-resource "aws_eks_node_group" "general" {
+resource "aws_eks_node_group" "this" {
   count           = data.aws_caller_identity.this.id != "000000000000" && var.aws_eks_enabled ? 1 : 0
   cluster_name    = one(aws_eks_cluster.this.*.name)
   node_group_name = format("%s-%s", var.aws_project, local.app_id)
