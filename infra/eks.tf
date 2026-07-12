@@ -1,41 +1,41 @@
-module "eks" {
-  count   = data.aws_caller_identity.this.id != "000000000000" && var.aws_eks_enabled ? 1 : 0
-  source  = "terraform-aws-modules/eks/aws"
-  version = "~> 21.0"
+resource "aws_eks_cluster" "this" {
+  count    = data.aws_caller_identity.this.id != "000000000000" && var.aws_eks_enabled ? 1 : 0
+  name     = format("%s-%s", var.aws_project, local.app_id)
+  version  = "1.36"
+  role_arn = local.eks_role_arn
 
-  name       = format("%s-%s", var.aws_project, local.app_id)
-  vpc_id     = data.aws_vpc.this.id
-  subnet_ids = local.public_subnet_ids
+  vpc_config {
+    endpoint_public_access = true
+    subnet_ids = local.public_subnet_ids
+  }
+}
 
-  # create_auto_mode_iam_resources           = true
-  endpoint_public_access                   = true
-  enable_cluster_creator_admin_permissions = true
-  kubernetes_version                       = "1.36"
+resource "aws_eks_fargate_profile" "this" {
+  count                  = data.aws_caller_identity.this.id != "000000000000" && var.aws_eks_enabled ? 1 : 0
+  cluster_name           = one(aws_eks_cluster.this.*.name)
+  fargate_profile_name   = format("%s-%s", var.aws_project, local.app_id)
+  subnet_ids             = local.public_subnet_ids
+  pod_execution_role_arn = local.eks_role_arn
 
-  compute_config = {
-    enabled = true
+  selector {
+    namespace = "default"
   }
 
-  fargate_profiles = {
-    jupyter = {
-      name      = format("%s-%s", var.aws_project, local.app_id)
-      selectors = [{ namespace = "jupyter"}, { namespace = "kube-system"}]
-    }
+  selector {
+    namespace = "kube-system"
   }
-
-  tags = local.app_tags
 }
 
 resource "null_resource" "helm_chart" {
   count = data.aws_caller_identity.this.id != "000000000000" && var.aws_eks_enabled ? 1 : 0
 
   triggers = {
-    source_code_hash = one(module.eks.*.cluster_arn)
+    source_code_hash = one(aws_eks_cluster.this.*.name)
   }
 
   provisioner "local-exec" {
     command = <<-EOT
-      aws eks update-kubeconfig --region us-east-1 --name ${one(module.eks.*.cluster_name)} && \
+      aws eks update-kubeconfig --region us-east-1 --name ${one(aws_eks_cluster.this.*.name)} && \
       helm repo add jupyterhub https://jupyter.org && \
       helm repo update && \
       helm upgrade --cleanup-on-fail \

@@ -118,7 +118,19 @@ locals {
     MONGO_USER    = data.aws_caller_identity.this.id == "000000000000" ? "" : try(one(aws_docdb_cluster.this.*.master_username), "")
     MONGO_PASS    = data.aws_caller_identity.this.id == "000000000000" ? "" : try(one(aws_docdb_cluster.this.*.master_password), "")
   }
-  lambda_iam_arns = [
-    format("arn:%s:iam::aws:policy/service-role/AWSLambdaVPCAccessExecutionRole", data.aws_partition.this.partition),
-  ]
+  lambda_role_arn = format(
+    "arn:%s:iam::%s:role/%s-lambda-%s-%s",
+    data.aws_partition.this.partition, data.aws_caller_identity.this.id,
+    var.aws_project, data.aws_region.this.region, local.app_id
+  )
+  eks_role_arn = format(
+    "arn:%s:iam::%s:role/%s-eks-%s-%s",
+    data.aws_partition.this.partition, data.aws_caller_identity.this.id,
+    var.aws_project, data.aws_region.this.region, local.app_id
+  )
+  glue_role_arn = format(
+    "arn:%s:iam::%s:role/%s-glue-%s-%s",
+    data.aws_partition.this.partition, data.aws_caller_identity.this.id,
+    var.aws_project, data.aws_region.this.region, local.app_id
+  )
 }

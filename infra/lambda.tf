@@ -12,6 +12,7 @@ module "lambda" {
   timeout         = 300
   tracing_mode    = "PassThrough"
   build_in_docker = false
+  lambda_role     = local.lambda_role_arn
   store_on_s3     = data.aws_caller_identity.this.id != "000000000000"
   s3_bucket       = data.aws_caller_identity.this.id != "000000000000" ? format("%s-tfstate-%s", var.aws_project, local.app_id) : null
   s3_prefix       = data.aws_caller_identity.this.id != "000000000000" ? format("lambda/%s/%s/", local.app_id, each.value.name) : null
@@ -27,20 +28,8 @@ module "lambda" {
   vpc_subnet_ids         = local.public_subnet_ids
   attach_network_policy  = true
 
-  create_package     = true
-  create_role        = true
-  role_name          = format("%s-lambda-%s-%s", var.aws_project, each.value.name, local.app_id)
-  role_path          = "/service-role/"
-  attach_policies    = true
-  number_of_policies = length(local.lambda_iam_arns)
-  policies           = local.lambda_iam_arns
-  attach_policy_json = true
-  policy_json = templatefile("${path.module}/policy.tftpl", {
-    partition = data.aws_partition.this.partition,
-    app_id    = local.app_id,
-    app_name  = var.aws_project,
-  })
-
+  create_package                    = true
+  create_role                       = false
   attach_cloudwatch_logs_policy     = true
   attach_dead_letter_policy         = true
   ephemeral_storage_size            = 512
