@@ -7,10 +7,10 @@ module "eks" {
   vpc_id     = data.aws_vpc.this.id
   subnet_ids = local.public_subnet_ids
 
-  kubernetes_version                       = "1.36"
-  create_auto_mode_iam_resources           = true
+  # create_auto_mode_iam_resources           = true
   endpoint_public_access                   = true
   enable_cluster_creator_admin_permissions = true
+  kubernetes_version                       = "1.36"
 
   compute_config = {
     enabled = true
