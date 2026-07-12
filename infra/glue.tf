@@ -1,5 +1,5 @@
 resource "aws_glue_job" "this" {
-  for_each          = data.aws_caller_identity.this.id != "000000000000" && var.aws_glue_enabled ? local.job_names : {}
+  for_each          = data.aws_caller_identity.this.id != "000000000000" && var.aws_eks_enabled ? local.job_names : {}
   name              = format("%s-%s-%s", var.aws_project, each.value.name, local.app_id)
   glue_version      = each.value.glue_version
   worker_type       = "G.1X"
@@ -36,7 +36,7 @@ resource "aws_glue_job" "this" {
 }
 
 resource "aws_s3_object" "this" {
-  for_each = data.aws_caller_identity.this.id != "000000000000" && var.aws_glue_enabled ? local.job_names : {}
+  for_each = data.aws_caller_identity.this.id != "000000000000" && var.aws_eks_enabled ? local.job_names : {}
   bucket   = one(aws_s3_bucket.this.*.id)
   key      = format("spark/_scripts/%s/%s", each.value.name, each.value.file)
   source   = format("%s/%s", each.value.path, each.value.file)
