@@ -8,6 +8,8 @@ resource "aws_eks_cluster" "this" {
     endpoint_public_access = true
     subnet_ids = local.public_subnet_ids
   }
+
+  tags = local.app_tags
 }
 
 resource "aws_eks_fargate_profile" "this" {
@@ -24,6 +26,8 @@ resource "aws_eks_fargate_profile" "this" {
   selector {
     namespace = "kube-system"
   }
+
+  tags = local.app_tags
 }
 
 resource "null_resource" "helm_chart" {
