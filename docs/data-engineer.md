@@ -1,6 +1,6 @@
 # Coding Workshop - Data Engineer Guide
 
-> [Main Guide](./README.md) | [Validation Guide](./validation.md) | [Evaluation Guide](./evaluation.md) | [Testing Guide](./testing.md) | [Full Stack Guide](./full-stack.md) | **Data Engineer Guide**
+> [Main Guide](./README.md) | [Validation Guide](./validation.md) | [Evaluation Guide](./evaluation.md) | [Full Stack Guide](./full-stack.md) | **Data Engineer Guide**
 
 ## Overview
 
@@ -14,6 +14,7 @@ drive / deliver value.
 ```mermaid
 graph LR
     PG["PostgreSQL<br/>(Data Source)"]
+    S3["Storage<br/>(Data Source)"]
     subgraph Data Lake
         BronzeLayer["Bronze Layer / Raw Zone<br/>(Ingestion & Storage)"]
         SilverLayer["Silver Layer / Processed Zone<br/>(Cleaning & Validation)"]
@@ -22,6 +23,7 @@ graph LR
     Jupyter["Jupyter Notebook<br/>(Analytics & Insights)"]
 
     PG --> BronzeLayer
+    S3 --> BronzeLayer
     BronzeLayer --> SilverLayer
     SilverLayer --> GoldLayer
     GoldLayer --> Jupyter
@@ -141,6 +143,42 @@ Robust pipelines handle unexpected data and infrastructure issues gracefully.
 | **S3 Access Denied** | Ingestion or write fails. | Verify IAM Role permissions (Glue or S3 policies). |
 | **Zero Rows Written** | Downstream jobs receive empty datasets. | Check if source dataset was empty; raise warning or halt pipeline depending on SLA. |
 
+## Testing Expectations
+
+### Functional Testing
+
+To be updated
+
+### Performance Testing
+
+To be updated
+
+### Test Coverage Goals
+
+To be updated
+
+### Examples: How To Test
+
+#### Local Development
+
+To test your job changes locally:
+
+To be updated
+
+To tail job logs in real-time:
+
+To be updated
+
+#### Cloud Deployment
+
+To test your job changes in the cloud:
+
+To be updated
+
+To tail job logs in real-time:
+
+To be updated
+
 ## Navigation Links
 
 <nav aria-label="breadcrumb">
@@ -148,7 +186,6 @@ Robust pipelines handle unexpected data and infrastructure issues gracefully.
     <li><a href="./README.md">Main Guide</a></li>
     <li><a href="./validation.md">Validation Guide</a></li>
     <li><a href="./evaluation.md">Evaluation Guide</a></li>
-    <li><a href="./testing.md">Testing Guide</a></li>
     <li><a href="./full-stack.md">Full Stack Guide</a></li>
     <li aria-current="page">Data Engineer Guide</li>
   </ol>

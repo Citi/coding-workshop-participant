@@ -1,6 +1,6 @@
 # Coding Workshop - Evaluation Guide
 
-> [Main Guide](./README.md) | [Validation Guide](./validation.md) | **Evaluation Guide** | [Testing Guide](./testing.md) | [Full Stack Guide](./full-stack.md) | [Data Engineer Guide](./data-engineer.md)
+> [Main Guide](./README.md) | [Validation Guide](./validation.md) | **Evaluation Guide** | [Full Stack Guide](./full-stack.md) | [Data Engineer Guide](./data-engineer.md)
 
 ## Overview
 
@@ -23,26 +23,30 @@ This workshop is designed to evaluate your effectiveness in delivering a fully w
 ## Expectations
 
 1. **Deployment**
-    - Application is deployed to AWS
-    - Frontend is accessible via URL
-    - Backend is accessible via API
-    - Database is configured
+
+  - Application is deployed to AWS
+  - Frontend is accessible via URL
+  - Backend is accessible via API
+  - Database is configured
 
 2. **Testing**
-    - Unit tests pass
-    - Integration tests pass
-    - Manual testing completed
-    - Test results documented
+
+  - Unit tests pass
+  - Integration tests pass
+  - Manual testing completed
+  - Test results documented
 
 3. **Documentation**
-    - README explains how to run the application
-    - API endpoints are documented
-    - Setup instructions are clear
+
+  - README explains how to run the application
+  - API endpoints are documented
+  - Setup instructions are clear
 
 4. **Self-Assessment**
-    - Which requirements are implemented
-    - Any known issues
-    - What you learned
+
+  - Which requirements are implemented
+  - Any known issues
+  - What you learned
 
 ## Outcomes
 
@@ -61,7 +65,6 @@ Excellent user experience | Good user experience | Acceptable user experience | 
     <li><a href="./README.md">Main Guide</a></li>
     <li><a href="./validation.md">Validation Guide</a></li>
     <li aria-current="page">Evaluation Guide</li>
-    <li><a href="./testing.md">Testing Guide</a></li>
     <li><a href="./full-stack.md">Full Stack Guide</a></li>
     <li><a href="./data-engineer.md">Data Engineer Guide</a></li>
   </ol>

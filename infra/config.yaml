@@ -1,10 +1,9 @@
 proxy:
-  chp:
-    nodeSelector:
-      kubernetes.io/os: linux
+  secretToken: "GENERATE_A_LONG_RANDOM_HEX_STRING"
+  service:
+    type: ClusterIP
 
 hub:
-  cookieSecret: "generate-a-secure-random-string"
   config:
     JupyterHub:
       authenticator_class: ldapauthenticator.LDAPAuthenticator
@@ -15,14 +14,26 @@ hub:
       user_attribute: "sAMAccountName"
       allowed_groups:
         - "OU=Groups,OU=CORP,DC=corp,DC=codingworkshop,DC=net"
-  nodeSelector:
-    kubernetes.io/os: linux
 
 singleuser:
-  cloudMetadata:
-    blockWithIptables: false
   image:
     name: jupyter/datascience-notebook
     tag: latest
-  nodeSelector:
-    kubernetes.io/os: linux
+  cpu:
+    limit: 2
+    guarantee: 1
+  memory:
+    limit: 2Gi
+    guarantee: 1Gi
+  storage:
+    type: static
+    static:
+      pvcName: "jupyterhub-shared-pvc"
+    homeMountPath: /home/jupyter
+
+scheduling:
+  userScheduler:
+    enabled: true
+  userPlaceholder:
+    enabled: true
+    replicas: 1
