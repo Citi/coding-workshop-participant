@@ -32,10 +32,10 @@ Before starting, ensure you have:
 ## Next Steps
 
 1. Follow the [Validation Guide](./validation.md) to make sure your development environment includes all prerequisites and requirements.
-2. Review the [Full Stack Guide](./full-stack.md) to understand evaluation principles, testing expectations and implementation guidelines.
-3. Review the [Data Engineer Guide](./data-engineer.md) to understand evaluation principles, testing expectations and implementation guidelines.
-4. Review the [System Engineer Guide](./system-engineer.md) to understand evaluation principles, testing expectations and implementation guidelines.
-5. Review the [UI/UX Engineer Guide](./ui-ux-engineer.md) to understand evaluation principles, testing expectations and implementation guidelines.
+2. Review the [Full Stack Guide](./full-stack.md) to understand the full stack engineering specific evaluation principles, testing expectations and implementation guidelines.
+3. Review the [Data Engineer Guide](./data-engineer.md) to understand the data engineering specific evaluation principles, testing expectations and implementation guidelines.
+4. Review the [System Engineer Guide](./system-engineer.md) to understand the system engineering specific evaluation principles, testing expectations and implementation guidelines.
+5. Review the [UI/UX Engineer Guide](./ui-ux-engineer.md) to understand the UI/UX engineering specific evaluation principles, testing expectations and implementation guidelines.
 
 > [!NOTE]
 > Choose the most appropriate guide for your scenario. For example, if you're a full stack engineering participant, read only the **Validation Guide** and **Full Stack Guide**, ignore the rest. Similar for data engineering participants, read only the **Validation Guide** and **Data Engineer Guide**, ignore the rest.
