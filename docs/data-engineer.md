@@ -1,6 +1,6 @@
 # Coding Workshop - Data Engineer Guide
 
-> [Main Guide](./README.md) | [Validation Guide](./validation.md) | [Evaluation Guide](./evaluation.md) | [Full Stack Guide](./full-stack.md) | **Data Engineer Guide**
+> [Main Guide](./README.md) | [Validation Guide](./validation.md) | [Full Stack Guide](./full-stack.md) | **Data Engineer Guide**
 
 ## Overview
 
@@ -8,6 +8,11 @@ This guide provides directions and guidelines on implementation expectations
 but you are free to exercise your creativity to showcase your technical skills
 combined with soft skills such as curiosity, observability, and ability to
 drive / deliver value.
+
+* [Architecture Diagram](#architecture-diagram)
+* [Evaluation Expectations](#evaluation-expectations)
+* [Testing Expectations](#testing-expectations)
+* [Implementation Expectations](#implementation-expectations)
 
 ## Architecture Diagram
 
@@ -30,6 +35,68 @@ graph LR
     GoldLayer --> Jupyter
     GoldLayer --> Dashboard
 ```
+
+## Evaluation Expectations
+
+1. **Implementation**
+
+  - To be updated
+
+2. **Design**
+
+  - To be updated
+
+3. **Code**
+
+  - To be updated
+
+4. **Testing**
+
+  - To be updated
+
+5. **Experience**
+
+  - To be updated
+
+Each technical skill will be evaluated between 1 (lowest) and 10 (highest) with average being the final number of the technical assessment. Similar process is applied to the soft skills assessment with the final evaluation being the average of two.
+
+Participants rated over 9 (inclusive) are considered *Excellent*, over 7 (inclusive) - *Good*, over 5 (inclusive) - *Satisfactory*, and others - *Incomplete*.
+
+## Testing Expectations
+
+### Functional Testing
+
+To be updated
+
+### Performance Testing
+
+To be updated
+
+### Test Coverage Goals
+
+To be updated
+
+### Examples: How To Test
+
+#### Local Development
+
+To test your job changes locally:
+
+To be updated
+
+To tail job logs in real-time:
+
+To be updated
+
+#### Cloud Deployment
+
+To test your job changes in the cloud:
+
+To be updated
+
+To tail job logs in real-time:
+
+To be updated
 
 ## Implementation Expectations
 
@@ -145,49 +212,12 @@ Robust pipelines handle unexpected data and infrastructure issues gracefully.
 | **S3 Access Denied** | Ingestion or write fails. | Verify IAM Role permissions (Glue or S3 policies). |
 | **Zero Rows Written** | Downstream jobs receive empty datasets. | Check if source dataset was empty; raise warning or halt pipeline depending on SLA. |
 
-## Testing Expectations
-
-### Functional Testing
-
-To be updated
-
-### Performance Testing
-
-To be updated
-
-### Test Coverage Goals
-
-To be updated
-
-### Examples: How To Test
-
-#### Local Development
-
-To test your job changes locally:
-
-To be updated
-
-To tail job logs in real-time:
-
-To be updated
-
-#### Cloud Deployment
-
-To test your job changes in the cloud:
-
-To be updated
-
-To tail job logs in real-time:
-
-To be updated
-
 ## Navigation Links
 
 <nav aria-label="breadcrumb">
   <ol>
     <li><a href="./README.md">Main Guide</a></li>
     <li><a href="./validation.md">Validation Guide</a></li>
-    <li><a href="./evaluation.md">Evaluation Guide</a></li>
     <li><a href="./full-stack.md">Full Stack Guide</a></li>
     <li aria-current="page">Data Engineer Guide</li>
   </ol>

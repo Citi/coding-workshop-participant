@@ -1,6 +1,6 @@
 # Coding Workshop - Full Stack Guide
 
-> [Main Guide](./README.md) | [Validation Guide](./validation.md) | [Evaluation Guide](./evaluation.md) | **Full Stack Guide** | [Data Engineer Guide](./data-engineer.md)
+> [Main Guide](./README.md) | [Validation Guide](./validation.md) | **Full Stack Guide** | [Data Engineer Guide](./data-engineer.md)
 
 ## Overview
 
@@ -8,6 +8,11 @@ This guide provides directions and guidelines on implementation expectations
 but you are free to exercise your creativity to showcase your technical skills
 combined with soft skills such as curiosity, observability, and ability to
 drive / deliver value.
+
+* [Architecture Diagram](#architecture-diagram)
+* [Evaluation Expectations](#evaluation-expectations)
+* [Testing Expectations](#testing-expectations)
+* [Implementation Expectations](#implementation-expectations)
 
 ## Architecture Diagram
 
@@ -35,6 +40,117 @@ graph TD
     Lambda -->|Reads/Writes| DB_PG
     Lambda -->|Reads/Writes| DB_Mongo
 ```
+
+## Evaluation Expectations
+
+1. **Implementation**
+
+  - Application is functional locally
+  - Application is deployed to AWS
+  - Frontend is accessible via URL
+  - Backend is accessible via API
+  - Database is configured
+
+2. **Design**
+
+  - To be updated
+
+3. **Code**
+
+  - To be updated
+
+4. **Testing**
+
+  - Unit tests pass
+  - Integration tests pass
+  - Manual testing completed
+  - Test results documented
+
+5. **Experience**
+
+  - To be updated
+
+Each technical skill will be evaluated between 1 (lowest) and 10 (highest) with average being the final number of the technical assessment. Similar process is applied to the soft skills assessment with the final evaluation being the average of two.
+
+Participants rated over 9 (inclusive) are considered *Excellent*, over 7 (inclusive) - *Good*, over 5 (inclusive) - *Satisfactory*, and others - *Incomplete*.
+
+## Testing Expectations
+
+### Backend Testing
+
+1. Unit Tests: Test individual Lambda functions in isolation.
+2. Integration Tests: Test API endpoints with actual database connections.
+3. Error Handling Tests: Test validation and error scenarios for CRUD operations.
+
+### Frontend Testing
+
+1. Component Tests: Test React components using Jest and React Testing Library.
+2. API Integration Tests: Test API service functions with mocked responses.
+3. End-to-End Tests: Test complete user workflows using tools like Cypress or Selenium.
+
+### Performance Testing
+
+1. Load Testing: Test API endpoints under high concurrent load using tools like Artillery or JMeter.
+2. Performance Monitoring: Monitor response times and resource usage to ensure optimal performance.
+
+### Test Coverage Goals
+
+* Backend Components: 80%+ code coverage
+* Frontend Components: 80%+ code coverage
+* API Endpoints: 90%+ coverage for all CRUD operations
+* Error Handling: 90%+ coverage for validation and error cases
+* Critical User Paths: 100% E2E test coverage
+
+### Examples: How To Test
+
+#### Local Development
+
+To test your backend changes locally:
+
+```sh
+# Example: Get all records for {{service-name}}
+curl -X GET https://localhost:3001/api/{{service-name}} \
+     -H "Content-Type: application/json"
+```
+
+Replace `{{service-name}}` with corresponding service name
+(e.g. `python-service`).
+
+To tail backend logs in real-time:
+
+```sh
+# Example: Get logs for {{service-name}}
+AWS_ENDPOINT_URL="http://localhost:4566" \
+    aws logs tail /aws/lambda/{{function-name}} \
+        --follow --format short --color on
+```
+
+Replace `{{function-name}}` with corresponding service name
+(e.g. `coding-workshop-python-service-abcd1234`).
+
+#### Cloud Deployment
+
+To test your backend changes in the cloud:
+
+```sh
+# Example: Get all records for {{service-name}}
+curl -X GET https://{API_BASE_URL}/api/{{service-name}} \
+     -H "Content-Type: application/json"
+```
+
+Replace `{{service-name}}` with corresponding service name
+(e.g. `python-service`).
+
+To tail backend logs in real-time:
+
+```sh
+# Example: Get logs for {{service-name}}
+aws logs tail /aws/lambda/{{function-name}} \
+    --follow --format short --color on
+```
+
+Replace `{{function-name}}` with corresponding service name
+(e.g. `coding-workshop-python-service-abcd1234`).
 
 ## Implementation Expectations
 
@@ -255,91 +371,12 @@ Secure access is essential to protect data and ensure users only perform permitt
 - [ ] Network errors should be handled gracefully
 - [ ] Failed operations should not leave data in inconsistent states
 
-## Testing Expectations
-
-### Backend Testing
-
-1. Unit Tests: Test individual Lambda functions in isolation.
-2. Integration Tests: Test API endpoints with actual database connections.
-3. Error Handling Tests: Test validation and error scenarios for CRUD operations.
-
-### Frontend Testing
-
-1. Component Tests: Test React components using Jest and React Testing Library.
-2. API Integration Tests: Test API service functions with mocked responses.
-3. End-to-End Tests: Test complete user workflows using tools like Cypress or Selenium.
-
-### Performance Testing
-
-1. Load Testing: Test API endpoints under high concurrent load using tools like Artillery or JMeter.
-2. Performance Monitoring: Monitor response times and resource usage to ensure optimal performance.
-
-### Test Coverage Goals
-
-* Backend Components: 80%+ code coverage
-* Frontend Components: 80%+ code coverage
-* API Endpoints: 90%+ coverage for all CRUD operations
-* Error Handling: 90%+ coverage for validation and error cases
-* Critical User Paths: 100% E2E test coverage
-
-### Examples: How To Test
-
-#### Local Development
-
-To test your backend changes locally:
-
-```sh
-# Example: Get all records for {{service-name}}
-curl -X GET https://localhost:3001/api/{{service-name}} \
-     -H "Content-Type: application/json"
-```
-
-Replace `{{service-name}}` with corresponding service name
-(e.g. `python-service`).
-
-To tail backend logs in real-time:
-
-```sh
-# Example: Get logs for {{service-name}}
-AWS_ENDPOINT_URL="http://localhost:4566" \
-    aws logs tail /aws/lambda/{{function-name}} \
-        --follow --format short --color on
-```
-
-Replace `{{function-name}}` with corresponding service name
-(e.g. `coding-workshop-python-service-abcd1234`).
-
-#### Cloud Deployment
-
-To test your backend changes in the cloud:
-
-```sh
-# Example: Get all records for {{service-name}}
-curl -X GET https://{API_BASE_URL}/api/{{service-name}} \
-     -H "Content-Type: application/json"
-```
-
-Replace `{{service-name}}` with corresponding service name
-(e.g. `python-service`).
-
-To tail backend logs in real-time:
-
-```sh
-# Example: Get logs for {{service-name}}
-aws logs tail /aws/lambda/{{function-name}} \
-    --follow --format short --color on
-```
-
-Replace `{{function-name}}` with corresponding service name
-(e.g. `coding-workshop-python-service-abcd1234`).
-
 ## Navigation Links
 
 <nav aria-label="breadcrumb">
   <ol>
     <li><a href="./README.md">Main Guide</a></li>
     <li><a href="./validation.md">Validation Guide</a></li>
-    <li><a href="./evaluation.md">Evaluation Guide</a></li>
     <li aria-current="page">Full Stack Guide</li>
     <li><a href="./data-engineer.md">Data Engineer Guide</a></li>
   </ol>
