@@ -119,7 +119,7 @@ fi
 
 echo "Retrieving AWS Directory Service IP..."
 AWS_DS_IP="$(echo $JSON | jq -r '.Metadata.ips.S' | cut -d ',' -f1 || echo '')"
-if [ -n "$AWS_DS_IP" ] && [ "$AWS_DS_IP" != "null"]; then
+if [ -n "$AWS_DS_IP" ] && [ "$AWS_DS_IP" != "null" ]; then
     echo "INFO: AWS Directory Service IP - $AWS_DS_IP"
 else
     echo "WARN: AWS Directory Service IP not found"
