@@ -8,7 +8,7 @@ hub:
     JupyterHub:
       authenticator_class: ldapauthenticator.LDAPAuthenticator
     LDAPAuthenticator:
-      server_address: "://codingworkshop.net" # Your Managed AD DNS name or IP addresses
+      server_address: "corp.codingworkshop.net"
       server_port: 389
       bind_dn_template: "CN={username},OU=Users,OU=CORP,DC=corp,DC=codingworkshop,DC=net"
       user_attribute: "sAMAccountName"

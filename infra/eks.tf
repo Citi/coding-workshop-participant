@@ -10,8 +10,9 @@ resource "aws_eks_cluster" "this" {
   }
 
   vpc_config {
-    endpoint_public_access = true
-    subnet_ids             = local.public_subnet_ids
+    endpoint_public_access  = true
+    endpoint_private_access = true
+    subnet_ids              = local.public_subnet_ids
   }
 
   tags = local.app_tags
@@ -50,11 +51,13 @@ resource "null_resource" "helm_chart" {
 
   provisioner "local-exec" {
     command = <<-EOT
+      if [ -z "${var.aws_ds_ip}" ] || [ "${var.aws_ds_ip}" = "null" ]; then echo "ERROR: aws_ds_ip is not set"; exit 1; fi && \
       aws eks update-kubeconfig --region us-east-1 --name ${one(aws_eks_cluster.this.*.name)} && \
       helm repo add jupyterhub https://hub.jupyter.org/helm-chart/ && \
       helm repo update && \
       helm upgrade --cleanup-on-fail \
         --install jupyterhub jupyterhub/jupyterhub \
+        --set hub.config.JupyterHub.server_address="${var.aws_ds_ip}" \
         --namespace default --values config.yaml
     EOT
   }

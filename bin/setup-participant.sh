@@ -117,6 +117,9 @@ if [ -z "$AWS_ACCOUNT_ID" ]; then
     exit 1
 fi
 
+echo "Retrieving AWS Directory Service IP"
+AWS_DS_IP="$(echo $JSON | jq -r '.Metadata' || echo '')"
+
 echo "  ✓ AWS profile configured"
 echo ""
 
@@ -136,6 +139,7 @@ export PARTICIPANT_URL="$PARTICIPANT_URL"
 export PROJECT_NAME="$PROJECT_NAME"
 export TF_VAR_aws_app_code="$PARTICIPANT_ID"
 export TF_VAR_aws_project="$PROJECT_NAME"
+export TF_VAR_aws_ds_ip="$AWS_DS_IP"
 EOF
 
 echo "Created environment file: ENVIRONMENT.config"

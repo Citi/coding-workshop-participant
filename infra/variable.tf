@@ -16,6 +16,12 @@ variable "aws_app_code" {
   default     = "abcd1234"
 }
 
+variable "aws_ds_ip" {
+  description = "The AWS Directory Service ip address."
+  type        = string
+  default     = ""
+}
+
 variable "aws_vpc_id" {
   description = "The AWS VPC identifier."
   type        = string

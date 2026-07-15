@@ -14,19 +14,21 @@ drive / deliver value.
 ```mermaid
 graph LR
     PG["PostgreSQL<br/>(Data Source)"]
-    S3["Storage<br/>(Data Source)"]
+    S3["S3 Storage<br/>(Data Source)"]
     subgraph Data Lake
         BronzeLayer["Bronze Layer / Raw Zone<br/>(Ingestion & Storage)"]
         SilverLayer["Silver Layer / Processed Zone<br/>(Cleaning & Validation)"]
         GoldLayer["Gold Layer / Curated Zone<br/>(Aggregation & Analytics)"]
     end
     Jupyter["Jupyter Notebook<br/>(Analytics & Insights)"]
+    Dashboard["Dashboard / BI Tool<br/>(Analytics & Insights)"]
 
     PG --> BronzeLayer
     S3 --> BronzeLayer
     BronzeLayer --> SilverLayer
     SilverLayer --> GoldLayer
     GoldLayer --> Jupyter
+    GoldLayer --> Dashboard
 ```
 
 ## Implementation Expectations
