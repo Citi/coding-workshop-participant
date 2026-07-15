@@ -117,6 +117,9 @@ if [ -z "$AWS_ACCOUNT_ID" ]; then
     exit 1
 fi
 
+echo "  ✓ AWS profile configured"
+echo ""
+
 echo "Retrieving AWS Directory Service IP..."
 AWS_DS_IP="$(echo $JSON | jq -r '.Metadata.ips.S' | cut -d ',' -f1 || echo '')"
 if [ -n "$AWS_DS_IP" ] && [ "$AWS_DS_IP" != "null" ]; then
@@ -124,9 +127,6 @@ if [ -n "$AWS_DS_IP" ] && [ "$AWS_DS_IP" != "null" ]; then
 else
     echo "WARN: AWS Directory Service IP not found"
 fi
-
-echo "  ✓ AWS profile configured"
-echo ""
 
 # Create environment configuration file for deployment scripts
 ENVIRONMENT_CONFIG="$PROJECT_ROOT/ENVIRONMENT.config"
