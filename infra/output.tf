@@ -43,5 +43,5 @@ output "website_url" {
 
 output "jupyter_url" {
   description = "The URL of the JupyterHub instance"
-  value       = data.aws_caller_identity.this.id == "000000000000" ? "http://localstack.cloud:8888" : try("https://${one(aws_eks_cluster.this.*.endpoint)}", null)
+  value       = data.aws_caller_identity.this.id == "000000000000" ? "http://localhost:8888" : try("https://${one(aws_eks_cluster.this.*.endpoint)}", null)
 }
