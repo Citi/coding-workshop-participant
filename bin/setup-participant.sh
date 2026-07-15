@@ -45,7 +45,7 @@ DOMAIN_NAME="codingworkshop.net"
 if [ -z "$EVENT_ID" ]; then EVENT_ID="abcd1234"; fi
 
 # Retrieve DNS TXT record
-echo "Retrieve DNS TXT record..."
+echo "INFO: Retrieve DNS TXT record..."
 CURRENT_RECORD=$(dig +short TXT "$DOMAIN_NAME" | tr -d '"')
 while IFS='=' read -r key value; do
     key=$(echo "$key" | xargs)
@@ -82,14 +82,14 @@ if [ -z "$PARTICIPANT_CODE" ]; then
 fi
 
 # Retrieve temporary AWS credentials from workshop API
-echo "Retrieving temporary AWS credentials..."
+echo "INFO: Retrieving temporary AWS credentials..."
 JSON=$(curl -H "x-id: $PARTICIPANT_ID" -H "x-code: $PARTICIPANT_CODE" $PARTICIPANT_URL) || {
     echo "ERROR: Failed to retrieve temporary AWS credentials. Aborting..."
     exit 1
 }
 
 # Configure AWS CLI profile with temporary credentials
-echo "Setting up the AWS CLI..."
+echo "INFO: Setting up the AWS CLI..."
 AWS_ACCESS_KEY_ID="$(echo $JSON | jq -r '.AccessKeyId')"
 aws configure set aws_access_key_id $AWS_ACCESS_KEY_ID
 AWS_SECRET_ACCESS_KEY="$(echo $JSON | jq -r '.SecretAccessKey')"
@@ -98,7 +98,7 @@ AWS_SESSION_TOKEN="$(echo $JSON | jq -r '.SessionToken')"
 aws configure set aws_session_token $AWS_SESSION_TOKEN
 
 # Auto-detect AWS Account ID from credentials
-echo "Auto-detecting AWS Account ID..."
+echo "INFO: Auto-detecting AWS Account ID..."
 AWS_ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text) || {
     echo "ERROR: Failed to retrieve AWS Account ID. Aborting..."
     exit 1
@@ -120,7 +120,7 @@ fi
 echo "  ✓ AWS profile configured"
 echo ""
 
-echo "Retrieving AWS Directory Service IP..."
+echo "INFO: Retrieving AWS Directory Service IP..."
 AWS_DS_IP="$(echo $JSON | jq -r '.Metadata.ips.S' | cut -d ',' -f1 || echo '')"
 if [ -n "$AWS_DS_IP" ] && [ "$AWS_DS_IP" != "null" ]; then
     echo "INFO: AWS Directory Service IP - $AWS_DS_IP"
@@ -147,6 +147,6 @@ export TF_VAR_aws_project="$PROJECT_NAME"
 export TF_VAR_aws_ds_ip="$AWS_DS_IP"
 EOF
 
-echo "Created environment file: ENVIRONMENT.config"
+echo "INFO: Created environment file - ENVIRONMENT.config"
 echo "  ✓ Environment configured"
 echo ""
