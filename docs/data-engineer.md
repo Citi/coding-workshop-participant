@@ -1,6 +1,6 @@
 # Coding Workshop - Data Engineer Guide
 
-> [Main Guide](./README.md) | [Validation Guide](./validation.md) | [Full Stack Guide](./full-stack.md) | **Data Engineer Guide**
+> [Main Guide](./README.md) | [Validation Guide](./validation.md) | [Full Stack Guide](./full-stack.md) | **Data Engineer Guide** | [System Engineer Guide](./system-engineer.md) | [UI/UX Engineer Guide](./ui-ux-engineer.md)
 
 ## Overview
 
@@ -220,5 +220,7 @@ Robust pipelines handle unexpected data and infrastructure issues gracefully.
     <li><a href="./validation.md">Validation Guide</a></li>
     <li><a href="./full-stack.md">Full Stack Guide</a></li>
     <li aria-current="page">Data Engineer Guide</li>
+    <li><a href="./system-engineer.md">System Engineer Guide</a></li>
+    <li><a href="./ui-ux-engineer.md">UI/UX Engineer Guide</a></li>
   </ol>
 </nav>

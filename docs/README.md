@@ -1,6 +1,6 @@
 # Coding Workshop - Main Guide
 
-> **Main Guide** | [Validation Guide](./validation.md) | [Full Stack Guide](./full-stack.md) | [Data Engineer Guide](./data-engineer.md)
+> **Main Guide** | [Validation Guide](./validation.md) | [Full Stack Guide](./full-stack.md) | [Data Engineer Guide](./data-engineer.md) | [System Engineer Guide](./system-engineer.md) | [UI/UX Engineer Guide](./ui-ux-engineer.md)
 
 This folder contains a comprehensive set of documentation to guide you through building a complete web application that meets all specifications and requirements. The goal is to evaluate your effectiveness in delivering a fully working application. Your implementation will be assessed against expected deliverables and milestones.
 
@@ -32,9 +32,12 @@ Before starting, ensure you have:
 ## Next Steps
 
 1. Follow the [Validation Guide](./validation.md) to make sure your development environment includes all prerequisites and requirements.
-2. Review the [Evaluation Guide](./evaluation.md) to understand how your implementation will be assessed and evaluated.
-3. Explore the [Testing Guide](./testing.md) to make sure your implementation doesn't miss important aspects of development lifecycle.
-4. Check the [Implementation Guide](./implementation.md) to get directions and guidelines on implementation expectations.
+2. Review the [Full Stack Guide](./full-stack.md) to understand evaluation principles, testing expectations and implementation guidelines.
+3. Review the [Data Engineer Guide](./data-engineer.md) to understand evaluation principles, testing expectations and implementation guidelines.
+4. Review the [System Engineer Guide](./system-engineer.md) to understand evaluation principles, testing expectations and implementation guidelines.
+
+> [!NOTE]
+> Choose the most appropriate guide for your scenario. For example, if you're a full stack engineering participant, read only the **Validation Guide** and **Full Stack Guide**, ignore the rest. Similar for data engineering participants, read only the **Validation Guide** and **Data Engineer Guide**, ignore the rest.
 
 ## Navigation Links
 
@@ -44,5 +47,7 @@ Before starting, ensure you have:
     <li><a href="./validation.md">Validation Guide</a></li>
     <li><a href="./full-stack.md">Full Stack Guide</a></li>
     <li><a href="./data-engineer.md">Data Engineer Guide</a></li>
+    <li><a href="./system-engineer.md">System Engineer Guide</a></li>
+    <li><a href="./ui-ux-engineer.md">UI/UX Engineer Guide</a></li>
   </ol>
 </nav>
