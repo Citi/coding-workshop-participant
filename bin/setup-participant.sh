@@ -118,7 +118,7 @@ if [ -z "$AWS_ACCOUNT_ID" ]; then
 fi
 
 echo "Retrieving AWS Directory Service IP"
-AWS_DS_IP="$(echo $JSON | jq -r '.Metadata' || echo '')"
+AWS_DS_IP="$(echo $JSON | jq -r '.Metadata.ips.S' | cut -d ',' -f1 || echo '')"
 
 echo "  ✓ AWS profile configured"
 echo ""
