@@ -1,4 +1,4 @@
-# Coding Workshop - Data Engineer Guide
+# Coding Workshop - UI/UX Engineer Guide
 
 > [Main Guide](./README.md) | [Validation Guide](./validation.md) | [Full Stack Guide](./full-stack.md) | [Data Engineer Guide](./data-engineer.md) | [System Engineer Guide](./system-engineer.md) | **UI/UX Engineer Guide**
 
