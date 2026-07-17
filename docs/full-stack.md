@@ -45,34 +45,42 @@ graph TD
 
 1. **Implementation**
 
-  - Application is functional locally
-  - Application is deployed to AWS
-  - Frontend is accessible via URL
-  - Backend is accessible via API
-  - Database is configured
+  - Application runs successfully in local development and cloud environments.
+  - Frontend and backend integration supports complete CRUD workflows.
+  - Infrastructure dependencies (API, storage, and databases) are configured correctly.
+  - Deployment process is reproducible and produces verifiable outputs.
 
 2. **Design**
 
-  - To be updated
+  - UI layout is intuitive, responsive, and accessible across common screen sizes.
+  - Information architecture is clear, with user flows that minimize friction.
+  - Design choices are consistent (typography, spacing, colors, and interaction states).
+  - Backend and frontend boundaries are clean, with maintainable API contracts.
 
 3. **Code**
 
-  - To be updated
+  - Code is modular and organized by feature/domain rather than monolithic files.
+  - Error handling, validation, and edge cases are addressed in both layers.
+  - Naming, formatting, and linting conventions are consistently applied.
+  - Reusable components and utilities are favored over copy-paste implementations.
 
 4. **Testing**
 
-  - Unit tests pass
-  - Integration tests pass
-  - Manual testing completed
-  - Test results documented
+  - Unit and integration tests cover critical business logic and API contracts.
+  - Frontend behavior is validated for core user journeys and error states.
+  - Manual validation confirms end-to-end flow from UI through persistence layers.
+  - Test artifacts (commands, results, and known gaps) are documented clearly.
 
 5. **Experience**
 
-  - To be updated
+  - Project can be set up and run locally using documented commands with minimal friction.
+  - README/update notes clearly explain architecture, trade-offs, and assumptions.
+  - User interactions are smooth, with clear feedback for loading, success, and failure states.
+  - Delivery quality demonstrates ownership, communication clarity, and pragmatic decisions.
 
-Each technical skill will be evaluated between 1 (lowest) and 10 (highest) with average being the final number of the technical assessment. Similar process is applied to the soft skills assessment with the final evaluation being the average of two.
+Each technical competency is scored on a scale of 1 (lowest) to 10 (highest). The technical assessment result is the average of those scores. The soft skills are evaluated using the same scoring approach. The final overall evaluation is the average of the technical and soft skills results.
 
-Participants rated over 9 (inclusive) are considered *Excellent*, over 7 (inclusive) - *Good*, over 5 (inclusive) - *Satisfactory*, and others - *Incomplete*.
+A final score of 9 or higher is classified as **Excellent**, 7 or higher as **Good**, 5 or higher as **Satisfactory**, and below 5 as **Incomplete**.
 
 ## Testing Expectations
 

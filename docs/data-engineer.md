@@ -40,41 +40,72 @@ graph LR
 
 1. **Implementation**
 
-  - To be updated
+  - Bronze, Silver, and Gold layers are implemented and wired end-to-end.
+  - Jobs can run locally and in cloud mode without manual code changes.
+  - Pipelines are idempotent or incrementally safe, with no duplicate output on reruns.
+  - Data outputs are queryable and usable for downstream analytics.
 
 2. **Design**
 
-  - To be updated
+  - Pipeline design clearly separates ingestion, transformation, and serving concerns.
+  - Medallion boundaries and storage paths are consistent and documented.
+  - Schema contracts and data quality checks are explicit at each layer.
+  - Partitioning and file layout choices support scalability and cost efficiency.
 
 3. **Code**
 
-  - To be updated
+  - Code is modular, readable, and avoids duplicated transformation logic.
+  - Configuration is externalized via environment variables and not hardcoded.
+  - Logging and exception handling provide actionable diagnostics.
+  - Naming conventions, typing/docstrings, and folder structure are consistent.
 
 4. **Testing**
 
-  - To be updated
+  - Unit tests validate core transformations and schema validation rules.
+  - Integration tests validate read/write behavior with PostgreSQL and S3.
+  - Reconciliation checks confirm row counts and aggregates across layers.
+  - Test evidence (commands, output, and conclusions) is documented.
 
 5. **Experience**
 
-  - To be updated
+  - Setup and execution instructions are clear and reproducible.
+  - Visual storytelling explains findings for both technical and business audiences.
+  - Trade-offs, assumptions, and known limitations are explicitly called out.
+  - Delivery quality reflects ownership, clarity, and maintainability.
 
-Each technical skill will be evaluated between 1 (lowest) and 10 (highest) with average being the final number of the technical assessment. Similar process is applied to the soft skills assessment with the final evaluation being the average of two.
+Each technical competency is scored on a scale of 1 (lowest) to 10 (highest). The technical assessment result is the average of those scores. The soft skills are evaluated using the same scoring approach. The final overall evaluation is the average of the technical and soft skills results.
 
-Participants rated over 9 (inclusive) are considered *Excellent*, over 7 (inclusive) - *Good*, over 5 (inclusive) - *Satisfactory*, and others - *Incomplete*.
+A final score of 9 or higher is classified as **Excellent**, 7 or higher as **Good**, 5 or higher as **Satisfactory**, and below 5 as **Incomplete**.
 
 ## Testing Expectations
 
 ### Functional Testing
 
-To be updated
+Functional testing should verify that each pipeline step produces correct and complete outputs.
+
+1. Source Ingestion Validation: Confirm source records are ingested into Bronze with expected row counts and required columns.
+2. Transformation Validation: Validate cleaning, casting, filtering, and deduplication behavior in Silver.
+3. Aggregation Validation: Verify Gold metrics (counts, averages, totals) against known expected values.
+4. Data Quality Validation: Confirm invalid rows are quarantined and quality rules are enforced.
+5. Idempotency Validation: Run the same job twice and confirm no duplicate records are introduced.
 
 ### Performance Testing
 
-To be updated
+Performance testing should demonstrate acceptable runtime and stability under realistic data volumes.
+
+1. Batch Throughput Test: Measure records processed per minute for representative datasets.
+2. Scale Test: Execute jobs with small, medium, and large input sizes to identify nonlinear slowdowns.
+3. Resource Efficiency Test: Monitor memory and CPU usage during heavy transformations.
+4. External Dependency Test: Validate retry/backoff behavior for transient PostgreSQL or S3 failures.
+5. SLA Verification: Confirm end-to-end job completion time meets expected delivery windows.
 
 ### Test Coverage Goals
 
-To be updated
+* Core transformation functions: 80%+ coverage
+* Schema and validation rules: 90%+ coverage
+* Error-handling and retry paths: 85%+ coverage
+* Critical business metric calculations: 95%+ coverage
+* End-to-end pipeline smoke test: 100% for at least one representative flow
 
 ### Examples: How To Test
 
@@ -82,21 +113,41 @@ To be updated
 
 To test your job changes locally:
 
-To be updated
+```sh
+# Install dependencies for your job
+pip install -r ../data/{{job-name}}/requirements.txt
+
+# Run the job locally
+python ../data/{{job-name}}/job.py
+```
+
+Replace `{{job-name}}` with your job directory (for example, `citi-daily-etl`).
 
 To tail job logs in real-time:
 
-To be updated
+```sh
+python ../data/{{job-name}}/job.py 2>&1 | tee /tmp/{{job-name}}.log
+tail -f /tmp/{{job-name}}.log
+```
 
 #### Cloud Deployment
 
 To test your job changes in the cloud:
 
-To be updated
+```sh
+# Start a Glue job run
+aws glue start-job-run --job-name {{job-name}}
+
+# Check status (rerun until state is SUCCEEDED)
+aws glue get-job-runs --job-name {{job-name}} --max-results 1
+```
 
 To tail job logs in real-time:
 
-To be updated
+```sh
+# Glue output stream (adjust log group if your environment differs)
+aws logs tail /aws-glue/jobs/output --follow --format short --color on
+```
 
 ## Implementation Expectations
 
