@@ -1127,7 +1127,29 @@ configure_dnsmasq() {
 
     print_info "Configuring dnsmasq for LocalStack..."
 
-    # Create dnsmasq configuration for LocalStack
+    # Step 1: Check if port 53 is already in use
+    local port_user=$(sudo lsof -i :53 2>/dev/null | grep -v COMMAND | awk '{print $1}' | sort -u | head -1)
+    if [ -n "$port_user" ]; then
+        print_info "Port 53 is currently used by: $port_user"
+
+        # If systemd-resolved is using it, disable it
+        if [ "$port_user" = "systemd-resolv" ] || sudo systemctl is-active --quiet systemd-resolved; then
+            print_info "Disabling systemd-resolved to free port 53..."
+            if sudo systemctl stop systemd-resolved && sudo systemctl disable systemd-resolved; then
+                print_status "systemd-resolved stopped and disabled"
+            else
+                print_error "Failed to stop systemd-resolved"
+                add_failure "Cannot free port 53 from systemd-resolved"
+                return
+            fi
+        else
+            print_error "Port 53 is in use by $port_user and it's not systemd-resolved"
+            add_failure "Cannot start dnsmasq: port 53 already in use"
+            return
+        fi
+    fi
+
+    # Step 2: Create dnsmasq configuration for LocalStack
     local dnsmasq_conf="/etc/dnsmasq.d/localstack.conf"
 
     if [ ! -f "$dnsmasq_conf" ]; then
@@ -1141,12 +1163,42 @@ EOF
         print_info "dnsmasq configuration already exists"
     fi
 
-    # Restart dnsmasq
-    if sudo systemctl restart dnsmasq && sudo systemctl enable dnsmasq; then
-        print_status "dnsmasq configured and restarted"
-    else
-        add_failure "Failed to configure dnsmasq"
-    fi
+    # Step 3: Restart dnsmasq with retry logic
+    print_info "Starting dnsmasq service..."
+    local attempt=1
+    while [ $attempt -le 3 ]; do
+        if sudo systemctl restart dnsmasq; then
+            # Verify it's running
+            if sudo systemctl is-active --quiet dnsmasq; then
+                print_status "dnsmasq started successfully"
+                if sudo systemctl enable dnsmasq; then
+                    print_status "dnsmasq enabled for auto-start"
+                else
+                    print_error "Warning: dnsmasq not enabled for auto-start"
+                fi
+                return 0
+            else
+                print_error "dnsmasq service restarted but not active"
+            fi
+        else
+            print_error "Attempt $attempt to start dnsmasq failed"
+        fi
+
+        if [ $attempt -lt 3 ]; then
+            print_info "Retrying in 3 seconds..."
+            sleep 3
+        fi
+        ((attempt++))
+    done
+
+    # If we get here, dnsmasq failed to start
+    print_error "Failed to start dnsmasq after 3 attempts"
+    print_info "Checking dnsmasq status..."
+    sudo systemctl status dnsmasq --no-pager || true
+    print_info "Checking dnsmasq logs..."
+    sudo journalctl -u dnsmasq -n 10 --no-pager || true
+
+    add_failure "Failed to configure dnsmasq"
 }
 
 install_terraform() {
