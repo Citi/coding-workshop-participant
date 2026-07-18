@@ -1151,19 +1151,34 @@ configure_dnsmasq() {
 
     # Step 2: Create dnsmasq configuration for LocalStack
     local dnsmasq_conf="/etc/dnsmasq.d/localstack.conf"
+    local dnsmasq_temp_conf
+    local dnsmasq_config_changed=false
 
-    if [ ! -f "$dnsmasq_conf" ]; then
-        sudo tee "$dnsmasq_conf" > /dev/null << EOF
+    dnsmasq_temp_conf=$(mktemp)
+    cat > "$dnsmasq_temp_conf" <<'EOF'
 # LocalStack DNS configuration
 address=/.localhost.localstack.cloud/127.0.0.1
 server=8.8.8.8
 EOF
-        print_status "Created LocalStack dnsmasq configuration"
+
+    if [ ! -f "$dnsmasq_conf" ] || ! sudo cmp -s "$dnsmasq_temp_conf" "$dnsmasq_conf"; then
+        sudo install -o root -g root -m 644 "$dnsmasq_temp_conf" "$dnsmasq_conf"
+        print_status "Written LocalStack dnsmasq configuration"
+        dnsmasq_config_changed=true
     else
-        print_info "dnsmasq configuration already exists"
+        print_info "dnsmasq configuration already up to date"
     fi
+    rm -f "$dnsmasq_temp_conf"
 
     # Step 3: Restart dnsmasq with retry logic
+    if sudo systemctl is-active --quiet dnsmasq && [ "$dnsmasq_config_changed" = false ]; then
+        print_status "dnsmasq is already running and configuration is unchanged"
+        if sudo systemctl enable dnsmasq >/dev/null 2>&1; then
+            print_status "dnsmasq enabled for auto-start"
+        fi
+        return 0
+    fi
+
     print_info "Starting dnsmasq service..."
     local attempt=1
     while [ $attempt -le 3 ]; do
