@@ -1276,34 +1276,41 @@ install_localstack() {
         return
     fi
 
-    if [ -x "$localstack_bin" ]; then
-        print_info "LocalStack already installed: $("$localstack_bin" --version 2>/dev/null || echo "$LOCALSTACK_VERSION")"
-        return
-    fi
-
-    print_info "Installing LocalStack $LOCALSTACK_VERSION..."
-
     # Ensure ~/.local/bin exists and is in PATH
     mkdir -p "$ACTUAL_HOME/.local/bin"
     export PATH="$ACTUAL_HOME/.local/bin:$PATH"
 
-    # Install via pip
-    if python3 -m pip install --user "localstack==${LOCALSTACK_VERSION}"; then
-        if [ -x "$localstack_bin" ]; then
-            print_status "LocalStack installed: $("$localstack_bin" --version 2>/dev/null || echo "$LOCALSTACK_VERSION")"
-        else
-            print_status "LocalStack installed: $LOCALSTACK_VERSION"
-        fi
-
-        # Ensure ~/.local/bin is in PATH for future sessions
-        if ! grep -q 'export PATH="$HOME/.local/bin:$PATH"' "$ACTUAL_HOME/.bashrc" 2>/dev/null; then
-            echo 'export PATH="$HOME/.local/bin:$PATH"' >> "$ACTUAL_HOME/.bashrc"
-        fi
-
-        print_info "LocalStack accessible at: http://localhost:4566"
+    if [ -x "$localstack_bin" ]; then
+        print_info "LocalStack already installed: $("$localstack_bin" --version 2>/dev/null || echo "$LOCALSTACK_VERSION")"
     else
-        add_failure "Failed to install LocalStack"
+        print_info "Installing LocalStack $LOCALSTACK_VERSION..."
+
+        if python3 -m pip install --user "localstack==${LOCALSTACK_VERSION}"; then
+            if [ -x "$localstack_bin" ]; then
+                print_status "LocalStack installed: $("$localstack_bin" --version 2>/dev/null || echo "$LOCALSTACK_VERSION")"
+            else
+                print_status "LocalStack installed: $LOCALSTACK_VERSION"
+            fi
+
+            if ! grep -q 'export PATH="$HOME/.local/bin:$PATH"' "$ACTUAL_HOME/.bashrc" 2>/dev/null; then
+                echo 'export PATH="$HOME/.local/bin:$PATH"' >> "$ACTUAL_HOME/.bashrc"
+            fi
+        else
+            add_failure "Failed to install LocalStack"
+            return
+        fi
     fi
+
+    print_info "Starting LocalStack..."
+    if "$localstack_bin" start -d >/dev/null 2>&1; then
+        print_status "LocalStack started in the background"
+    elif pgrep -f "localstack.*start" >/dev/null 2>&1; then
+        print_status "LocalStack is already running"
+    else
+        add_failure "Failed to start LocalStack"
+    fi
+
+    print_info "LocalStack accessible at: http://localhost:4566"
 }
 
 install_kubectl() {

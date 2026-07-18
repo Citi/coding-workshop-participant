@@ -59,7 +59,8 @@ source ~/.bashrc
 Then run the setup-environment script to install the tools required for this workshop automatically with:
 
 ```sh
-./bin/setup-environment.sh
+source ~/.bashrc
+./bin/setup-environment.sh -d
 ```
 
 **Note:** The script will ask you for your `sudo` password. This is the same password you used to login to the VDI. The terminal will not show any characters to protect your password, thus, just press `Enter` after typing your password or after pasting it if you copied it from somewhere.
