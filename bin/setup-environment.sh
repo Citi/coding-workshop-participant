@@ -1416,6 +1416,14 @@ install_jupyter_notebook() {
         if ! grep -q 'export PATH="$HOME/.local/bin:$PATH"' "$ACTUAL_HOME/.bashrc" 2>/dev/null; then
             echo 'export PATH="$HOME/.local/bin:$PATH"' >> "$ACTUAL_HOME/.bashrc"
         fi
+
+        print_info "Starting Jupyter Notebook on port $JUPYTER_PORT..."
+        if nohup jupyter notebook --ip=0.0.0.0 --port="$JUPYTER_PORT" --no-browser > "$ACTUAL_HOME/.local/share/jupyter-notebook.log" 2>&1 & then
+            print_status "Jupyter Notebook started in the background"
+            print_info "Open http://localhost:$JUPYTER_PORT"
+        else
+            add_failure "Failed to start Jupyter Notebook"
+        fi
     else
         add_failure "Failed to install Jupyter"
     fi
