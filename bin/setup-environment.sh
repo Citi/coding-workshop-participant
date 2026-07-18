@@ -10,31 +10,31 @@ set +e
 # CONFIGURATION
 # ============================================================================
 
-PYENV_VERSION="3.13"
-JAVA_VERSION="21"
-NODEJS_VERSION="22"
-LOCALSTACK_VERSION="2026.6.0"
-JUPYTER_PORT="${JUPYTER_PORT:-8888}"
-POSTGRES_VERSION="16"
+PYENV_VERSION="${PYENV_VERSION:-3.13}"
+JAVA_VERSION="${JAVA_VERSION:-21}"
+NODEJS_VERSION="${NODEJS_VERSION:-22}"
+INTELLIJ_EDITION="${INTELLIJ_EDITION:-community}"
+PYCHARM_EDITION="${PYCHARM_EDITION:-community}"
+POSTGRES_VERSION="${POSTGRES_VERSION:-16}"
 POSTGRES_USER="${POSTGRES_USER:-postgres}"
 POSTGRES_PASS="${POSTGRES_PASS:-postgres123}"
-MONGODB_VERSION="7.0"
-COMPASS_VERSION="1.43.0"
+MONGODB_VERSION="${MONGODB_VERSION:-7.0}"
 MONGO_USER="${MONGO_USER:-mongo}"
 MONGO_PASS="${MONGO_PASS:-mongo123}"
-SPARK_VERSION="4.1.2"
-TRINO_VERSION="476"
+COMPASS_VERSION="${COMPASS_VERSION:-1.43.0}"
+DOCKER_GROUP_ACTIVATED=${DOCKER_GROUP_ACTIVATED:-false}
+KUBECTL_VERSION="${KUBECTL_VERSION:-1.31.0}"
+HELM_VERSION="${HELM_VERSION:-3.15.4}"
+LOCALSTACK_VERSION="${LOCALSTACK_VERSION:-2026.6.0}"
+JUPYTER_PORT="${JUPYTER_PORT:-8888}"
+SPARK_VERSION="${SPARK_VERSION:-4.1.2}"
+TRINO_VERSION="${TRINO_VERSION:-476}"
+DNSMASQ_INSTALL="${DNSMASQ_INSTALL:-false}"
 
 # Retry configuration
 MAX_RETRIES=3
 RETRY_DELAY=5
-
-# Command-line arguments
 DRY_RUN=false
-INSTALL_DNSMASQ=false
-INTELLIJ_EDITION="community"
-PYCHARM_EDITION="community"
-DOCKER_GROUP_ACTIVATED=${DOCKER_GROUP_ACTIVATED:-false}
 
 # Track failures
 declare -a FAILURES=()
@@ -167,7 +167,7 @@ install_prerequisites() {
     fi
 
     local packages="ca-certificates curl python3-pip gnupg lsb-release apt-transport-https software-properties-common unzip wget jq"
-    [ "$INSTALL_DNSMASQ" = true ] && packages="$packages dnsmasq"
+    [ "$DNSMASQ_INSTALL" = true ] && packages="$packages dnsmasq"
 
     print_info "Updating system and installing prerequisites..."
     if retry_command $MAX_RETRIES "sudo apt update && sudo apt install -y $packages"; then
@@ -1110,7 +1110,7 @@ configure_sshd() {
 configure_dnsmasq() {
     print_section "dnsmasq Configuration"
 
-    if [ "$INSTALL_DNSMASQ" != true ]; then
+    if [ "$DNSMASQ_INSTALL" != true ]; then
         print_info "dnsmasq installation not requested (use -d flag)"
         return
     fi
@@ -1254,6 +1254,73 @@ install_localstack() {
     fi
 }
 
+install_kubectl() {
+    print_section "kubectl"
+
+    local kubectl_bin="$ACTUAL_HOME/.local/bin/kubectl"
+
+    if is_dry_run; then
+        [ -x "$kubectl_bin" ] && print_status "Already installed" || print_info "Would install kubectl $KUBECTL_VERSION"
+        return
+    fi
+
+    if [ -x "$kubectl_bin" ]; then
+        print_info "kubectl already installed: $($kubectl_bin version --client --short 2>/dev/null || echo "version unknown")"
+        return
+    fi
+
+    print_info "Installing kubectl $KUBECTL_VERSION..."
+    mkdir -p "$ACTUAL_HOME/.local/bin"
+
+    if curl -fsSL "https://dl.k8s.io/release/v${KUBECTL_VERSION}/bin/linux/amd64/kubectl" -o "$kubectl_bin" && chmod +x "$kubectl_bin"; then
+        print_status "kubectl installed: $($kubectl_bin version --client --short 2>/dev/null || echo "$KUBECTL_VERSION")"
+
+        if ! grep -q 'export PATH="$HOME/.local/bin:$PATH"' "$ACTUAL_HOME/.bashrc" 2>/dev/null; then
+            echo 'export PATH="$HOME/.local/bin:$PATH"' >> "$ACTUAL_HOME/.bashrc"
+        fi
+    else
+        add_failure "Failed to install kubectl"
+    fi
+}
+
+install_helm() {
+    print_section "Helm"
+
+    local helm_bin="$ACTUAL_HOME/.local/bin/helm"
+
+    if is_dry_run; then
+        [ -x "$helm_bin" ] && print_status "Already installed" || print_info "Would install Helm $HELM_VERSION"
+        return
+    fi
+
+    if [ -x "$helm_bin" ]; then
+        print_info "Helm already installed: $($helm_bin version --short 2>/dev/null || echo "version unknown")"
+        return
+    fi
+
+    print_info "Installing Helm $HELM_VERSION..."
+    mkdir -p "$ACTUAL_HOME/.local/bin"
+
+    local tmp_dir
+    tmp_dir=$(mktemp -d)
+    cd "$tmp_dir" || return
+
+    if curl -fsSL "https://get.helm.sh/helm-v${HELM_VERSION}-linux-amd64.tar.gz" -o helm.tgz && \
+       tar -xzf helm.tgz && [ -x "linux-amd64/helm" ]; then
+        install -m 0755 "linux-amd64/helm" "$helm_bin"
+        print_status "Helm installed: $($helm_bin version --short 2>/dev/null || echo "$HELM_VERSION")"
+
+        if ! grep -q 'export PATH="$HOME/.local/bin:$PATH"' "$ACTUAL_HOME/.bashrc" 2>/dev/null; then
+            echo 'export PATH="$HOME/.local/bin:$PATH"' >> "$ACTUAL_HOME/.bashrc"
+        fi
+    else
+        add_failure "Failed to install Helm"
+    fi
+
+    cd - > /dev/null || true
+    rm -rf "$tmp_dir"
+}
+
 install_jupyter_notebook() {
     print_section "Jupyter Notebook"
 
@@ -1319,7 +1386,7 @@ ORIGINAL_ARGS="$*"
 while [[ $# -gt 0 ]]; do
     case $1 in
         -n) DRY_RUN=true; shift ;;
-        -d) INSTALL_DNSMASQ=true; shift ;;
+        -d) DNSMASQ_INSTALL=true; shift ;;
         -h|--help) show_help; exit 0 ;;
         --intellij-ultimate) INTELLIJ_EDITION="ultimate"; shift ;;
         --pycharm-professional) PYCHARM_EDITION="professional"; shift ;;
@@ -1352,7 +1419,6 @@ main() {
     install_vscode
     install_intellij
     install_pycharm
-    install_docker
 
     # Install databases
     install_postgres
@@ -1362,6 +1428,11 @@ main() {
     configure_mongodb_bind
     configure_mongodb_auth
     install_mongodb_compass
+
+    # Install container tools
+    install_docker
+    install_kubectl
+    install_helm
 
     # Install cloud tools
     install_terraform
