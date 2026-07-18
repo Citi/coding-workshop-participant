@@ -72,7 +72,7 @@ if [ "$ENVIRONMENT" = "aws" ]; then
     fi
 else
     # Local development configuration
-    export AWS_ENDPOINT_URL="http://localhost:4566"
+    export AWS_ENDPOINT_URL="http://localhost.localstack.cloud:4566"
     export AWS_ENDPOINT_URL_S3="http://s3.localhost.localstack.cloud:4566"
 
     BUCKET_NAME="coding-workshop-tfstate-${PARTICIPANT_ID:-abcd1234}"

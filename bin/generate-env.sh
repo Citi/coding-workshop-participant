@@ -53,7 +53,7 @@ fi
 if curl -s http://localhost:4566/_localstack/health > /dev/null 2>&1; then
     # LocalStack is running — use it
     ENVIRONMENT="local"
-    export AWS_ENDPOINT_URL="http://localhost:4566"
+    export AWS_ENDPOINT_URL="http://localhost.localstack.cloud:4566"
     export AWS_ENDPOINT_URL_S3="http://s3.localhost.localstack.cloud:4566"
     export AWS_ACCESS_KEY_ID=test
     export AWS_SECRET_ACCESS_KEY=test

@@ -1157,6 +1157,8 @@ configure_dnsmasq() {
     dnsmasq_temp_conf=$(mktemp)
     cat > "$dnsmasq_temp_conf" <<'EOF'
 # LocalStack DNS configuration
+address=/localhost/127.0.0.1
+address=/.localhost/127.0.0.1
 address=/.localhost.localstack.cloud/127.0.0.1
 server=8.8.8.8
 EOF
