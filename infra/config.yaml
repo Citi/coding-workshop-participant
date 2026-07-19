@@ -26,12 +26,7 @@ singleuser:
     limit: 2Gi
     guarantee: 1Gi
   storage:
-    type: dynamic
-    capacity: 10Gi
-    dynamic:
-      storageClass: gp2
-      pvcNameTemplate: "pvc-{username}-{servername}"
-      volumeNameTemplate: "volume-{username}-{servername}"
+    type: none
 
 scheduling:
   userScheduler:
