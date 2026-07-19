@@ -29,7 +29,7 @@ singleuser:
     type: dynamic
     capacity: 10Gi
     dynamic:
-      storageClass: gp3
+      storageClass: gp2
       pvcNameTemplate: "pvc-{username}-{servername}"
       volumeNameTemplate: "volume-{username}-{servername}"
 
