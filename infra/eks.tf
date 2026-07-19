@@ -62,3 +62,22 @@ resource "null_resource" "helm_chart" {
     EOT
   }
 }
+
+# resource "null_resource" "kubectl_python_job" {
+#   count = data.aws_caller_identity.this.id != "000000000000" && var.aws_eks_enabled ? length(local.data_names_python) : 0
+
+#   triggers = {
+#     source_code_hash = one(aws_eks_node_group.this.*.id)
+#   }
+
+#   provisioner "local-exec" {
+#     command = <<-EOT
+#       kubectl create configmap python-job-source \
+#         --from-file=job.py=../data/_examples/python-job/job.py \
+#         --dry-run=client -o yaml | kubectl apply -f - && \
+#       kubectl apply -f eks-python.yaml
+#     EOT
+#   }
+
+#   depends_on = [null_resource.helm_chart]
+# }

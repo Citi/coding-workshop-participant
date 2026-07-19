@@ -26,10 +26,15 @@ singleuser:
     limit: 2Gi
     guarantee: 1Gi
   storage:
-    type: static
-    static:
-      pvcName: "jupyterhub-shared-pvc"
-    homeMountPath: /home/jupyter
+    type: dynamic
+    capacity: 10Gi
+    storageClassName: gp3
+    accessModes:
+      - ReadWriteOnce
+    dynamic:
+      storageClass: gp3
+      pvcNameTemplate: "pvc-{username}-{servername}"
+      volumeNameTemplate: "volume-{username}-{servername}"
 
 scheduling:
   userScheduler:
