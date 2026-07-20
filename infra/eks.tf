@@ -72,7 +72,7 @@ resource "null_resource" "helm_python_job" {
   provisioner "local-exec" {
     command = <<-EOT
       helm upgrade --cleanup-on-fail \
-        --install ${replace(each.key, "_", "-")}-python-job ../helm/ \
+        --install ${replace(each.key, "_", "-")}-python-job ./helm/ \
         --set pythonJob.enabled=true \
         --set pythonJob.name=${replace(each.key, "_", "-")} \
         --set-file pythonJob.scriptContent=${each.value.path}/${each.value.file} \
