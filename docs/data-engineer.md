@@ -38,6 +38,14 @@ graph LR
 
 ## Evaluation Expectations
 
+Candidates are evaluated on five technical competencies (specifically: 1. Implementation, 2. Design, 3. Code, 4. Testing, 5. Experience) and three soft skills (specifically: 1. Curious, 2. Observant, 3. Driven). Each technical competency is scored on a scale of 1 (lowest) to 10 (highest). The technical assessment result is the average of those scores. The soft skills are evaluated using the same scoring approach. The final overall evaluation is the average of the technical and soft skills results, as follows:
+
+Evaluation    | Excellent     | Good          | Satisfactory   | Incomplete
+--------------|---------------|---------------|----------------|-----------
+*Score Range* | *9 or higher* | *7 or higher* | *5 or higher*  | *below 5*
+
+Here below are more details on the technical competencies expectations:
+
 1. **Implementation**
 
   - Bronze, Silver, and Gold layers are implemented and wired end-to-end.
@@ -72,12 +80,6 @@ graph LR
   - Visual storytelling explains findings for both technical and business audiences.
   - Trade-offs, assumptions, and known limitations are explicitly called out.
   - Delivery quality reflects ownership, clarity, and maintainability.
-
-Each technical competency is scored on a scale of 1 (lowest) to 10 (highest). The technical assessment result is the average of those scores. The soft skills are evaluated using the same scoring approach. The final overall evaluation is the average of the technical and soft skills results, as follows:
-
-Evaluation:    | Excellent     | Good          | Satisfactory   | Incomplete
----------------|---------------|---------------|----------------|-----------
-*Score Range:* | *9 or higher* | *7 or higher* | *5 or higher*  | *below 5*
 
 ## Testing Expectations
 
