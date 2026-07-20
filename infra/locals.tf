@@ -73,20 +73,17 @@ locals {
   ]
   data_names_python = {
     for name in local.data_dirs_python : name => {
-      name           = name
-      runtime        = "python"
-      python_version = "3"
-      path           = abspath(format("%s/../data/%s", path.module, name))
-      file           = "job.py"
-      modules        = join(",", compact(split("\n", file(abspath(format("%s/../data/%s/requirements.txt", path.module, name))))))
+      name    = name
+      path    = abspath(format("%s/../data/%s", path.module, name))
+      file    = "job.py"
+      modules = join(",", compact(split("\n", file(abspath(format("%s/../data/%s/requirements.txt", path.module, name))))))
     }
   }
   data_names_java = {
     for name in local.data_dirs_java : name => {
-      name         = name
-      runtime      = "scala"
-      path         = abspath(format("%s/../data/%s", path.module, name))
-      file         = "Job.java"
+      name = name
+      path = abspath(format("%s/../data/%s", path.module, name))
+      file = "Job.java"
     }
   }
   job_names      = merge(local.data_names_python, local.data_names_java)

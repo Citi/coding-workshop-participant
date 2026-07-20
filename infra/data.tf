@@ -65,7 +65,6 @@ data "aws_service_principal" "cloudfront" {
 }
 
 data "aws_servicecatalogappregistry_application" "this" {
-  count  = data.aws_caller_identity.this.id != "000000000000" && try(var.aws_app_code, null) != null ? 1 : 0
-  id     = format("%s-%s", var.aws_project, var.aws_app_code)
-  region = data.aws_region.this.region
+  count = data.aws_caller_identity.this.id != "000000000000" && try(var.aws_app_code, null) != null ? 1 : 0
+  id    = format("%s-%s", var.aws_project, var.aws_app_code)
 }

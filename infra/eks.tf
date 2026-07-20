@@ -36,7 +36,6 @@ resource "aws_eks_node_group" "this" {
 
   update_config {
     max_unavailable = 1
-    update_strategy = "DEFAULT"
   }
 
   tags = local.app_tags
@@ -47,37 +46,39 @@ resource "null_resource" "helm_chart" {
 
   triggers = {
     source_code_hash = one(aws_eks_node_group.this.*.id)
+    aws_ds_ip        = var.aws_ds_ip
   }
 
   provisioner "local-exec" {
     command = <<-EOT
       if [ -z "${var.aws_ds_ip}" ] || [ "${var.aws_ds_ip}" = "null" ]; then echo "ERROR: aws_ds_ip is not set"; exit 1; fi && \
-      aws eks update-kubeconfig --region us-east-1 --name ${one(aws_eks_cluster.this.*.name)} && \
-      helm repo add jupyterhub https://hub.jupyter.org/helm-chart/ && \
-      helm repo update && \
+      aws eks update-kubeconfig --region ${data.aws_region.this.region} --name ${one(aws_eks_cluster.this.*.name)} && \
       helm upgrade --cleanup-on-fail \
-        --install jupyterhub jupyterhub/jupyterhub \
-        --set hub.config.LDAPAuthenticator.server_address="${var.aws_ds_ip}" \
-        --namespace default --values config.yaml
+        --install jupyterhub https://hub.jupyter.org/helm-chart/ \
+        --set hub.config.LDAPAuthenticator.server_address=${var.aws_ds_ip} \
+        --namespace default
     EOT
   }
 }
 
-# resource "null_resource" "kubectl_python_job" {
-#   count = data.aws_caller_identity.this.id != "000000000000" && var.aws_eks_enabled ? length(local.data_names_python) : 0
+resource "null_resource" "helm_python_job" {
+  for_each = data.aws_caller_identity.this.id != "000000000000" && var.aws_eks_enabled ? local.data_names_python : {}
 
-#   triggers = {
-#     source_code_hash = one(aws_eks_node_group.this.*.id)
-#   }
+  triggers = {
+    source_code_hash = one(aws_eks_node_group.this.*.id)
+    script_hash      = filemd5(format("%s/%s", each.value.path, each.value.file))
+  }
 
-#   provisioner "local-exec" {
-#     command = <<-EOT
-#       kubectl create configmap python-job-source \
-#         --from-file=job.py=../data/_examples/python-job/job.py \
-#         --dry-run=client -o yaml | kubectl apply -f - && \
-#       kubectl apply -f eks-python.yaml
-#     EOT
-#   }
+  provisioner "local-exec" {
+    command = <<-EOT
+      helm upgrade --cleanup-on-fail \
+        --install ${replace(each.key, "_", "-")}-python-job ../helm/ \
+        --set pythonJob.enabled=true \
+        --set pythonJob.name=${replace(each.key, "_", "-")} \
+        --set-file pythonJob.scriptContent=${each.value.path}/${each.value.file} \
+        --namespace default
+    EOT
+  }
 
-#   depends_on = [null_resource.helm_chart]
-# }
+  depends_on = [null_resource.helm_chart]
+}

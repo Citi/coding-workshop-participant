@@ -1,0 +1,51 @@
+{{- if .Values.pythonJob.enabled }}
+{{- if .Values.pythonJob.scriptContent }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "name" . }}-{{ .Values.pythonJob.name }}-source
+  labels:
+    {{- include "labels" . | nindent 4 }}
+data:
+  job.py: |
+    {{ .Values.pythonJob.scriptContent | nindent 4 }}
+---
+{{- end }}
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: {{ include "name" . }}-{{ .Values.pythonJob.name }}
+  labels:
+    {{- include "labels" . | nindent 4 }}
+spec:
+  template:
+    metadata:
+      labels:
+        {{- include "labels" . | nindent 8 }}
+    spec:
+      containers:
+        - name: {{ include "name" . }}-{{ .Values.pythonJob.name }}
+          image: {{ .Values.pythonJob.image.repository }}:{{ .Values.pythonJob.image.tag }}
+          imagePullPolicy: {{ .Values.pythonJob.image.pullPolicy }}
+          command: ["python", "/app/job.py"]
+          {{- if .Values.pythonJob.scriptContent }}
+          volumeMounts:
+            - name: script
+              mountPath: /app
+          {{- end }}
+          resources:
+            limits:
+              cpu: {{ .Values.pythonJob.resources.limits.cpu }}
+              memory: {{ .Values.pythonJob.resources.limits.memory }}
+            requests:
+              cpu: {{ .Values.pythonJob.resources.requests.cpu }}
+              memory: {{ .Values.pythonJob.resources.requests.memory }}
+      {{- if .Values.pythonJob.scriptContent }}
+      volumes:
+        - name: script
+          configMap:
+            name: {{ include "name" . }}-{{ .Values.pythonJob.name }}-source
+      {{- end }}
+      restartPolicy: Never
+  backoffLimit: 4
+{{- end }}

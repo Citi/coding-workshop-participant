@@ -73,9 +73,11 @@ graph LR
   - Trade-offs, assumptions, and known limitations are explicitly called out.
   - Delivery quality reflects ownership, clarity, and maintainability.
 
-Each technical competency is scored on a scale of 1 (lowest) to 10 (highest). The technical assessment result is the average of those scores. The soft skills are evaluated using the same scoring approach. The final overall evaluation is the average of the technical and soft skills results.
+Each technical competency is scored on a scale of 1 (lowest) to 10 (highest). The technical assessment result is the average of those scores. The soft skills are evaluated using the same scoring approach. The final overall evaluation is the average of the technical and soft skills results, as follows:
 
-A final score of 9 or higher is classified as **Excellent**, 7 or higher as **Good**, 5 or higher as **Satisfactory**, and below 5 as **Incomplete**.
+**Excellent** | **Good**    | **Satisfactory** | **Incomplete**
+--------------|-------------|------------------|---------------
+9 or higher   | 7 or higher | 5 or higher      | below 5
 
 ## Testing Expectations
 
@@ -118,35 +120,22 @@ To test your job changes locally:
 pip install -r ../data/{{job-name}}/requirements.txt
 
 # Run the job locally
-python ../data/{{job-name}}/job.py
-```
-
-Replace `{{job-name}}` with your job directory (for example, `citi-daily-etl`).
-
-To tail job logs in real-time:
-
-```sh
 python ../data/{{job-name}}/job.py 2>&1 | tee /tmp/{{job-name}}.log
 tail -f /tmp/{{job-name}}.log
 ```
+
+Replace `{{job-name}}` with your job directory (for example, `citi-daily-etl`).
 
 #### Cloud Deployment
 
 To test your job changes in the cloud:
 
 ```sh
-# Start a Glue job run
-aws glue start-job-run --job-name {{job-name}}
+# Deploy changes
+../bin/deploy-backend.sh
 
-# Check status (rerun until state is SUCCEEDED)
-aws glue get-job-runs --job-name {{job-name}} --max-results 1
-```
-
-To tail job logs in real-time:
-
-```sh
-# Glue output stream (adjust log group if your environment differs)
-aws logs tail /aws-glue/jobs/output --follow --format short --color on
+# Stream logs from the active Kubernetes Job pod
+kubectl logs -f job/python-job
 ```
 
 ## Implementation Expectations
@@ -174,7 +163,7 @@ Replace `{{coding-language}}` with either `python` or `java`, and replace `{{job
 When you create a new data job, make sure to restart the development environment or execute the build/deploy scripts to make them active:
 
 ```sh
-../bin/start-dev.sh
+../bin/deploy-backend.sh
 ```
 
 > [!NOTE]
@@ -260,7 +249,7 @@ Robust pipelines handle unexpected data and infrastructure issues gracefully.
 | **Database Connection Timeout** | Pipeline fails to read/write. | Implement retry logic with exponential backoff; alert on multiple failures. |
 | **Schema Drift / Mismatch** | Downstream jobs fail due to changed columns. | Use strict schema validation; catch exception, quarantine the file, and notify support. |
 | **Malformed/Truncated Row** | Data corruption. | Drop/quarantine the bad row; write the remaining valid rows; log warning with row details. |
-| **S3 Access Denied** | Ingestion or write fails. | Verify IAM Role permissions (Glue or S3 policies). |
+| **S3 Access Denied** | Ingestion or write fails. | Verify IAM Role permissions (EKS or S3 policies). |
 | **Zero Rows Written** | Downstream jobs receive empty datasets. | Check if source dataset was empty; raise warning or halt pipeline depending on SLA. |
 
 ## Navigation Links
