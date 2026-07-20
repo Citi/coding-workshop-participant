@@ -75,9 +75,9 @@ graph LR
 
 Each technical competency is scored on a scale of 1 (lowest) to 10 (highest). The technical assessment result is the average of those scores. The soft skills are evaluated using the same scoring approach. The final overall evaluation is the average of the technical and soft skills results, as follows:
 
-**Excellent** | **Good**    | **Satisfactory** | **Incomplete**
---------------|-------------|------------------|---------------
-9 or higher   | 7 or higher | 5 or higher      | below 5
+Evaluation:    | Excellent     | Good          | Satisfactory   | Incomplete
+---------------|---------------|---------------|----------------|-----------
+*Score Range:* | *9 or higher* | *7 or higher* | *5 or higher*  | *below 5*
 
 ## Testing Expectations
 
