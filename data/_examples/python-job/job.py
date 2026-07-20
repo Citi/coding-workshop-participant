@@ -1,44 +1,46 @@
-import sys
-from awsglue.utils import getResolvedOptions
 from pyspark.sql import SparkSession
-from awsglue.context import GlueContext
-from awsglue.job import Job
 
-args = getResolvedOptions(sys.argv, ['JOB_NAME', 'BRONZE_LAYER', 'SILVER_LAYER', 'GOLD_LAYER'])
-
-# Configure Spark for Iceberg BEFORE creating GlueContext
-spark = SparkSession.builder \
-    .config("spark.sql.extensions", "org.apache.iceberg.spark.extensions.IcebergSparkSessionExtensions") \
-    .config("spark.sql.catalog.glue_catalog", "org.apache.iceberg.spark.SparkCatalog") \
-    .config("spark.sql.catalog.glue_catalog.catalog-impl", "org.apache.iceberg.aws.glue.GlueCatalog") \
-    .config("spark.sql.catalog.glue_catalog.io-impl", "org.apache.iceberg.aws.s3.S3FileIO") \
-    .config("spark.sql.catalog.glue_catalog.silver", args['SILVER_LAYER']) \
-    .config("spark.sql.catalog.glue_catalog.gold", args['GOLD_LAYER']) \
-    .getOrCreate()
-
-# ETL - Extract Transform Load
-glueContext = GlueContext(spark.sparkContext)
-spark = glueContext.spark_session
-job = Job(glueContext)
-job.init(args['JOB_NAME'], args)
-
-# Extract
-dynamic_frame = glueContext.create_dynamic_frame.from_options(
-    connection_type="s3",
-    connection_options={"paths": [args['BRONZE_LAYER']]},
-    format="csv",
-    format_options={"withHeader": True}
-)
-
-# Transform
-# TODO: implement this
-
-# Load
-if not dynamic_frame.toDF().isEmpty():
-    glueContext.write_dynamic_frame.from_options(
-        connection_type="s3",
-        connection_options={"path": args['SILVER_LAYER']},
-        frame=dynamic_frame
+def create_spark_session():
+    """Create and configure the Spark session."""
+    return (
+        SparkSession.builder.appName("python-pyspark-pandas-iceberg-job")
+        .config("spark.sql.extensions", "org.apache.iceberg.spark.extensions.IcebergSparkSessionExtensions")
+        .config("spark.sql.catalog.iceberg", "org.apache.iceberg.spark.SparkCatalog")
+        .config("spark.sql.catalog.iceberg.type", "hadoop")
+        .getOrCreate()
     )
 
-job.commit()
+def ingest_into_bronze(spark):
+    """Ingest raw data into the bronze layer."""
+    # TODO: Implement this logic
+    return True
+
+def transform_to_silver(spark):
+    """Transform data from the bronze layer to the silver layer."""
+    # TODO: Implement this logic
+    return True
+
+def aggregate_to_gold(spark):
+    """Aggregate data from the silver layer to the gold layer."""
+    # TODO: Implement this logic
+    return True
+
+def main():
+    """Run the ETL job steps in sequence."""
+    # Create the Spark session
+    spark = create_spark_session()
+
+    # Ingest raw data into the bronze layer
+    ingest_into_bronze(spark)
+
+    # Transform the data from bronze to silver layer
+    transform_to_silver(spark)
+
+    # Aggregate the data from silver to gold layer
+    aggregate_to_gold(spark)
+
+    # Stop the Spark session
+    spark.stop()
+
+if __name__ == "__main__":
+    main()
