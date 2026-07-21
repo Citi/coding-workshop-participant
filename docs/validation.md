@@ -12,7 +12,11 @@ The VDI is a virtual desktop computer built and packaged with software to use du
 
 Details such as your credentials for online accounts (e.g. GitHub, Google, etc.) will be stored for the length of the workshop and completely erased shortly after the conclusion of the workshop.
 
-If you are using the [WorkSpaces Client](https://clients.amazonworkspaces.com/), you will be able to share clipboard between your personal computer and your VDI. Meaning, if you can copy commands in this doc from your web browser in your personal computer and paste them in your virtual desktop with `Ctrl+V` or `Ctrl+Shift+V` if you are pasting in the terminal. It also works the other way around.
+You have two VDI access options:
+  - Connect to VDI through [WorkSpaces WebUI](https://webclient.amazonworkspaces.com/), or
+  - Install VDI client through [WorkSpaces Client](https://clients.amazonworkspaces.com/) on your personal computer / laptop.
+
+If you are using the WorkSpaces Client, you will be able to share clipboard between your personal computer and your VDI. Meaning, if you can copy commands in this doc from your web browser in your personal computer and paste them in your virtual desktop with `Ctrl+V` or `Ctrl+Shift+V` if you are pasting in the terminal. It also works the other way around.
 
 ### Troubleshooting
 
