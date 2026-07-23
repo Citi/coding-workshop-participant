@@ -105,6 +105,13 @@ const server = http.createServer((req, res) => {
     }
   };
 
+  // Forward the bearer token. Without this every authenticated request reaches
+  // the Lambda with no credentials: login succeeds, and each call after it
+  // fails with 401. Not a CORS header, so it is safe to pass straight through.
+  if (headers.authorization) {
+    options.headers.authorization = headers.authorization;
+  }
+
   const proxyReq = protocol.request(options, (proxyRes) => {
     // Filter out CORS headers from Lambda response since we set our own
     const headers = { ...proxyRes.headers };

@@ -6,6 +6,29 @@ resource "aws_cloudfront_origin_access_control" "this" {
   signing_protocol                  = "sigv4"
 }
 
+# Rewrites client-side route paths (e.g. /login, /dashboard) to the SPA entry
+# point so a deep link or a refresh serves index.html instead of a missing-key
+# 403 from S3. Scoped to the default (S3) behavior via function_association
+# below, so the /api/* behavior is untouched and real API 403/404s pass through.
+resource "aws_cloudfront_function" "spa_rewrite" {
+  count   = data.aws_caller_identity.this.id != "000000000000" ? 1 : 0
+  name    = format("%s-spa-rewrite", local.origin_id)
+  runtime = "cloudfront-js-2.0"
+  comment = "SPA rewrite: extensionless paths -> /index.html"
+  publish = true
+  code    = <<-EOT
+    function handler(event) {
+      var request = event.request;
+      var uri = request.uri;
+      // A path with no file extension is a client route, not a static asset.
+      if (uri !== "/" && !uri.includes(".")) {
+        request.uri = "/index.html";
+      }
+      return request;
+    }
+  EOT
+}
+
 resource "aws_cloudfront_distribution" "this" {
   count               = data.aws_caller_identity.this.id != "000000000000" ? 1 : 0
   enabled             = true
@@ -96,6 +119,13 @@ resource "aws_cloudfront_distribution" "this" {
 
     target_origin_id       = local.origin_id
     viewer_protocol_policy = "redirect-to-https"
+
+    # Only the S3 (frontend) behavior gets the SPA rewrite; /api/* behaviors do
+    # not, so API responses are never rewritten to index.html.
+    function_association {
+      event_type   = "viewer-request"
+      function_arn = aws_cloudfront_function.spa_rewrite[0].arn
+    }
 
     forwarded_values {
       query_string = false

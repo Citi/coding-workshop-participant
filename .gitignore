@@ -3,6 +3,23 @@ __pycache__/
 *.py[cod]
 *$py.class
 
+# Backend: per-service copies of backend/_shared, produced by
+# backend/sync-shared.sh. The canonical source is backend/_shared itself.
+backend/*/_shared/
+!backend/_shared/
+
+# Backend: pip dependencies vendored into each service directory by
+# bin/start-dev.sh and the Terraform packaging step. The canonical source is
+# requirements.txt; these installed copies must not be checked in.
+backend/*/.pip_installed
+backend/*/bcrypt/
+backend/*/bcrypt-*.dist-info/
+backend/*/jwt/
+backend/*/PyJWT-*.dist-info/
+backend/*/psycopg2/
+backend/*/psycopg2_binary-*.dist-info/
+backend/*/psycopg2_binary.libs/
+
 # C extensions
 *.so
 
