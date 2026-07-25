@@ -26,14 +26,22 @@ singleuser:
     limit: 2Gi
     guarantee: 1Gi
   storage:
-    type: dynamic
-    capacity: 10Gi
-    dynamic:
-      storageClass: gp3
-      pvcNameTemplate: 'claim-{username}'
-      volumeNameTemplate: 'volume-{username}'
-    extraLabels:
-      hub.jupyter.org/network-access-singleuser: "true"
+    type: "none"
+    extraVolumes:
+      - name: scratch-volume
+        emptyDir: {}
+    extraVolumeMounts:
+      - name: scratch-volume
+        mountPath: /var/run/jupyter
+  # storage:
+  #   type: dynamic
+  #   capacity: 10Gi
+  #   dynamic:
+  #     storageClass: gp3
+  #     pvcNameTemplate: 'claim-{username}'
+  #     volumeNameTemplate: 'volume-{username}'
+  #   extraLabels:
+  #     hub.jupyter.org/network-access-singleuser: "true"
 
 scheduling:
   userScheduler:
