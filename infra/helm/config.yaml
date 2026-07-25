@@ -4,8 +4,6 @@ proxy:
     type: ClusterIP
 
 hub:
-  extraPipPackages:
-    - jupyterhub-ldapauthenticator
   config:
     JupyterHub:
       authenticator_class: ldapauthenticator.LDAPAuthenticator

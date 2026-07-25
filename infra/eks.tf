@@ -59,8 +59,7 @@ resource "null_resource" "helm_chart" {
       helm upgrade --cleanup-on-fail \
         --install jupyterhub jupyterhub/jupyterhub \
         --set hub.config.LDAPAuthenticator.server_address=${var.aws_ds_ip} \
-        --namespace default --values ./helm/config.yaml && \
-      kubectl --namespace=default port-forward service/proxy-public 8080:http &
+        --namespace default --values ./helm/config.yaml
     EOT
   }
 }
