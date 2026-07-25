@@ -14,10 +14,11 @@ hub:
         get_info: "ALL"
       use_ssl: false
       use_tls: false
-      bind_dn_template: "CN={username},OU=Users,OU=CORP,DC=corp,DC=codingworkshop,DC=net"
       user_attribute: "sAMAccountName"
       allowed_groups:
-        - "OU=Groups,OU=CORP,DC=corp,DC=codingworkshop,DC=net"
+        - "CN=Users,OU=Groups,OU=CORP,DC=corp,DC=codingworkshop,DC=net"
+      bind_dn_template:
+        - "CN={username},OU=Users,OU=CORP,DC=corp,DC=codingworkshop,DC=net"
   db:
     type: sqlite-memory
 
