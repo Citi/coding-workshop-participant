@@ -41,37 +41,20 @@ resource "aws_eks_node_group" "this" {
   tags = local.app_tags
 }
 
-resource "aws_eks_pod_identity_association" "this" {
-  count           = data.aws_caller_identity.this.id != "000000000000" && var.aws_eks_enabled ? 1 : 0
-  cluster_name    = one(aws_eks_cluster.this.*.name)
-  namespace       = "kube-system"
-  service_account = "ebs-csi-controller-sa"
-  role_arn        = local.eks_role_arn
-}
-
-resource "aws_eks_addon" "this" {
-  count        = data.aws_caller_identity.this.id != "000000000000" && var.aws_eks_enabled ? 1 : 0
-  cluster_name = one(aws_eks_cluster.this.*.name)
-  addon_name   = "aws-ebs-csi-driver"
-
-  resolve_conflicts_on_update = "OVERWRITE"
-
-  depends_on = [aws_eks_pod_identity_association.this]
-}
-
 resource "null_resource" "helm_chart" {
   count = data.aws_caller_identity.this.id != "000000000000" && var.aws_eks_enabled ? 1 : 0
 
   triggers = {
     cluster_id  = one(aws_eks_node_group.this.*.id)
-    aws_ds_ip   = var.aws_ds_ip
     source_hash = local.helm_hash
+    aws_ds_ip   = var.aws_ds_ip
   }
 
   provisioner "local-exec" {
     command = <<-EOT
       if [ -z "${var.aws_ds_ip}" ] || [ "${var.aws_ds_ip}" = "null" ]; then echo "ERROR: aws_ds_ip is not set"; exit 1; fi && \
       aws eks update-kubeconfig --region ${data.aws_region.this.region} --name ${one(aws_eks_cluster.this.*.name)} && \
+      aws eks update-cluster-config --region ${data.aws_region.this.region} --name ${one(aws_eks_cluster.this.*.name)} --resources-vpc-config publicAccessCidrs="$(curl -s https://amazonaws.com)/32" && \
       helm repo add jupyterhub https://hub.jupyter.org/helm-chart/ && helm repo update && \
       helm upgrade --cleanup-on-fail \
         --install jupyterhub jupyterhub/jupyterhub \
@@ -79,8 +62,6 @@ resource "null_resource" "helm_chart" {
         --namespace default --values ./helm/config.yaml
     EOT
   }
-
-  depends_on = [aws_eks_addon.this]
 }
 
 resource "null_resource" "helm_python_job" {
