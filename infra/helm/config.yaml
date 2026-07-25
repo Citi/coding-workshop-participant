@@ -4,6 +4,8 @@ proxy:
     type: ClusterIP
 
 hub:
+  extraPipPackages:
+    - jupyterhub-ldapauthenticator
   config:
     JupyterHub:
       authenticator_class: ldapauthenticator.LDAPAuthenticator
@@ -14,6 +16,8 @@ hub:
       user_attribute: "sAMAccountName"
       allowed_groups:
         - "OU=Groups,OU=CORP,DC=corp,DC=codingworkshop,DC=net"
+  db:
+    type: sqlite-memory
 
 singleuser:
   image:
