@@ -162,9 +162,16 @@ cp -R ../data/_examples/{{coding-language}}-job ../data/{{job-name}}
 
 Replace `{{coding-language}}` with either `python` or `java`, and replace `{{job-name}}` with your new job directory name.
 
-When you create a new data job, make sure to restart the development environment or execute the build/deploy scripts to make them active:
+To enable the Amazon EKS container environment, run the following commands:
 
 ```sh
+echo "export TF_VAR_aws_eks_enabled=true" >> ~/.bashrc
+```
+
+Going forward, every deploy backend execution will ensure that Amazon EKS with data engineering jobs is provisioned and available to be used in the cloud:
+
+```sh
+source ~/.bashrc
 ../bin/deploy-backend.sh
 ```
 
