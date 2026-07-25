@@ -26,10 +26,19 @@ singleuser:
     limit: 2Gi
     guarantee: 1Gi
   storage:
-    type: none
+    type: dynamic
+    capacity: 10Gi
+    dynamic:
+      storageClass: gp3
+      pvcNameTemplate: 'claim-{username}'
+      volumeNameTemplate: 'volume-{username}'
+    extraLabels:
+      hub.jupyter.org/network-access-singleuser: "true"
 
 scheduling:
   userScheduler:
+    enabled: true
+  podPriority:
     enabled: true
   userPlaceholder:
     enabled: true

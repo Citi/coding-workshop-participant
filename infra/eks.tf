@@ -41,6 +41,24 @@ resource "aws_eks_node_group" "this" {
   tags = local.app_tags
 }
 
+resource "aws_eks_pod_identity_association" "this" {
+  count           = data.aws_caller_identity.this.id != "000000000000" && var.aws_eks_enabled ? 1 : 0
+  cluster_name    = one(aws_eks_cluster.this.*.name)
+  namespace       = "kube-system"
+  service_account = "ebs-csi-controller-sa"
+  role_arn        = local.eks_role_arn
+}
+
+resource "aws_eks_addon" "this" {
+  count        = data.aws_caller_identity.this.id != "000000000000" && var.aws_eks_enabled ? 1 : 0
+  cluster_name = one(aws_eks_cluster.this.*.name)
+  addon_name   = "aws-ebs-csi-driver"
+
+  resolve_conflicts_on_update = "OVERWRITE"
+
+  depends_on = [aws_eks_pod_identity_association.this]
+}
+
 resource "null_resource" "helm_chart" {
   count = data.aws_caller_identity.this.id != "000000000000" && var.aws_eks_enabled ? 1 : 0
 
@@ -60,6 +78,8 @@ resource "null_resource" "helm_chart" {
         --namespace default
     EOT
   }
+
+  depends_on = [aws_eks_addon.this]
 }
 
 resource "null_resource" "helm_python_job" {
