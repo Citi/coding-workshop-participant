@@ -69,9 +69,8 @@ resource "null_resource" "helm_python_job" {
   for_each = data.aws_caller_identity.this.id != "000000000000" && var.aws_eks_enabled ? local.data_names_python : {}
 
   triggers = {
-    cluster_id   = one(aws_eks_node_group.this.*.id)
-    source_hash  = local.helm_hash
-    trigger_hash = filesha256(format("%s/%s", each.value.path, each.value.file))
+    cluster_id  = one(aws_eks_node_group.this.*.id)
+    source_hash = timestamp()
   }
 
   provisioner "local-exec" {
