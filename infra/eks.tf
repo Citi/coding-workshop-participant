@@ -54,7 +54,7 @@ resource "null_resource" "helm_chart" {
     command = <<-EOT
       if [ -z "${var.aws_ds_ip}" ] || [ "${var.aws_ds_ip}" = "null" ]; then echo "ERROR: aws_ds_ip is not set"; exit 1; fi && \
       aws eks update-kubeconfig --region ${data.aws_region.this.region} --name ${one(aws_eks_cluster.this.*.name)} && \
-      aws eks update-cluster-config --region ${data.aws_region.this.region} --name ${one(aws_eks_cluster.this.*.name)} --resources-vpc-config publicAccessCidrs="$(curl -s https://amazonaws.com)/32" && \
+      aws eks update-cluster-config --region ${data.aws_region.this.region} --name ${one(aws_eks_cluster.this.*.name)} --resources-vpc-config publicAccessCidrs="$(curl -s https://checkip.amazonaws.com)/32" && \
       helm repo add jupyterhub https://hub.jupyter.org/helm-chart/ && helm repo update && \
       helm upgrade --cleanup-on-fail \
         --install jupyterhub jupyterhub/jupyterhub \
