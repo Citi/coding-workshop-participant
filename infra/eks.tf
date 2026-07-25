@@ -81,6 +81,7 @@ resource "null_resource" "helm_python_job" {
         --set pythonJob.enabled=true \
         --set pythonJob.name=${replace(each.key, "_", "-")} \
         --set-file pythonJob.scriptContent=${each.value.path}/${each.value.file} \
+        --set-file pythonJob.requirementsContent=${each.value.path}/${each.value.reqs} \
         --namespace default
     EOT
   }

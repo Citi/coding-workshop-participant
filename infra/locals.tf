@@ -73,10 +73,10 @@ locals {
   ]
   data_names_python = {
     for name in local.data_dirs_python : name => {
-      name    = name
-      path    = abspath(format("%s/../data/%s", path.module, name))
-      file    = "job.py"
-      modules = join(",", compact(split("\n", file(abspath(format("%s/../data/%s/requirements.txt", path.module, name))))))
+      name = name
+      path = abspath(format("%s/../data/%s", path.module, name))
+      file = "job.py"
+      reqs = "requirements.txt"
     }
   }
   data_names_java = {
@@ -84,6 +84,7 @@ locals {
       name = name
       path = abspath(format("%s/../data/%s", path.module, name))
       file = "Job.java"
+      reqs = "pom.xml"
     }
   }
   job_names      = merge(local.data_names_python, local.data_names_java)

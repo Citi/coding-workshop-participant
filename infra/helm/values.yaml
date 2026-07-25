@@ -2,6 +2,10 @@ pythonJob:
   enabled: false
   name: "python-job"
   scriptContent: ""
+  requirementsContent: ""
+  backoffLimit: 4
+  ttlSecondsAfterFinished: 100
+  restartPolicy: Never
   image:
     repository: jupyter/datascience-notebook
     pullPolicy: IfNotPresent
