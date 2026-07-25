@@ -24,7 +24,7 @@ resource "aws_eks_node_group" "this" {
   node_group_name = format("%s-%s", var.aws_project, local.app_id)
   node_role_arn   = local.eks_role_arn
   subnet_ids      = local.public_subnet_ids
-  capacity_type   = "SPOT" # Use "ON_DEMAND" or "SPOT"
+  capacity_type   = var.aws_eks_type
   instance_types  = ["t3.medium", "t3a.medium", "t2.medium"]
   disk_size       = 50
 
@@ -53,8 +53,9 @@ resource "null_resource" "helm_chart" {
     command = <<-EOT
       if [ -z "${var.aws_ds_ip}" ] || [ "${var.aws_ds_ip}" = "null" ]; then echo "ERROR: aws_ds_ip is not set"; exit 1; fi && \
       aws eks update-kubeconfig --region ${data.aws_region.this.region} --name ${one(aws_eks_cluster.this.*.name)} && \
+      helm repo add jupyterhub https://hub.jupyter.org/helm-chart/ && helm repo update && \
       helm upgrade --cleanup-on-fail \
-        --install jupyterhub https://hub.jupyter.org/helm-chart/ \
+        --install jupyterhub jupyterhub/jupyterhub \
         --set hub.config.LDAPAuthenticator.server_address=${var.aws_ds_ip} \
         --namespace default
     EOT

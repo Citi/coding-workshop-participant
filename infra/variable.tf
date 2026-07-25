@@ -32,6 +32,11 @@ variable "aws_postgres_enabled" {
   description = "Enable or disable PostgreSQL (AWS Aurora). Default: true (set to 'false' to disable it)."
   type        = bool
   default     = true
+
+  validation {
+    condition     = contains([true, false], var.aws_postgres_enabled)
+    error_message = "The aws_postgres_enabled variable must be either 'true' or 'false'."
+  }
 }
 
 variable "aws_postgres_host" {
@@ -44,6 +49,11 @@ variable "aws_mongo_enabled" {
   description = "Enable or disable MongoDB (AWS DocumentDB). Default: false (set to 'true' to enable it)."
   type        = bool
   default     = false
+
+  validation {
+    condition     = contains([true, false], var.aws_mongo_enabled)
+    error_message = "The aws_mongo_enabled variable must be either 'true' or 'false'."
+  }
 }
 
 variable "aws_mongo_host" {
@@ -56,4 +66,20 @@ variable "aws_eks_enabled" {
   description = "Enable or disable Jupyter Notebook (AWS EKS). Default: false (set to 'true' to enable it)."
   type        = bool
   default     = false
+
+  validation {
+    condition     = contains([true, false], var.aws_eks_enabled)
+    error_message = "The aws_eks_enabled variable must be either 'true' or 'false'."
+  }
+}
+
+variable "aws_eks_type" {
+  description = "EKS nodes type. Default: SPOT."
+  type        = string
+  default     = "SPOT"
+
+  validation {
+    condition     = contains(["ON_DEMAND", "SPOT"], var.aws_eks_type)
+    error_message = "The aws_eks_type variable must be either 'ON_DEMAND' or 'SPOT'."
+  }
 }

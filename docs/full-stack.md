@@ -241,13 +241,13 @@ PostgreSQL is the recommended database option, but we also added support for Mon
 
 ```sh
 echo "export TF_VAR_aws_mongo_enabled=true" >> ~/.bashrc
-source ~/.bashrc
 ```
 
 Going forward, every deploy backend execution will ensure that AWS DocumentDB is provisioned and available to be used in the cloud:
 
 ```sh
-./bin/deploy-backend.sh
+source ~/.bashrc
+../bin/deploy-backend.sh
 ```
 
 **Expected Capabilities**
