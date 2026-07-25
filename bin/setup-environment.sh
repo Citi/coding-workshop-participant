@@ -1327,7 +1327,7 @@ install_localstack() {
         add_failure "Failed to start LocalStack"
     fi
 
-    print_info "LocalStack accessible at: http://localhost:4566"
+    print_info "LocalStack accessible at: http://localhost.localstack.cloud:4566"
 }
 
 install_kubectl() {
@@ -1556,7 +1556,7 @@ main() {
             echo -e "  ${RED}✗${NC} Docker: installed but not running (run: sudo systemctl start docker)"
         fi
     fi
-    [ -x "$ACTUAL_HOME/.local/bin/localstack" ] && echo -e "  ${GREEN}✓${NC} LocalStack: http://localhost:4566"
+    [ -x "$ACTUAL_HOME/.local/bin/localstack" ] && echo -e "  ${GREEN}✓${NC} LocalStack: http://localhost.localstack.cloud:4566"
     command_exists jupyter && echo -e "  ${GREEN}✓${NC} Jupyter: localhost:$JUPYTER_PORT"
     [ -d "$ACTUAL_HOME/.local/spark" ] && echo -e "  ${GREEN}✓${NC} Spark: $ACTUAL_HOME/.local/spark"
     [ -f "$ACTUAL_HOME/.local/bin/trino" ] && echo -e "  ${GREEN}✓${NC} Trino: $ACTUAL_HOME/.local/bin/trino"

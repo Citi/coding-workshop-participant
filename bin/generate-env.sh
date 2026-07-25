@@ -50,7 +50,7 @@ if [ -f "$PARTICIPANT_CONFIG" ]; then
 fi
 
 # Detect environment (local with LocalStack or AWS)
-if curl -s http://localhost:4566/_localstack/health > /dev/null 2>&1; then
+if curl -s http://localhost.localstack.cloud:4566/_localstack/health > /dev/null 2>&1; then
     # LocalStack is running — use it
     ENVIRONMENT="local"
     export AWS_ENDPOINT_URL="http://localhost.localstack.cloud:4566"
