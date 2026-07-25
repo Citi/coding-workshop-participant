@@ -1557,7 +1557,7 @@ main() {
         fi
     fi
     [ -x "$ACTUAL_HOME/.local/bin/localstack" ] && echo -e "  ${GREEN}✓${NC} LocalStack: http://localhost.localstack.cloud:4566"
-    command_exists jupyter && echo -e "  ${GREEN}✓${NC} Jupyter: localhost:$JUPYTER_PORT"
+    command_exists jupyter && echo -e "  ${GREEN}✓${NC} http://localhost:$JUPYTER_PORT"
     [ -d "$ACTUAL_HOME/.local/spark" ] && echo -e "  ${GREEN}✓${NC} Spark: $ACTUAL_HOME/.local/spark"
     [ -f "$ACTUAL_HOME/.local/bin/trino" ] && echo -e "  ${GREEN}✓${NC} Trino: $ACTUAL_HOME/.local/bin/trino"
     echo ""

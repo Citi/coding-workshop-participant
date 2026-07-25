@@ -87,7 +87,7 @@ locals {
     }
   }
   job_names      = merge(local.data_names_python, local.data_names_java)
-  helm_hash      = sha256(join("", [for f in fileset("./helm/", "{*.yaml,*/*.yaml}") : filesha256("${path.module}/helm/${f}")]))
+  helm_hash      = sha256(join("", [for f in fileset("helm", "**/*.yaml") : filesha256("${path.module}/helm/${f}")]))
   function_names = merge(local.backend_names_java, local.backend_names_nodejs, local.backend_names_python)
   function_origins = [
     for name, func in local.function_names : {
