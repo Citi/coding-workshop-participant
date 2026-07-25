@@ -29,7 +29,7 @@ spec:
         - name: {{ include "name" . }}-{{ .Values.pythonJob.name }}
           image: {{ .Values.pythonJob.image.repository }}:{{ .Values.pythonJob.image.tag }}
           imagePullPolicy: {{ .Values.pythonJob.image.pullPolicy }}
-          {{- if .Values.pythonJob.requirements }}
+          {{- if .Values.pythonJob.requirementsContent }}
           command: ["sh", "-c"]
           args:
             - |
