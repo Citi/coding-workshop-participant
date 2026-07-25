@@ -23,7 +23,7 @@ hub:
 
 singleuser:
   image:
-    name: jupyter/datascience-notebook
+    name: jupyter/all-spark-notebook
     tag: latest
   cpu:
     limit: 2

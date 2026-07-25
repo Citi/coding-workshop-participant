@@ -29,7 +29,6 @@ spec:
         - name: {{ include "name" . }}-{{ .Values.pythonJob.name }}
           image: {{ .Values.pythonJob.image.repository }}:{{ .Values.pythonJob.image.tag }}
           imagePullPolicy: {{ .Values.pythonJob.image.pullPolicy }}
-          {{- if .Values.pythonJob.requirementsContent }}
           command: ["sh", "-c"]
           args:
             - |
@@ -38,9 +37,6 @@ spec:
                 pip install --no-cache-dir -r /app/requirements.txt
               fi
               python /app/job.py
-          {{- else }}
-          command: ["python", "/app/job.py"]
-          {{- end }}
           {{- if .Values.pythonJob.scriptContent }}
           volumeMounts:
             - name: script
