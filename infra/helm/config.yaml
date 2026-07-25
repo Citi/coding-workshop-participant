@@ -12,7 +12,7 @@ hub:
       server_port: 389
       server_args:
         get_info: "ALL"
-      tls_strategy: "no_tls"
+      tls_strategy: "insecure"
       user_attribute: "sAMAccountName"
       allowed_groups:
         - "CN=Users,OU=Groups,OU=CORP,DC=corp,DC=codingworkshop,DC=net"
