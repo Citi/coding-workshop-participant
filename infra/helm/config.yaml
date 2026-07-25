@@ -9,7 +9,9 @@ hub:
       authenticator_class: ldapauthenticator.LDAPAuthenticator
     LDAPAuthenticator:
       server_address: "corp.codingworkshop.net"
-      server_port: 389
+      server_port: 636
+      use_ssl: true
+      use_tls: false
       bind_dn_template: "CN={username},OU=Users,OU=CORP,DC=corp,DC=codingworkshop,DC=net"
       user_attribute: "sAMAccountName"
       allowed_groups:
