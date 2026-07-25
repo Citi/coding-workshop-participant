@@ -63,8 +63,9 @@ resource "null_resource" "helm_chart" {
   count = data.aws_caller_identity.this.id != "000000000000" && var.aws_eks_enabled ? 1 : 0
 
   triggers = {
-    source_code_hash = one(aws_eks_node_group.this.*.id)
-    aws_ds_ip        = var.aws_ds_ip
+    cluster_id  = one(aws_eks_node_group.this.*.id)
+    aws_ds_ip   = var.aws_ds_ip
+    source_hash = local.helm_hash
   }
 
   provisioner "local-exec" {
@@ -86,8 +87,8 @@ resource "null_resource" "helm_python_job" {
   for_each = data.aws_caller_identity.this.id != "000000000000" && var.aws_eks_enabled ? local.data_names_python : {}
 
   triggers = {
-    source_code_hash = one(aws_eks_node_group.this.*.id)
-    script_hash      = filemd5(format("%s/%s", each.value.path, each.value.file))
+    cluster_id  = one(aws_eks_node_group.this.*.id)
+    source_hash = filesha256(format("%s/%s", each.value.path, each.value.file))
   }
 
   provisioner "local-exec" {
