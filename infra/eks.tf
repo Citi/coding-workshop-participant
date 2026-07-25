@@ -13,6 +13,7 @@ resource "aws_eks_cluster" "this" {
     endpoint_public_access  = true
     endpoint_private_access = true
     subnet_ids              = local.public_subnet_ids
+    security_group_ids      = data.aws_security_groups.this.ids
   }
 
   tags = local.app_tags
@@ -54,12 +55,9 @@ resource "null_resource" "helm_chart" {
     command = <<-EOT
       if [ -z "${var.aws_ds_ip}" ] || [ "${var.aws_ds_ip}" = "null" ]; then echo "ERROR: aws_ds_ip is not set"; exit 1; fi && \
       aws eks update-kubeconfig --region ${data.aws_region.this.region} --name ${one(aws_eks_cluster.this.*.name)} || true && \
-      aws eks update-cluster-config --region ${data.aws_region.this.region} --name ${one(aws_eks_cluster.this.*.name)} --resources-vpc-config publicAccessCidrs="$(curl -s https://checkip.amazonaws.com)/32" || true && \
-      aws eks wait cluster-active --region ${data.aws_region.this.region} --name ${one(aws_eks_cluster.this.*.name)} || true && \
       helm repo add jupyterhub https://hub.jupyter.org/helm-chart/ && helm repo update && \
       helm upgrade --cleanup-on-fail \
         --install jupyterhub jupyterhub/jupyterhub \
-        --kube-apiserver="$(aws eks describe-cluster --region ${data.aws_region.this.region} --name ${one(aws_eks_cluster.this.*.name)} --query "cluster.endpoint" --output text)" \
         --set hub.config.LDAPAuthenticator.server_address=${var.aws_ds_ip} \
         --namespace default --values ./helm/config.yaml
     EOT
