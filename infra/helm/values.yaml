@@ -1,5 +1,5 @@
 proxy:
-  secretToken: "GENERATE_A_LONG_RANDOM_HEX_STRING"
+  secretToken: "f0e017c6a1948c8e4291fe187f67b3e25da010d8ca0c7722818dd0a8ebf31464"
   service:
     type: ClusterIP
 
