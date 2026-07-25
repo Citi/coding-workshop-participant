@@ -58,7 +58,7 @@ resource "null_resource" "helm_chart" {
       helm repo add jupyterhub https://hub.jupyter.org/helm-chart/ && helm repo update && \
       helm upgrade --cleanup-on-fail \
         --install jupyterhub jupyterhub/jupyterhub \
-        --set hub.config.LDAPAuthenticator.server_address="ldap://${var.aws_ds_ip}" \
+        --set hub.config.LDAPAuthenticator.server_address="ldaps://${var.aws_ds_ip}" \
         --namespace default --values ./helm/config.yaml
     EOT
   }

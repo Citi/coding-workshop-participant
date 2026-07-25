@@ -10,6 +10,8 @@ hub:
     LDAPAuthenticator:
       server_address: "corp.codingworkshop.net"
       server_port: 636
+      server_args:
+        get_info: "ALL"
       use_ssl: true
       use_tls: false
       bind_dn_template: "CN={username},OU=Users,OU=CORP,DC=corp,DC=codingworkshop,DC=net"
