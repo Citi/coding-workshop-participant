@@ -252,7 +252,7 @@ echo -e "  ✓ Docker is running"
 # Check if LocalStack is running
 LOCALSTACK_OK=false
 LOCALSTACK_IMAGE="${LOCALSTACK_IMAGE:-localstack/localstack-pro}"
-if curl -s http://localhost:4566/_localstack/health > /dev/null 2>&1; then
+if curl -s http://localhost.localstack.cloud:4566/_localstack/health > /dev/null 2>&1; then
     # Verify the correct image is running
     RUNNING_IMAGE=$(docker inspect localstack-main --format '{{.Config.Image}}' 2>/dev/null || echo "")
     if [ "$RUNNING_IMAGE" != "$LOCALSTACK_IMAGE" ]; then
@@ -280,7 +280,7 @@ if [ "$LOCALSTACK_OK" = false ]; then
 
     # Wait for LocalStack to be ready (up to 30 seconds)
     for i in {1..30}; do
-        if curl -s http://localhost:4566/_localstack/health > /dev/null 2>&1; then
+        if curl -s http://localhost.localstack.cloud:4566/_localstack/health > /dev/null 2>&1; then
             LOCALSTACK_OK=true
             echo -e "  ✓ LocalStack started"
             break
@@ -296,7 +296,7 @@ if [ "$LOCALSTACK_OK" = false ]; then
 fi
 
 # Verify LocalStack services
-HEALTH=$(curl -s http://localhost:4566/_localstack/health 2>/dev/null || echo "{}")
+HEALTH=$(curl -s http://localhost.localstack.cloud:4566/_localstack/health 2>/dev/null || echo "{}")
 LAMBDA_STATUS=$(echo "$HEALTH" | grep -o '"lambda":"[^"]*"' | cut -d'"' -f4 || echo "unknown")
 S3_STATUS=$(echo "$HEALTH" | grep -o '"s3":"[^"]*"' | cut -d'"' -f4 || echo "unknown")
 
@@ -425,7 +425,7 @@ if [ "$BACKEND_OK" = false ]; then
 
         # Wait for LocalStack to be ready
         for i in {1..30}; do
-            if curl -s http://localhost:4566/_localstack/health > /dev/null 2>&1; then
+            if curl -s http://localhost.localstack.cloud:4566/_localstack/health > /dev/null 2>&1; then
                 echo -e "  ✓ LocalStack restarted"
                 break
             fi
@@ -525,11 +525,10 @@ echo -e "  ✓ All Components Verified!"
 echo "============================================================"
 echo ""
 echo "Services Status:"
-echo "  • MongoDB:    Running on 0.0.0.0:27017"
-echo "  • PostgreSQL: Running on localhost:5432"
-echo "  • LocalStack: Running on localhost:4566"
-echo "  • Backend:    Deployed to LocalStack"
-echo "  • Proxy:      Running on localhost:3001"
+echo "  • LocalStack:  Running on localhost:4566"
+echo "  • PostgreSQL:  Running on localhost:5432"
+echo "  • MongoDB:     Running on localhost:27017"
+
 if [ "$REACT_RUNNING" = true ]; then
     echo "  • Frontend:   Already running on localhost:3000"
 else

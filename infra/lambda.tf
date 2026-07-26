@@ -81,7 +81,7 @@ resource "null_resource" "hot_reload" {
       AWS_REGION=us-east-1 \
       AWS_ACCESS_KEY_ID=test \
       AWS_SECRET_ACCESS_KEY=test \
-      AWS_ENDPOINT_URL=http://localhost:4566 \
+      AWS_ENDPOINT_URL=http://localhost.localstack.cloud:4566 \
       aws lambda update-function-code \
         --function-name ${module.lambda[each.key].lambda_function_name} \
         --s3-bucket hot-reload \

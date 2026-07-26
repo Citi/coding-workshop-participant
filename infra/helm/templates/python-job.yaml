@@ -9,6 +9,8 @@ metadata:
 data:
   job.py: |
     {{ .Values.pythonJob.scriptContent | nindent 4 }}
+  requirements.txt: |
+    {{ .Values.pythonJob.requirementsContent | nindent 4 }}
 ---
 {{- end }}
 apiVersion: batch/v1
@@ -27,7 +29,14 @@ spec:
         - name: {{ include "name" . }}-{{ .Values.pythonJob.name }}
           image: {{ .Values.pythonJob.image.repository }}:{{ .Values.pythonJob.image.tag }}
           imagePullPolicy: {{ .Values.pythonJob.image.pullPolicy }}
-          command: ["python", "/app/job.py"]
+          command: ["sh", "-c"]
+          args:
+            - |
+              if [ -f /app/requirements.txt ]; then
+                echo "Installing pipeline dependencies from requirements.txt..."
+                pip install --no-cache-dir -r /app/requirements.txt
+              fi
+              python /app/job.py
           {{- if .Values.pythonJob.scriptContent }}
           volumeMounts:
             - name: script
@@ -46,6 +55,7 @@ spec:
           configMap:
             name: {{ include "name" . }}-{{ .Values.pythonJob.name }}-source
       {{- end }}
-      restartPolicy: Never
-  backoffLimit: 4
+      restartPolicy: {{ .Values.pythonJob.restartPolicy }}
+  backoffLimit: {{ .Values.pythonJob.backoffLimit }}
+  ttlSecondsAfterFinished: {{ .Values.pythonJob.ttlSecondsAfterFinished }}
 {{- end }}

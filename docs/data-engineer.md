@@ -133,6 +133,10 @@ Replace `{{job-name}}` with your job directory (for example, `citi-daily-etl`).
 To test your job changes in the cloud:
 
 ```sh
+# Ensure EKS is enabled
+echo "export TF_VAR_aws_eks_enabled=true" >> ~/.bashrc
+source ~/.bashrc
+
 # Deploy changes
 ../bin/deploy-backend.sh
 

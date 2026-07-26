@@ -4,9 +4,9 @@ def create_spark_session():
     """Create and configure the Spark session."""
     return (
         SparkSession.builder.appName("python-pyspark-pandas-iceberg-job")
+        .config("spark.jars.packages", "org.apache.iceberg:iceberg-spark-runtime-4.1_2.13:1.11.0")
         .config("spark.sql.extensions", "org.apache.iceberg.spark.extensions.IcebergSparkSessionExtensions")
         .config("spark.sql.catalog.iceberg", "org.apache.iceberg.spark.SparkCatalog")
-        .config("spark.sql.catalog.iceberg.type", "hadoop")
         .getOrCreate()
     )
 

@@ -73,10 +73,10 @@ locals {
   ]
   data_names_python = {
     for name in local.data_dirs_python : name => {
-      name    = name
-      path    = abspath(format("%s/../data/%s", path.module, name))
-      file    = "job.py"
-      modules = join(",", compact(split("\n", file(abspath(format("%s/../data/%s/requirements.txt", path.module, name))))))
+      name = name
+      path = abspath(format("%s/../data/%s", path.module, name))
+      file = "job.py"
+      reqs = "requirements.txt"
     }
   }
   data_names_java = {
@@ -84,9 +84,11 @@ locals {
       name = name
       path = abspath(format("%s/../data/%s", path.module, name))
       file = "Job.java"
+      reqs = "pom.xml"
     }
   }
   job_names      = merge(local.data_names_python, local.data_names_java)
+  helm_hash      = sha256(join("", [for f in fileset("helm", "**/*.yaml") : filesha256(format("%s/helm/%s", path.module, f))]))
   function_names = merge(local.backend_names_java, local.backend_names_nodejs, local.backend_names_python)
   function_origins = [
     for name, func in local.function_names : {

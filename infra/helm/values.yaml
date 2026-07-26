@@ -1,52 +1,19 @@
-proxy:
-  secretToken: "GENERATE_A_LONG_RANDOM_HEX_STRING"
-  service:
-    type: ClusterIP
-
-hub:
-  config:
-    JupyterHub:
-      authenticator_class: ldapauthenticator.LDAPAuthenticator
-    LDAPAuthenticator:
-      server_address: "corp.codingworkshop.net"
-      server_port: 389
-      bind_dn_template: "CN={username},OU=Users,OU=CORP,DC=corp,DC=codingworkshop,DC=net"
-      user_attribute: "sAMAccountName"
-      allowed_groups:
-        - "OU=Groups,OU=CORP,DC=corp,DC=codingworkshop,DC=net"
-
-singleuser:
-  image:
-    name: jupyter/datascience-notebook
-    tag: latest
-  cpu:
-    limit: 2
-    guarantee: 1
-  memory:
-    limit: 2Gi
-    guarantee: 1Gi
-  storage:
-    type: none
-
-scheduling:
-  userScheduler:
-    enabled: true
-  userPlaceholder:
-    enabled: true
-    replicas: 1
-
 pythonJob:
   enabled: false
   name: "python-job"
   scriptContent: ""
+  requirementsContent: ""
+  backoffLimit: 4
+  ttlSecondsAfterFinished: 100
+  restartPolicy: Never
   image:
-    repository: jupyter/datascience-notebook
+    repository: jupyter/all-spark-notebook
     pullPolicy: IfNotPresent
     tag: "latest"
   resources:
     limits:
-      cpu: 2
+      cpu: 1.0
       memory: 2Gi
     requests:
-      cpu: 1
+      cpu: 0.5
       memory: 1Gi
