@@ -1,13 +1,10 @@
 # Coding Workshop - Data Engineer Guide
 
-> [Main Guide](./README.md) | [Validation Guide](./validation.md) | [Full Stack Guide](./full-stack.md) | **Data Engineer Guide** | [System Engineer Guide](./system-engineer.md) | [UI/UX Engineer Guide](./ui-ux-engineer.md)
+> [Main Guide](./README.md) | [Validation Guide](./validation.md) | [AI FDE Guide](./ai-fde.md) | **Data Engineer Guide** | [Full Stack Guide](./full-stack.md) | [System Engineer Guide](./system-engineer.md) | [UI/UX Engineer Guide](./ui-ux-engineer.md)
 
 ## Overview
 
-This guide provides directions and guidelines on implementation expectations
-but you are free to exercise your creativity to showcase your technical skills
-combined with soft skills such as curiosity, observability, and ability to
-drive / deliver value.
+This guide provides directions and guidelines on implementation expectations but you are free to exercise your creativity to showcase your technical skills combined with soft skills such as curiosity, observability, and ability to drive / deliver value.
 
 * [Architecture Diagram](#architecture-diagram)
 * [Evaluation Expectations](#evaluation-expectations)
@@ -135,13 +132,13 @@ To test your job changes in the cloud:
 ```sh
 # Ensure EKS is enabled
 echo "export TF_VAR_aws_eks_enabled=true" >> ~/.bashrc
-source ~/.bashrc
 
 # Deploy changes
+source ~/.bashrc
 ../bin/deploy-backend.sh
 
 # Stream logs from the active Kubernetes Job pod
-kubectl logs -f job/python-job
+kubectl logs -f job/{{job-name}}
 ```
 
 ## Implementation Expectations
@@ -271,8 +268,9 @@ Robust pipelines handle unexpected data and infrastructure issues gracefully.
   <ol>
     <li><a href="./README.md">Main Guide</a></li>
     <li><a href="./validation.md">Validation Guide</a></li>
-    <li><a href="./full-stack.md">Full Stack Guide</a></li>
+    <li><a href="./ai-fde.md">AI FDE Guide</a></li>
     <li aria-current="page">Data Engineer Guide</li>
+    <li><a href="./full-stack.md">Full Stack Guide</a></li>
     <li><a href="./system-engineer.md">System Engineer Guide</a></li>
     <li><a href="./ui-ux-engineer.md">UI/UX Engineer Guide</a></li>
   </ol>
