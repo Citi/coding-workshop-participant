@@ -1127,29 +1127,44 @@ configure_dnsmasq() {
 
     print_info "Configuring dnsmasq for LocalStack..."
 
-    # Step 1: Check if port 53 is already in use
-    local port_user=$(sudo lsof -i :53 2>/dev/null | grep -v COMMAND | awk '{print $1}' | sort -u | head -1)
-    if [ -n "$port_user" ]; then
-        print_info "Port 53 is currently used by: $port_user"
+    # Step 1: Configure the dnsmasq service defaults before starting it.
+    # Keep dnsmasq off the normal DNS port. systemd-resolved owns port 53 on
+    # Ubuntu, and resolved will route only LocalStack names to this listener.
+    local dnsmasq_defaults="/etc/default/dnsmasq"
+    local dnsmasq_defaults_temp
+    local dnsmasq_defaults_changed=false
 
-        # If systemd-resolved is using it, disable it
-        if [ "$port_user" = "systemd-resolv" ] || sudo systemctl is-active --quiet systemd-resolved; then
-            print_info "Disabling systemd-resolved to free port 53..."
-            if sudo systemctl stop systemd-resolved && sudo systemctl disable systemd-resolved; then
-                print_status "systemd-resolved stopped and disabled"
-            else
-                print_error "Failed to stop systemd-resolved"
-                add_failure "Cannot free port 53 from systemd-resolved"
-                return
-            fi
-        else
-            print_error "Port 53 is in use by $port_user and it's not systemd-resolved"
-            add_failure "Cannot start dnsmasq: port 53 already in use"
-            return
-        fi
+    dnsmasq_defaults_temp=$(mktemp)
+    if [ -f "$dnsmasq_defaults" ]; then
+        sudo cp "$dnsmasq_defaults" "$dnsmasq_defaults_temp"
+    else
+        : > "$dnsmasq_defaults_temp"
+    fi
+    sed -i '/^[[:space:]]*IGNORE_RESOLVCONF[[:space:]]*=.*$/d; /^[[:space:]]*DNSMASQ_EXCEPT[[:space:]]*=.*$/d' "$dnsmasq_defaults_temp"
+    cat >> "$dnsmasq_defaults_temp" <<'EOF'
+# Managed by setup-environment.sh
+IGNORE_RESOLVCONF=yes
+EOF
+
+    if [ ! -f "$dnsmasq_defaults" ] || ! sudo cmp -s "$dnsmasq_defaults_temp" "$dnsmasq_defaults"; then
+        sudo install -o root -g root -m 644 "$dnsmasq_defaults_temp" "$dnsmasq_defaults"
+        print_status "Written dnsmasq service defaults"
+        dnsmasq_defaults_changed=true
+    else
+        print_info "dnsmasq service defaults already up to date"
+    fi
+    rm -f "$dnsmasq_defaults_temp"
+
+    # Step 2: Check if dnsmasq's dedicated port is already in use
+    local dnsmasq_port=5353
+    local port_user=$(sudo lsof -iTCP:${dnsmasq_port} -sTCP:LISTEN -nP 2>/dev/null | grep -v COMMAND | awk '{print $1}' | sort -u | head -1)
+    if [ -n "$port_user" ]; then
+        print_error "Port ${dnsmasq_port} is already in use by: $port_user"
+        add_failure "Cannot start dnsmasq: port ${dnsmasq_port} already in use"
+        return
     fi
 
-    # Step 2: Create dnsmasq configuration for LocalStack
+    # Step 3: Create dnsmasq configuration for LocalStack
     local dnsmasq_conf="/etc/dnsmasq.d/localstack.conf"
     local dnsmasq_temp_conf
     local dnsmasq_config_changed=false
@@ -1157,9 +1172,11 @@ configure_dnsmasq() {
     dnsmasq_temp_conf=$(mktemp)
     cat > "$dnsmasq_temp_conf" <<'EOF'
 # LocalStack DNS configuration
-address=/localhost/127.0.0.1
-address=/.localhost/127.0.0.1
 address=/.localhost.localstack.cloud/127.0.0.1
+listen-address=127.0.0.1
+bind-interfaces
+port=5353
+no-resolv
 server=8.8.8.8
 EOF
 
@@ -1172,11 +1189,39 @@ EOF
     fi
     rm -f "$dnsmasq_temp_conf"
 
-    # Step 3: Restart dnsmasq with retry logic
-    if sudo systemctl is-active --quiet dnsmasq && [ "$dnsmasq_config_changed" = false ]; then
+    # Route only LocalStack's wildcard domain to dnsmasq. This preserves
+    # systemd-resolved for every other hostname and avoids a DNS loop.
+    local resolved_dir="/etc/systemd/resolved.conf.d"
+    local resolved_conf="${resolved_dir}/localstack.conf"
+    local resolved_temp_conf
+    local resolved_config_changed=false
+    resolved_temp_conf=$(mktemp)
+    cat > "$resolved_temp_conf" <<EOF
+# Managed by setup-environment.sh
+[Resolve]
+DNS=127.0.0.1:${dnsmasq_port}
+Domains=~localhost.localstack.cloud
+EOF
+    if [ ! -f "$resolved_conf" ] || ! sudo cmp -s "$resolved_temp_conf" "$resolved_conf"; then
+        sudo install -d -m 755 "$resolved_dir"
+        sudo install -o root -g root -m 644 "$resolved_temp_conf" "$resolved_conf"
+        print_status "Written systemd-resolved LocalStack routing configuration"
+        resolved_config_changed=true
+    else
+        print_info "systemd-resolved LocalStack routing configuration already up to date"
+    fi
+    rm -f "$resolved_temp_conf"
+
+    # Step 4: Restart dnsmasq with retry logic
+    if sudo systemctl is-active --quiet dnsmasq && [ "$dnsmasq_config_changed" = false ] && [ "$dnsmasq_defaults_changed" = false ] && [ "$resolved_config_changed" = false ]; then
         print_status "dnsmasq is already running and configuration is unchanged"
         if sudo systemctl enable dnsmasq >/dev/null 2>&1; then
             print_status "dnsmasq enabled for auto-start"
+        fi
+        if sudo systemctl restart systemd-resolved; then
+            print_status "systemd-resolved restarted successfully"
+        else
+            add_failure "Failed to restart systemd-resolved"
         fi
         return 0
     fi
@@ -1192,6 +1237,11 @@ EOF
                     print_status "dnsmasq enabled for auto-start"
                 else
                     print_error "Warning: dnsmasq not enabled for auto-start"
+                fi
+                if sudo systemctl restart systemd-resolved; then
+                    print_status "systemd-resolved restarted successfully"
+                else
+                    add_failure "Failed to restart systemd-resolved"
                 fi
                 return 0
             else

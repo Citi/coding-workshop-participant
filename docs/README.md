@@ -1,6 +1,6 @@
 # Coding Workshop - Main Guide
 
-> **Main Guide** | [Validation Guide](./validation.md) | [Full Stack Guide](./full-stack.md) | [Data Engineer Guide](./data-engineer.md) | [System Engineer Guide](./system-engineer.md) | [UI/UX Engineer Guide](./ui-ux-engineer.md)
+> **Main Guide** | [Validation Guide](./validation.md) | [AI FDE Guide](./ai-fde.md) | [Data Engineer Guide](./data-engineer.md) | [Full Stack Guide](./full-stack.md) | [System Engineer Guide](./system-engineer.md) | [UI/UX Engineer Guide](./ui-ux-engineer.md)
 
 This folder contains a comprehensive set of documentation to guide you through building a complete web application that meets all specifications and requirements. The goal is to evaluate your effectiveness in delivering a fully working application. Your implementation will be assessed against expected deliverables and milestones.
 
@@ -32,10 +32,11 @@ Before starting, ensure you have:
 ## Next Steps
 
 1. Follow the [Validation Guide](./validation.md) to make sure your development environment includes all prerequisites and requirements.
-2. Review the [Full Stack Guide](./full-stack.md) to understand the full stack engineering specific expectations and guidelines.
+2. Review the [AI FDE Guide](./ai-fde.md) to understand the artificial intelligence (AI) forward deployed engineering (FDE) specific expectations and guidelines.
 3. Review the [Data Engineer Guide](./data-engineer.md) to understand the data engineering specific expectations and guidelines.
-4. Review the [System Engineer Guide](./system-engineer.md) to understand the system engineering specific expectations and guidelines.
-5. Review the [UI/UX Engineer Guide](./ui-ux-engineer.md) to understand the UI/UX engineering specific expectations and guidelines.
+4. Review the [Full Stack Guide](./full-stack.md) to understand the full stack engineering specific expectations and guidelines.
+5. Review the [System Engineer Guide](./system-engineer.md) to understand the system engineering specific expectations and guidelines.
+6. Review the [UI/UX Engineer Guide](./ui-ux-engineer.md) to understand the UI/UX engineering specific expectations and guidelines.
 
 > [!NOTE]
 > Choose the most appropriate guide for your scenario. For example, if you're a full stack engineering participant, read only the **Validation Guide** and **Full Stack Guide**, ignore the rest. Similar for data engineering participants, read only the **Validation Guide** and **Data Engineer Guide**, ignore the rest.
@@ -46,8 +47,9 @@ Before starting, ensure you have:
   <ol>
     <li aria-current="page">Main Guide</li>
     <li><a href="./validation.md">Validation Guide</a></li>
-    <li><a href="./full-stack.md">Full Stack Guide</a></li>
+    <li><a href="./ai-stack.md">AI FDE Guide</a></li>
     <li><a href="./data-engineer.md">Data Engineer Guide</a></li>
+    <li><a href="./full-stack.md">Full Stack Guide</a></li>
     <li><a href="./system-engineer.md">System Engineer Guide</a></li>
     <li><a href="./ui-ux-engineer.md">UI/UX Engineer Guide</a></li>
   </ol>

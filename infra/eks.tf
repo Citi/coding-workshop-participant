@@ -58,6 +58,7 @@ resource "null_resource" "helm_chart" {
       helm repo add jupyterhub https://hub.jupyter.org/helm-chart/ && helm repo update && \
       helm upgrade --cleanup-on-fail \
         --install jupyterhub jupyterhub/jupyterhub \
+        --set proxy.secretToken="${sha256(random_pet.this.id)}" \
         --set hub.config.LDAPAuthenticator.server_address="${var.aws_ds_ip}" \
         --set-string "hub.config.LDAPAuthenticator.allowed_groups[0]=CN=${local.app_id}\,OU=Users\,OU=CORP\,DC=corp\,DC=codingworkshop\,DC=net" \
         --namespace default --values ./helm/config.yaml
