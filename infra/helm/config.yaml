@@ -13,8 +13,6 @@ hub:
         get_info: "ALL"
       tls_strategy: "insecure"
       user_attribute: "sAMAccountName"
-      allowed_groups:
-        - "CN={username},OU=Users,OU=CORP,DC=corp,DC=codingworkshop,DC=net"
       bind_dn_template:
         - "CN={username},OU=Users,OU=CORP,DC=corp,DC=codingworkshop,DC=net"
   db:

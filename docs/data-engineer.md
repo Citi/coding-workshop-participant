@@ -123,7 +123,7 @@ python ../data/{{job-name}}/job.py 2>&1 | tee /tmp/{{job-name}}.log
 tail -f /tmp/{{job-name}}.log
 ```
 
-Replace `{{job-name}}` with your job directory (for example, `citi-daily-etl`).
+Replace `{{job-name}}` with your job directory (for example, `acme-daily-etl`).
 
 #### Cloud Deployment
 
