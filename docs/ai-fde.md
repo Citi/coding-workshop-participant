@@ -154,7 +154,7 @@ The AI agent is the core of the solution, responsible for understanding HR inqui
 - [ ] Retrieve relevant context from a vector store using RAG (Retrieval-Augmented Generation)
 - [ ] Generate responses grounded in retrieved documents with source citations
 - [ ] Apply guardrails to intercept hallucinated, out-of-scope, or policy-violating outputs
-- [ ] Route sensitive categories through a human-in-the-loop approval step before delivery
+- [ ] Route sensitive categories and any data-mutating transaction through a human-in-the-loop approval step before delivery
 - [ ] Emit structured traces and logs via MLflow and OpenTelemetry for auditability
 
 **Key Attributes to Consider**
@@ -231,11 +231,12 @@ Every AI-generated response must be safe, grounded, and auditable.
 
 ### 4. Human-in-the-Loop Approval Flow
 
-Sensitive categories require human analyst review before the AI-generated response reaches the end user.
+Sensitive categories require human analyst review before the AI-generated response reaches the end user — and so does any inquiry that would write or change a record, regardless of topic sensitivity.
 
 **Expected Capabilities**
 
-- [ ] Classify each inquiry into a sensitivity tier (e.g. standard / sensitive / escalation)
+- [ ] Classify each inquiry into a sensitivity tier (e.g. standard / sensitive / escalation) and flag whether it mutates data
+- [ ] Route data-mutating transactions (e.g. updating dependents, reassigning a manager) through approval even when the topic itself isn't sensitive
 - [ ] Queue sensitive responses for analyst review with the original inquiry, AI answer, and citations displayed side-by-side
 - [ ] Allow analysts to approve, edit, or reject AI-generated responses
 - [ ] Deliver only approved responses to the end user
@@ -243,7 +244,7 @@ Sensitive categories require human analyst review before the AI-generated respon
 
 ### 5. Frontend User Interface
 
-The frontend provides a self-service portal for operators and analysts to submit inquiries, view AI-generated answers, and manage the approval queue.
+The frontend provides a self-service portal for analysts to submit inquiries, view AI-generated answers, and manage the approval queue.
 
 **Expected Capabilities**
 

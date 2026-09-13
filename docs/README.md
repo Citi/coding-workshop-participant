@@ -47,7 +47,7 @@ Before starting, ensure you have:
   <ol>
     <li aria-current="page">Main Guide</li>
     <li><a href="./validation.md">Validation Guide</a></li>
-    <li><a href="./ai-stack.md">AI FDE Guide</a></li>
+    <li><a href="./ai-fde.md">AI FDE Guide</a></li>
     <li><a href="./data-engineer.md">Data Engineer Guide</a></li>
     <li><a href="./full-stack.md">Full Stack Guide</a></li>
     <li><a href="./system-engineer.md">System Engineer Guide</a></li>
