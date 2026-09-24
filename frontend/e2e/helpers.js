@@ -88,6 +88,18 @@ export async function signIn(page, email, { password = PASSWORD, home = 'My dash
   await expect(page.getByRole('heading', { level: 1, name: home })).toBeVisible()
 }
 
+/**
+ * Go to a sidebar page on a tablet or phone, where the sidebar sits behind the menu
+ * button, and wait for the drawer to close again.
+ * @param {string} link the nav link's name, e.g. "People"
+ */
+export async function goViaMenu(page, link) {
+  await page.getByRole('button', { name: 'Open menu' }).click()
+  const nav = page.getByRole('navigation', { name: 'Main' })
+  await nav.getByRole('link', { name: link }).click()
+  await expect(nav).toHaveCount(0)
+}
+
 /** Pick an option from an MUI select by its label. */
 export async function choose(page, label, option) {
   await page.getByRole('combobox', { name: new RegExp(`^${label}`) }).click()

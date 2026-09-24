@@ -29,31 +29,36 @@ export function roleLabel(role) {
 }
 
 /**
- * Header navigation per role. `section` is the path prefix that marks a link current, so
- * a ticket's details (/admin/tickets/5) still highlights Dashboard. Employees have no
- * links yet: their dashboard links to everything they need.
+ * Sidebar navigation per role. `sections` are the path prefixes that mark a link current,
+ * so a ticket's details (/admin/tickets/5) still highlight Dashboard. `icon` names an icon
+ * in the sidebar's icon map. Only pages that exist today are listed.
  */
 export const NAV_LINKS = {
-  engineer: [{ to: '/engineer', label: 'My queue', section: '/engineer' }],
+  employee: [
+    { to: '/dashboard', label: 'Dashboard', icon: 'dashboard', sections: ['/dashboard', '/tickets'] },
+    { to: '/tickets/new', label: 'Report an issue', icon: 'report', sections: ['/tickets/new'] },
+  ],
+  engineer: [{ to: '/engineer', label: 'My queue', icon: 'dashboard', sections: ['/engineer'] }],
   admin: [
-    { to: '/admin', label: 'Dashboard', section: '/admin' },
-    { to: '/admin/people', label: 'People', section: '/admin/people' },
-    { to: '/admin/facilities', label: 'Facilities', section: '/admin/facilities' },
+    { to: '/admin', label: 'Dashboard', icon: 'dashboard', sections: ['/admin'] },
+    { to: '/admin/people', label: 'People', icon: 'people', sections: ['/admin/people'] },
+    { to: '/admin/facilities', label: 'Facilities', icon: 'facilities', sections: ['/admin/facilities'] },
   ],
 }
 
 /**
- * The role's header links, each marked `current` for the given path. The longest
+ * The role's sidebar links, each marked `current` for the given path. The longest
  * matching section wins, so /admin/people is People, not Dashboard.
  * @param {string} role
  * @param {string} pathname
- * @returns {{to: string, label: string, current: boolean}[]}
+ * @returns {{to: string, label: string, icon: string, current: boolean}[]}
  */
 export function navLinksFor(role, pathname) {
   const links = NAV_LINKS[role] ?? []
   const inSection = (section) => pathname === section || pathname.startsWith(`${section}/`)
+  const longestMatch = (link) => Math.max(0, ...link.sections.filter(inSection).map((s) => s.length))
   const current = links
-    .filter((link) => inSection(link.section))
-    .sort((a, b) => b.section.length - a.section.length)[0]
-  return links.map(({ to, label }) => ({ to, label, current: current?.to === to }))
+    .filter((link) => longestMatch(link) > 0)
+    .sort((a, b) => longestMatch(b) - longestMatch(a))[0]
+  return links.map(({ to, label, icon }) => ({ to, label, icon, current: current?.to === to }))
 }

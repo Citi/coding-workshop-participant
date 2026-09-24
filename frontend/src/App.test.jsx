@@ -1,4 +1,4 @@
-import { act, screen, within } from '@testing-library/react'
+import { act, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
@@ -15,7 +15,11 @@ vi.mock('./services/adminTicketService', () => ({
   listAllTickets: vi.fn().mockResolvedValue([]),
   getMetrics: vi.fn().mockResolvedValue({ unassigned: 0, open: 0, in_progress: 0, blocked: 0, resolved: 0, active_p1: 0, escalated: 0, closed_last_7_days: 0 }),
 }))
-vi.mock('./services/locationService', () => ({ listBuildings: vi.fn().mockResolvedValue([]) }))
+vi.mock('./services/locationService', () => ({
+  listBuildings: vi.fn().mockResolvedValue([]),
+  listFloors: vi.fn().mockResolvedValue([]),
+  listSeats: vi.fn().mockResolvedValue([]),
+}))
 vi.mock('./services/adminFacilityService', () => ({ getFacilities: vi.fn().mockResolvedValue([]) }))
 vi.mock('./services/adminUserService', () => ({
   listEngineers: vi.fn().mockResolvedValue([]),
@@ -127,7 +131,7 @@ describe('routing by role', () => {
   })
 })
 
-describe('header navigation', () => {
+describe('sidebar navigation on desktop', () => {
   const nav = () => screen.getByRole('navigation', { name: 'Main' })
 
   it.each([
@@ -157,59 +161,116 @@ describe('header navigation', () => {
     await act(async () => {})
   })
 
-  it('puts the links on a second row on phones', async () => {
-    renderWithProviders(<App />, { route: '/admin/people', user: ALEX, width: 375 })
-    expect(within(nav()).getAllByRole('link').map((a) => a.textContent)).toEqual(['Dashboard', 'People', 'Facilities'])
-    await act(async () => {})
-  })
-
   it('gives engineers a link to their queue, current on a ticket too', () => {
-    // An invalid id shows "not found" without calling the API; the header is what matters here.
+    // An invalid id shows "not found" without calling the API; the sidebar is what matters here.
     renderWithProviders(<App />, { route: '/engineer/tickets/abc', user: SAM })
     expect(within(nav()).getByRole('link', { current: 'page' })).toHaveTextContent('My queue')
     expect(within(nav()).getByRole('link', { name: 'My queue' })).toHaveAttribute('href', '/engineer')
   })
 
-  it('gives employees no page links', () => {
-    renderWithProviders(<App />, { route: '/', user: JANE })
-    expect(screen.queryByRole('navigation', { name: 'Main' })).not.toBeInTheDocument()
-  })
-})
-
-describe('header', () => {
-  it('shows only the app name to guests', () => {
-    renderWithProviders(<App />, { route: '/login' })
-    expect(screen.getByRole('link', { name: 'Facilities Helpdesk' })).toHaveAttribute('href', '/')
-    expect(screen.queryByRole('button', { name: 'Sign out' })).not.toBeInTheDocument()
-  })
-
-  it('shows the user and a sign-out button on desktop', () => {
-    renderWithProviders(<App />, { route: '/dashboard', user: JANE, width: 1280 })
-    expect(screen.getByText('Jane Doe')).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: 'Sign out' })).toHaveTextContent('Sign out')
-  })
-
-  it('shows no role chip to employees', () => {
+  it('gives employees Dashboard and Report an issue', async () => {
+    const user = userEvent.setup()
     renderWithProviders(<App />, { route: '/dashboard', user: JANE })
-    expect(screen.queryByText('Employee')).not.toBeInTheDocument()
+    expect(within(nav()).getAllByRole('link').map((a) => a.textContent)).toEqual(['Dashboard', 'Report an issue'])
+    expect(within(nav()).getByRole('link', { current: 'page' })).toHaveTextContent('Dashboard')
+
+    await user.click(within(nav()).getByRole('link', { name: 'Report an issue' }))
+
+    expect(heading()).toHaveTextContent('Report an issue')
+    expect(within(nav()).getByRole('link', { current: 'page' })).toHaveTextContent('Report an issue')
+    await act(async () => {})
   })
 
   it.each([
-    ['Engineer', 1280, SAM],
-    ['Engineer', 375, SAM],
-    ['Facility Admin', 1280, ALEX],
-  ])('shows the %s role chip at %spx wide', (label, width, user) => {
-    renderWithProviders(<App />, { route: '/', user, width })
-    expect(screen.getByRole('banner')).toHaveTextContent(label)
+    ['Employee', JANE],
+    ['Engineer', SAM],
+    ['Facility Admin', ALEX],
+  ])('labels the links with the role, %s', (label, user) => {
+    renderWithProviders(<App />, { route: '/', user })
+    expect(nav()).toHaveTextContent(label)
   })
 
-  it('uses a short name and an icon-only sign-out on phones', () => {
-    renderWithProviders(<App />, { route: '/dashboard', user: JANE, width: 375 })
-    expect(screen.getByRole('link', { name: 'Helpdesk' })).toBeInTheDocument()
-    expect(screen.queryByText('Jane Doe')).not.toBeInTheDocument()
-    expect(screen.getByRole('button', { name: 'Sign out' })).toHaveTextContent('')
+  it('shows the user card and no top bar', () => {
+    renderWithProviders(<App />, { route: '/dashboard', user: JANE, width: 1280 })
+    expect(screen.getByText('Jane Doe')).toHaveAttribute('title', 'Jane Doe')
+    expect(screen.getByText('jane@acme.inc')).toBeInTheDocument()
+    expect(screen.getByText('JD')).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Sign out' })).toBeInTheDocument()
+    expect(screen.queryByRole('banner')).not.toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: 'Open menu' })).not.toBeInTheDocument()
   })
 
+  it('keeps a long name and email whole in a tooltip title', () => {
+    const longName = 'Maximiliana Alexandra Worthington-Featherstonehaugh'
+    const longEmail = 'maximiliana.alexandra.worthington-featherstonehaugh@acme.inc'
+    renderWithProviders(<App />, { route: '/dashboard', user: { ...JANE, full_name: longName, email: longEmail } })
+    expect(screen.getByText(longName)).toHaveAttribute('title', longName)
+    expect(screen.getByText(longEmail)).toHaveAttribute('title', longEmail)
+    expect(screen.getByText('MW')).toBeInTheDocument()
+  })
+
+  it('links the brand to the start page', () => {
+    renderWithProviders(<App />, { route: '/dashboard', user: JANE })
+    expect(screen.getByRole('link', { name: 'ACME Facilities Incident Desk' })).toHaveAttribute('href', '/')
+  })
+})
+
+describe.each([
+  ['tablet', 820],
+  ['phone', 375],
+])('sidebar drawer on a %s', (_device, width) => {
+  const openMenu = () => screen.getByRole('button', { name: 'Open menu' })
+
+  it('hides the links behind a menu button in the top bar', () => {
+    renderWithProviders(<App />, { route: '/admin/people', user: ALEX, width })
+    expect(screen.getByRole('banner')).toContainElement(openMenu())
+    expect(openMenu()).toHaveAttribute('aria-expanded', 'false')
+    expect(screen.getByRole('link', { name: 'ACME Facilities Incident Desk' })).toBeInTheDocument()
+    expect(screen.queryByRole('navigation', { name: 'Main' })).not.toBeInTheDocument()
+    expect(screen.queryByText('Alex Admin')).not.toBeInTheDocument()
+  })
+
+  it('opens the drawer, navigates and closes it again', async () => {
+    const user = userEvent.setup()
+    renderWithProviders(<App />, { route: '/admin/people', user: ALEX, width })
+
+    await user.click(openMenu())
+    const nav = await screen.findByRole('navigation', { name: 'Main' })
+    expect(within(nav).getAllByRole('link').map((a) => a.textContent)).toEqual(['Dashboard', 'People', 'Facilities'])
+    expect(within(nav).getByRole('link', { current: 'page' })).toHaveTextContent('People')
+    expect(screen.getByText('Alex Admin')).toBeInTheDocument()
+
+    await user.click(within(nav).getByRole('link', { name: 'Facilities' }))
+
+    await waitFor(() => expect(screen.queryByRole('navigation', { name: 'Main' })).not.toBeInTheDocument())
+    expect(heading()).toHaveTextContent('Facilities')
+    await act(async () => {})
+  })
+
+  it('signs out from the drawer', async () => {
+    const user = userEvent.setup()
+    renderWithProviders(<App />, { route: '/dashboard', user: JANE, width })
+
+    await user.click(openMenu())
+    await user.click(await screen.findByRole('button', { name: 'Sign out' }))
+
+    await waitFor(() => expect(heading()).toHaveTextContent('Sign in'))
+    expect(getSession()).toBeNull()
+    expect(screen.queryByRole('button', { name: 'Open menu' })).not.toBeInTheDocument()
+  })
+})
+
+describe('layout for guests', () => {
+  it.each([375, 820, 1280])('shows only the brand at %spx wide', (width) => {
+    renderWithProviders(<App />, { route: '/login', width })
+    expect(screen.getByRole('link', { name: 'ACME Facilities Incident Desk' })).toHaveAttribute('href', '/')
+    expect(screen.queryByRole('navigation', { name: 'Main' })).not.toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: 'Open menu' })).not.toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: 'Sign out' })).not.toBeInTheDocument()
+  })
+})
+
+describe('signing out', () => {
   it('signs out, forgets the session and says so', async () => {
     const user = userEvent.setup()
     renderWithProviders(<App />, { route: '/dashboard', user: JANE })

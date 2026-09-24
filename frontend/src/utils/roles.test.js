@@ -27,12 +27,19 @@ describe('roleLabel', () => {
 describe('navLinksFor', () => {
   const current = (role, path) => navLinksFor(role, path).filter((l) => l.current).map((l) => l.label)
 
-  it('gives admins Dashboard, People and Facilities', () => {
-    expect(navLinksFor('admin', '/admin').map(({ to, label }) => [to, label])).toEqual([
-      ['/admin', 'Dashboard'],
-      ['/admin/people', 'People'],
-      ['/admin/facilities', 'Facilities'],
-    ])
+  it.each([
+    ['employee', [['/dashboard', 'Dashboard'], ['/tickets/new', 'Report an issue']]],
+    ['engineer', [['/engineer', 'My queue']]],
+    ['admin', [['/admin', 'Dashboard'], ['/admin/people', 'People'], ['/admin/facilities', 'Facilities']]],
+    ['someday-role', []],
+  ])('gives %s its links in order', (role, expected) => {
+    expect(navLinksFor(role, '/').map(({ to, label }) => [to, label])).toEqual(expected)
+  })
+
+  it('gives every link an icon key', () => {
+    ['employee', 'engineer', 'admin'].forEach((role) => {
+      navLinksFor(role, '/').forEach((link) => expect(link.icon).toEqual(expect.any(String)))
+    })
   })
 
   it.each([
@@ -42,19 +49,25 @@ describe('navLinksFor', () => {
     ['/admin/facilities', ['Facilities']],
     ['/admin/peoplex', ['Dashboard']],
     ['/dashboard', []],
-  ])('marks the right link current at %s', (path, expected) => {
+  ])('marks the right admin link current at %s', (path, expected) => {
     expect(current('admin', path)).toEqual(expected)
+  })
+
+  it.each([
+    ['/dashboard', ['Dashboard']],
+    ['/tickets/5', ['Dashboard']],
+    ['/tickets/new', ['Report an issue']],
+    ['/tickets/newer', ['Dashboard']],
+    ['/admin', []],
+  ])('marks the right employee link current at %s', (path, expected) => {
+    expect(current('employee', path)).toEqual(expected)
   })
 
   it.each([
     ['/engineer', ['My queue']],
     ['/engineer/tickets/5', ['My queue']],
-  ])('gives engineers My queue, current at %s', (path, expected) => {
-    expect(navLinksFor('engineer', path).map((l) => l.to)).toEqual(['/engineer'])
+    ['/engineers', []],
+  ])('marks My queue current for engineers at %s', (path, expected) => {
     expect(current('engineer', path)).toEqual(expected)
-  })
-
-  it.each(['employee', 'someday-role'])('gives %s no links', (role) => {
-    expect(navLinksFor(role, '/')).toEqual([])
   })
 })

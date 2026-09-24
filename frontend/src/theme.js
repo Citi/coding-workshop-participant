@@ -10,13 +10,25 @@ export const brand = {
   sky: '#00BDF2',
   page: '#F5F9FC',
   white: '#FFFFFF',
+  /** Body text, secondary text and quiet labels (all pass AA on white). */
+  ink: '#1A2733',
+  inkSoft: '#3A4A5A',
+  muted: '#5B6B7A',
+  /** Hairlines between panels, and the tint behind the current nav item. */
+  line: '#E3EAF1',
+  selected: '#E3F0FA',
 }
+
+/** Width of the desktop sidebar, in px. */
+export const SIDEBAR_WIDTH = 248
 
 const theme = createTheme({
   palette: {
     primary: { main: brand.blue, dark: brand.navy, contrastText: brand.white },
     secondary: { main: brand.navy, contrastText: brand.white },
     background: { default: brand.page, paper: brand.white },
+    text: { primary: brand.ink, secondary: brand.muted },
+    divider: brand.line,
   },
   shape: { borderRadius: 8 },
   typography: {

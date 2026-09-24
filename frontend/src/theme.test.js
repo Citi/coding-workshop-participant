@@ -16,6 +16,10 @@ describe('theme', () => {
     ['white text on the blue header and buttons', brand.white, brand.blue],
     ['blue links on white cards', brand.blue, brand.white],
     ['navy headings on the page background', brand.navy, brand.page],
+    ['body text on white', brand.ink, brand.white],
+    ['secondary text on the page background', brand.muted, brand.page],
+    ['nav labels on white', brand.inkSoft, brand.white],
+    ['the current nav item', brand.navy, brand.selected],
   ])('has readable contrast: %s', (_label, text, background) => {
     expect(getContrastRatio(text, background)).toBeGreaterThanOrEqual(AA)
   })

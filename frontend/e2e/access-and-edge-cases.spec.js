@@ -104,7 +104,7 @@ test('an engineer lands on their own queue and never calls the employee API', as
 
   await expect(page).toHaveURL(/\/engineer$/)
   await expect(page.getByRole('heading', { level: 1, name: 'My queue' })).toBeVisible()
-  await expect(page.getByRole('banner')).toContainText('Engineer')
+  await expect(page.getByRole('navigation', { name: 'Main' })).toContainText('Engineer')
 
   await page.goto('/dashboard')
   await expect(page.getByRole('heading', { level: 1, name: "You don't have access to this" })).toBeVisible()
@@ -122,7 +122,15 @@ test.describe('on a phone', () => {
     const ticket = await createTicketViaApi(request, owner)
 
     await signIn(page, owner.email)
-    await expect(page.getByRole('link', { name: 'Helpdesk' })).toBeVisible()
+    await expect(page.getByRole('link', { name: 'ACME Facilities Incident Desk' })).toBeVisible()
+    // The sidebar lives behind the menu button on phones.
+    await expect(page.getByRole('navigation', { name: 'Main' })).toHaveCount(0)
+    await page.getByRole('button', { name: 'Open menu' }).click()
+    const nav = page.getByRole('navigation', { name: 'Main' })
+    await expect(nav.getByRole('link')).toHaveText(['Dashboard', 'Report an issue'])
+    await expect(nav.getByRole('link', { name: 'Dashboard' })).toHaveAttribute('aria-current', 'page')
+    await page.keyboard.press('Escape')
+    await expect(nav).toHaveCount(0)
     await expect(page.getByRole('table')).toHaveCount(0)
     // On phones the list is cards; each card is one link to the ticket.
     const card = page.getByRole('region', { name: 'My tickets' }).getByRole('link', { name: new RegExp(`^#${ticket.ticket_id} `) })
@@ -131,6 +139,23 @@ test.describe('on a phone', () => {
 
     await card.click()
     await expect(page.getByRole('list', { name: 'Ticket workflow' })).toHaveCSS('flex-direction', 'column')
+    expect(await page.evaluate(() => document.documentElement.scrollWidth > window.innerWidth)).toBe(false)
+  })
+})
+
+test.describe('on a tablet', () => {
+  test.use({ viewport: { width: 820, height: 1180 }, hasTouch: true })
+
+  test('the sidebar opens as a drawer and closes after navigating', async ({ page, request }) => {
+    const owner = await registerViaApi(request, { name: 'Tablet User', email: uniqueEmail('tablet') })
+
+    await signIn(page, owner.email)
+    await expect(page.getByRole('navigation', { name: 'Main' })).toHaveCount(0)
+    await page.getByRole('button', { name: 'Open menu' }).click()
+    await page.getByRole('navigation', { name: 'Main' }).getByRole('link', { name: 'Report an issue' }).click()
+
+    await expect(page.getByRole('heading', { level: 1, name: 'Report an issue' })).toBeVisible()
+    await expect(page.getByRole('navigation', { name: 'Main' })).toHaveCount(0)
     expect(await page.evaluate(() => document.documentElement.scrollWidth > window.innerWidth)).toBe(false)
   })
 })

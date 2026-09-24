@@ -4,6 +4,7 @@ import { sql } from './db.js'
 import {
   choose,
   createTicketViaApi,
+  goViaMenu,
   registerAdmin,
   registerEngineer,
   registerViaApi,
@@ -74,7 +75,7 @@ test('an admin triages every ticket from their dashboard', async ({ page, reques
   await test.step('sign in and land on the admin dashboard', async () => {
     await signIn(page, admin.email, { home: ADMIN_HOME })
     await expect(page).toHaveURL(/\/admin$/)
-    await expect(page.getByRole('banner')).toContainText('Facility Admin')
+    await expect(page.getByRole('navigation', { name: 'Main' })).toContainText('Facility Admin')
   })
 
   const queue = page.getByRole('region', { name: /Needs an engineer/ })
@@ -506,15 +507,15 @@ test.describe('on a phone', () => {
     await expect(page.getByRole('list', { name: 'Ticket workflow' })).toHaveCSS('flex-direction', 'column')
     expect(await page.evaluate(() => document.documentElement.scrollWidth > window.innerWidth)).toBe(false)
 
-    // The page links sit on their own row on phones.
-    await page.getByRole('navigation', { name: 'Main' }).getByRole('link', { name: 'People' }).click()
+    // The page links sit in the menu drawer on phones.
+    await goViaMenu(page, 'People')
     await expect(page.getByRole('heading', { level: 1, name: 'People' })).toBeVisible()
     await expect(page.getByRole('table')).toHaveCount(0)
     await expect(page.getByRole('listitem').filter({ hasText: admin.email })).toContainText('Facility Admin')
     expect(await page.evaluate(() => document.documentElement.scrollWidth > window.innerWidth)).toBe(false)
 
     // Facilities: a building dropdown instead of the list, and the floors below it.
-    await page.getByRole('navigation', { name: 'Main' }).getByRole('link', { name: 'Facilities' }).click()
+    await goViaMenu(page, 'Facilities')
     await expect(page.getByRole('heading', { level: 1, name: 'Facilities' })).toBeVisible()
     await expect(page.getByRole('list', { name: 'Buildings' })).toHaveCount(0)
     await choose(page, 'Building', 'Building B')
