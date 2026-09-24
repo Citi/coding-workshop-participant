@@ -8,15 +8,8 @@ import Stack from '@mui/material/Stack'
 import TextField from '@mui/material/TextField'
 
 import { ApiError } from '../../services/apiClient'
+import { NOTE_LIMIT, noteError } from '../../utils/noteValidation'
 import NoteList from './NoteList'
-
-const NOTE_LIMIT = 2000
-
-function noteError(text) {
-  if (!text.trim()) return 'Write a note first.'
-  if (text.trim().length > NOTE_LIMIT) return `Use ${NOTE_LIMIT} characters or fewer.`
-  return ''
-}
 
 /** "Add a note" box. Hidden for closed tickets, since the API rejects those notes. */
 function AddNoteForm({ ticketId, addNote, placeholder, onAdded }) {

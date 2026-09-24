@@ -1,13 +1,9 @@
 import { useState } from 'react'
 import PropTypes from 'prop-types'
-import Alert from '@mui/material/Alert'
+import Box from '@mui/material/Box'
 import Button from '@mui/material/Button'
+import Card from '@mui/material/Card'
 import CircularProgress from '@mui/material/CircularProgress'
-import Dialog from '@mui/material/Dialog'
-import DialogActions from '@mui/material/DialogActions'
-import DialogContent from '@mui/material/DialogContent'
-import DialogContentText from '@mui/material/DialogContentText'
-import DialogTitle from '@mui/material/DialogTitle'
 import TextField from '@mui/material/TextField'
 import Typography from '@mui/material/Typography'
 import PriorityHighIcon from '@mui/icons-material/PriorityHigh'
@@ -17,44 +13,62 @@ import { requestEscalation } from '../../services/ticketService'
 
 const REASON_LIMIT = 1000
 
+/** The card's frame: an icon and title, then the content. Named "Escalation" for screen readers. */
+function EscalationCard({ title, children }) {
+  return (
+    <Card component="section" aria-label="Escalation" sx={{ p: 2.5, display: 'flex', flexDirection: 'column', gap: 1.5 }}>
+      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+        <PriorityHighIcon aria-hidden="true" sx={{ fontSize: 20, color: 'error.main' }} />
+        <Typography component="h2" sx={{ fontSize: 15, fontWeight: 600 }}>
+          {title}
+        </Typography>
+      </Box>
+      {children}
+    </Card>
+  )
+}
+
+EscalationCard.propTypes = {
+  title: PropTypes.string.isRequired,
+  children: PropTypes.node.isRequired,
+}
+
 /**
- * Escalation: shows a request already made, or lets the employee make one with a
- * reason. A ticket can be escalated once, and not after it is closed.
+ * Escalation, right on the page: the employee writes why and sends it. Once sent, the
+ * card shows the request instead. A ticket can be escalated once, and not after it is
+ * closed. Says "review", not "raise the priority": employees never see priority.
  */
 function EscalationPanel({ ticket, onEscalated }) {
-  const [open, setOpen] = useState(false)
   const [reason, setReason] = useState('')
   const [error, setError] = useState('')
   const [sending, setSending] = useState(false)
 
   if (ticket.escalation_requested) {
     return (
-      <Alert severity="warning" icon={<PriorityHighIcon />}>
-        <strong>Escalation requested.</strong> A facility admin will review it.
-        <Typography variant="body2" sx={{ mt: 0.5 }}>
+      <EscalationCard title="Escalation requested">
+        <Typography sx={{ fontSize: 13, color: 'text.secondary' }}>A Facility Admin will review it.</Typography>
+        <Typography sx={{ fontSize: 14, whiteSpace: 'pre-wrap', overflowWrap: 'anywhere' }}>
           Your reason: {ticket.escalation_reason}
         </Typography>
-      </Alert>
+      </EscalationCard>
     )
   }
   if (ticket.status === 'closed') {
-    return <Typography color="text.secondary">Closed tickets can&apos;t be escalated.</Typography>
-  }
-
-  const close = () => {
-    setOpen(false)
-    setError('')
+    return (
+      <EscalationCard title="Request escalation">
+        <Typography sx={{ fontSize: 13, color: 'text.secondary' }}>Closed tickets can&apos;t be escalated.</Typography>
+      </EscalationCard>
+    )
   }
 
   const handleSubmit = async (event) => {
     event.preventDefault()
-    if (!reason.trim()) return setError('Tell the facility admin why this needs more attention.')
+    if (!reason.trim()) return setError('Tell the Facility Admin why this needs more attention.')
     if (reason.trim().length > REASON_LIMIT) return setError(`Use ${REASON_LIMIT} characters or fewer.`)
 
     setSending(true)
     try {
       await requestEscalation(ticket.ticket_id, reason)
-      setOpen(false)
       setReason('')
       onEscalated()
     } catch (err) {
@@ -66,55 +80,39 @@ function EscalationPanel({ ticket, onEscalated }) {
   }
 
   return (
-    <>
-      <Typography color="text.secondary" sx={{ mb: 1.5 }}>
-        Is this getting worse, or not being handled? Ask a facility admin to take a look.
+    <EscalationCard title="Request escalation">
+      <Typography sx={{ fontSize: 13, lineHeight: 1.45, color: 'text.secondary' }}>
+        If this is getting worse or blocking important work, ask a Facility Admin to review it.
       </Typography>
-      <Button variant="outlined" startIcon={<PriorityHighIcon />} onClick={() => setOpen(true)}>
-        Request escalation
-      </Button>
-
-      <Dialog open={open} onClose={sending ? undefined : close} fullWidth maxWidth="sm">
-        <form onSubmit={handleSubmit} noValidate>
-          <DialogTitle>Request escalation</DialogTitle>
-          <DialogContent>
-            <DialogContentText sx={{ mb: 2 }}>
-              A facility admin will review ticket #{ticket.ticket_id} and follow up.
-            </DialogContentText>
-            <TextField
-              id="escalation-reason"
-              label="Why does this need more attention?"
-              multiline
-              minRows={3}
-              required
-              autoFocus
-              value={reason}
-              onChange={(event) => {
-                setReason(event.target.value)
-                if (error) setError('')
-              }}
-              error={Boolean(error)}
-              helperText={error || `${reason.trim().length}/${REASON_LIMIT}`}
-              disabled={sending}
-              fullWidth
-            />
-          </DialogContent>
-          <DialogActions>
-            <Button onClick={close} disabled={sending}>
-              Cancel
-            </Button>
-            <Button
-              type="submit"
-              variant="contained"
-              disabled={sending}
-              startIcon={sending ? <CircularProgress size={16} color="inherit" /> : null}
-            >
-              {sending ? 'Sending…' : 'Request escalation'}
-            </Button>
-          </DialogActions>
-        </form>
-      </Dialog>
-    </>
+      <Box component="form" onSubmit={handleSubmit} noValidate sx={{ display: 'flex', flexDirection: 'column', gap: 1.5 }}>
+        <TextField
+          id="escalation-reason"
+          label="Reason"
+          multiline
+          minRows={3}
+          required
+          value={reason}
+          onChange={(event) => {
+            setReason(event.target.value)
+            if (error) setError('')
+          }}
+          error={Boolean(error)}
+          helperText={error || `${reason.trim().length}/${REASON_LIMIT}`}
+          disabled={sending}
+          fullWidth
+        />
+        <Button
+          type="submit"
+          variant="outlined"
+          color="error"
+          disabled={sending}
+          startIcon={sending ? <CircularProgress size={16} color="inherit" /> : null}
+        >
+          {sending ? 'Sending…' : 'Send escalation request'}
+        </Button>
+      </Box>
+      <Typography sx={{ fontSize: 12, color: 'text.secondary' }}>A Facility Admin will review your request.</Typography>
+    </EscalationCard>
   )
 }
 

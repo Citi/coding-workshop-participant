@@ -49,7 +49,7 @@ test('a reopened ticket keeps every step in its status history', async ({ page, 
   await signIn(page, owner.email)
   await page.goto(`/tickets/${ticketId}`)
 
-  const rows = page.getByRole('list', { name: 'Status history' }).getByRole('listitem')
+  const rows = page.getByRole('list', { name: 'Updates and notes' }).getByRole('listitem')
   await expect(rows).toHaveCount(4)
   await expect(rows.nth(0)).toContainText('Opened')
   await expect(rows.nth(0)).toContainText('You · Employee')
@@ -149,7 +149,7 @@ test.describe('on a phone', () => {
     expect(await page.evaluate(() => document.documentElement.scrollWidth > window.innerWidth)).toBe(false)
 
     await card.click()
-    await expect(page.getByRole('list', { name: 'Ticket workflow' })).toHaveCSS('flex-direction', 'column')
+    await expect(page.getByRole('list', { name: 'Ticket progress' })).toHaveCSS('flex-direction', 'column')
     expect(await page.evaluate(() => document.documentElement.scrollWidth > window.innerWidth)).toBe(false)
   })
 

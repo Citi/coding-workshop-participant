@@ -265,7 +265,7 @@ describe('CreateTicketPage: submitting', () => {
       floor_id: '3',
       seat_id: '3',
     })
-    expect(await screen.findByRole('heading', { level: 1, name: '#12 Printer jam' })).toBeInTheDocument()
+    expect(await screen.findByRole('heading', { level: 1, name: 'Printer jam' })).toBeInTheDocument()
     expect(getMyTicket).toHaveBeenCalledWith({ ticketId: '12' }, expect.anything())
     expect(screen.getByRole('alert')).toHaveTextContent('Ticket created.')
   })

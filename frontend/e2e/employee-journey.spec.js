@@ -65,37 +65,36 @@ test('an employee reports an issue and follows it through', async ({ page }) => 
     await expect(details).toContainText('Building A · Floor 3 · Seat 301')
     await expect(details).toContainText('Not assigned yet')
 
-    const history = page.getByRole('list', { name: 'Status history' }).getByRole('listitem')
-    await expect(history).toHaveCount(1)
-    await expect(history).toContainText('Opened')
-    await expect(history).toContainText('You · Employee')
+    const updates = page.getByRole('list', { name: 'Updates and notes' }).getByRole('listitem')
+    await expect(updates).toHaveCount(1)
+    await expect(updates).toContainText('Opened')
+    await expect(updates).toContainText('You · Employee')
+    await expect(page.locator('body')).not.toContainText(/priority|urgency|\bP[123]\b/i)
   })
 
   await test.step('add a note', async () => {
-    const notes = page.getByRole('region', { name: 'Notes' })
-    await expect(notes.getByText('No notes yet.')).toBeVisible()
-    await notes.getByRole('textbox', { name: 'Add a note' }).fill('It is getting worse.')
-    await notes.getByRole('button', { name: 'Add note' }).click()
+    const thread = page.getByRole('region', { name: 'Updates & notes' })
+    await thread.getByRole('textbox', { name: 'Add a note' }).fill('It is getting worse.')
+    await thread.getByRole('button', { name: 'Add note' }).click()
 
-    await expect(notes.getByRole('listitem')).toHaveCount(1)
-    await expect(notes.getByRole('listitem')).toContainText('You · Employee')
-    await expect(notes.getByRole('listitem')).toContainText('It is getting worse.')
+    const items = thread.getByRole('listitem')
+    await expect(items).toHaveCount(2)
+    await expect(items.last()).toContainText('You · Employee')
+    await expect(items.last()).toContainText('It is getting worse.')
+    await expect(thread.getByRole('textbox', { name: 'Add a note' })).toHaveValue('')
   })
 
   await test.step('request escalation', async () => {
     const escalation = page.getByRole('region', { name: 'Escalation' })
-    await escalation.getByRole('button', { name: 'Request escalation' }).click()
-    const dialog = page.getByRole('dialog', { name: 'Request escalation' })
-    await dialog.getByRole('textbox').fill('I cannot read my documents.')
-    await dialog.getByRole('button', { name: 'Request escalation' }).click()
+    await escalation.getByRole('textbox', { name: /^Reason/ }).fill('I cannot read my documents.')
+    await escalation.getByRole('button', { name: 'Send escalation request' }).click()
 
-    await expect(dialog).toBeHidden()
-    await expect(escalation).toContainText('Escalation requested.')
+    await expect(escalation.getByRole('heading', { name: 'Escalation requested' })).toBeVisible()
     await expect(escalation).toContainText('Your reason: I cannot read my documents.')
   })
 
   await test.step('see it on the dashboard and find it by search', async () => {
-    await page.getByRole('link', { name: 'Back to dashboard' }).click()
+    await page.getByRole('navigation', { name: 'Breadcrumb' }).getByRole('link', { name: 'Dashboard' }).click()
 
     await expect(page.getByRole('region', { name: title })).toContainText('Your active ticket')
     await expect(page.getByText(/^1 active ticket · last update /)).toBeVisible()
