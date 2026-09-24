@@ -12,14 +12,6 @@ export const STATUSES = {
   closed: { label: 'Closed', dot: '#757575', chip: { bg: '#ECEFF2', fg: '#4A5561' } },
 }
 
-// Employees see urgency and impact, which they chose themselves. Priority is an
-// internal triage field for engineers and admins and is never shown to employees.
-export const URGENCIES = {
-  low: { label: 'Low', dot: '#757575' },
-  medium: { label: 'Medium', dot: '#E65100' },
-  high: { label: 'High', dot: '#C62828' },
-}
-
 /**
  * Internal triage priority, set from the impact. Staff screens only: employee pages
  * must never render it. `chip` is the MUI Chip color and variant; the text always

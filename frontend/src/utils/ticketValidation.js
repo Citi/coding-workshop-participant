@@ -8,17 +8,15 @@
 /** Form fields in on-screen order, so the first invalid one can be focused. */
 export const TICKET_FIELDS = [
   'title',
-  'short_description',
-  'category',
   'description',
-  'urgency',
+  'category',
   'affected_scope',
   'building_id',
   'floor_id',
   'seat_id',
 ]
 
-export const LIMITS = { title: 150, short_description: 280, description: 5000 }
+export const LIMITS = { title: 150, description: 5000 }
 
 /** Which location levels a scope needs: "me" needs a seat, "floor" a floor. */
 export function requiredLocation(scope) {
@@ -33,12 +31,9 @@ function text(value, limit, emptyMessage) {
 
 const rules = {
   title: ({ title }) => text(title, LIMITS.title, 'Give the issue a short title.'),
-  short_description: ({ short_description }) =>
-    text(short_description, LIMITS.short_description, 'Sum up the issue in a sentence.'),
   description: ({ description }) =>
     text(description, LIMITS.description, "Describe what's happening."),
   category: ({ category }) => (category ? '' : 'Choose a category.'),
-  urgency: ({ urgency }) => (urgency ? '' : 'Choose how urgent this is.'),
   affected_scope: ({ affected_scope }) => (affected_scope ? '' : "Choose who's affected."),
   building_id: ({ building_id }) => (building_id ? '' : 'Choose a building.'),
   floor_id: ({ affected_scope, floor_id }) =>

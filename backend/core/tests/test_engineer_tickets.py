@@ -23,7 +23,7 @@ def queue(create_ticket, jane, eve, loc, engineers, run_sql) -> dict[str, int]:
     loose   Jane  P3  Building A  open         unassigned
     """
     building = {"affected_scope": "building", "floor_id": None, "seat_id": None}
-    lights = create_ticket(jane, title="Lobby lights out", short_description="Dark lobby", **building)
+    lights = create_ticket(jane, title="Lobby lights out", description="The lobby is dark.", **building)
     wifi = create_ticket(eve)
     lamp = create_ticket(jane, title="Lamp broken", building_id=loc["B"], **building)
     kims = create_ticket(jane, title="Kim's ticket")

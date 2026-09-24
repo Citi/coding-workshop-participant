@@ -42,10 +42,8 @@ describe('ticketService: details, notes and escalation', () => {
 
 const FORM = {
   title: '  Printer jam ',
-  short_description: ' Tray 2 stuck ',
   description: ' Every job jams. ',
   category: 'printer',
-  urgency: 'high',
   affected_scope: 'me',
   building_id: '1',
   floor_id: '3',
@@ -60,10 +58,8 @@ describe('ticketService.createTicket', () => {
 
     expect(post).toHaveBeenCalledWith('/tickets', {
       title: 'Printer jam',
-      short_description: 'Tray 2 stuck',
       description: 'Every job jams.',
       category: 'printer',
-      urgency: 'high',
       affected_scope: 'me',
       building_id: 1,
       floor_id: 3,

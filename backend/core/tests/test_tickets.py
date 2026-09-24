@@ -68,7 +68,6 @@ def test_create_checks_the_location_hierarchy(
         {"seat_id": None},  # scope "me" without a seat
         {"affected_scope": "floor", "floor_id": None, "seat_id": None},
         {"category": "plumbing"},
-        {"urgency": "urgent"},
         {"title": "   "},
         {"description": "x" * 5001},
     ],
@@ -76,6 +75,26 @@ def test_create_checks_the_location_hierarchy(
 def test_create_rejects_invalid_input(client, api, jane, ticket_payload, overrides) -> None:
     response = client.post(f"{api}/tickets", json=ticket_payload(**overrides), headers=jane)
     assert response.status_code == 422
+
+
+def test_create_returns_no_urgency_or_short_description(client, api, jane, ticket_payload) -> None:
+    body = client.post(f"{api}/tickets", json=ticket_payload(), headers=jane).json()
+    assert "urgency" not in body
+    assert "short_description" not in body
+
+
+def test_create_ignores_urgency_and_short_description_from_old_clients(
+    client, api, jane, ticket_payload, run_sql
+) -> None:
+    # Tickets no longer have these fields. Old clients that still send them aren't
+    # rejected; the values are simply dropped.
+    payload = ticket_payload(urgency="high", short_description="Old field")
+    response = client.post(f"{api}/tickets", json=payload, headers=jane)
+    assert response.status_code == 201, response.text
+    columns = run_sql(
+        "SELECT column_name FROM information_schema.columns WHERE table_name = 'tickets'"
+    )
+    assert {"urgency", "short_description"}.isdisjoint({row["column_name"] for row in columns})
 
 
 def test_create_requires_a_signed_in_user(client, api, ticket_payload) -> None:
@@ -115,14 +134,14 @@ def test_list_is_most_recently_updated_first(client, api, jane, create_ticket, r
 
 @pytest.fixture
 def mixed_tickets(create_ticket, jane, run_sql) -> dict[str, int]:
-    """Three tickets that differ in status, urgency, scope and text."""
+    """Three tickets that differ in status, scope and text."""
     wifi = create_ticket(jane)["ticket_id"]
     printer = create_ticket(
-        jane, title="Printer jam", short_description="Tray 2 is 100% stuck",
-        category="printer", urgency="high", affected_scope="floor", seat_id=None,
+        jane, title="Printer jam", description="Tray 2 is 100% stuck",
+        category="printer", affected_scope="floor", seat_id=None,
     )["ticket_id"]
     lamp = create_ticket(
-        jane, title="Lamp_broken", short_description="Flickers", urgency="low",
+        jane, title="Lamp_broken", description="Flickers",
         affected_scope="building", floor_id=None, seat_id=None,
     )["ticket_id"]
     run_sql("UPDATE tickets SET status = 'closed' WHERE ticket_id = %s", (lamp,))
@@ -135,13 +154,13 @@ def mixed_tickets(create_ticket, jane, run_sql) -> dict[str, int]:
         ({"view": "active"}, {"wifi", "printer"}),
         ({"view": "closed"}, {"lamp"}),
         ({"status": "open"}, {"wifi", "printer"}),
-        ({"urgency": "high"}, {"printer"}),
         ({"q": "WI-FI"}, {"wifi"}),
-        ({"q": "tray"}, {"printer"}),
+        ({"q": "tray"}, {"printer"}),  # in the full description
+        ({"q": "LAPTOP"}, {"wifi"}),
         ({"q": "%"}, {"printer"}),
         ({"q": "_"}, {"lamp"}),
         ({"q": "nothing matches"}, set()),
-        ({"view": "active", "urgency": "medium"}, {"wifi"}),
+        ({"view": "active", "q": "wi-fi"}, {"wifi"}),
         ({"view": "closed", "status": "open"}, set()),
     ],
 )
@@ -154,7 +173,9 @@ def test_list_search_matches_ticket_id(client, api, jane, mixed_tickets) -> None
     assert _ids(client, api, jane, q=str(mixed_tickets["printer"])) == [mixed_tickets["printer"]]
 
 
-@pytest.mark.parametrize("params", [{"priority": "P1"}, {"priority": ""}, {"unknown": "x"}])
+@pytest.mark.parametrize(
+    "params", [{"priority": "P1"}, {"priority": ""}, {"urgency": "high"}, {"unknown": "x"}]
+)
 def test_list_has_no_priority_filter(client, api, jane, params) -> None:
     response = client.get(f"{api}/tickets", headers=jane, params=params)
     assert response.status_code == 422

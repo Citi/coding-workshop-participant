@@ -54,7 +54,7 @@ describe('requests', () => {
   it('adds query params, skipping empty values', async () => {
     const fetchMock = mockFetch(200, [])
 
-    await api.get('/tickets', { params: { view: 'active', q: 'wi fi', status: '', urgency: null } })
+    await api.get('/tickets', { params: { view: 'active', q: 'wi fi', status: '', building_id: null } })
 
     expect(fetchMock.mock.calls[0][0]).toBe('/api/core/tickets?view=active&q=wi+fi')
   })

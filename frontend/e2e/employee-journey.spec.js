@@ -49,15 +49,13 @@ test('an employee reports an issue and follows it through', async ({ page }) => 
   await test.step('create a ticket, choosing Building -> Floor -> Seat', async () => {
     await page.getByRole('main').getByRole('link', { name: 'Report an issue' }).click()
     await page.getByLabel(/^Title/).fill(title)
-    await page.getByLabel(/^Short description/).fill('Lamp at my desk flickers')
-    await choose(page, 'Category', 'Electrical / Power')
+    await page.getByRole('radio', { name: 'Electrical / Power' }).check()
     await page.getByLabel(/^Full description/).fill('Started this morning. Hard to read.')
-    await page.getByRole('radio', { name: /^High/ }).check()
     await page.getByRole('radio', { name: /^Just me/ }).check()
     await choose(page, 'Building', 'Building A')
     await choose(page, 'Floor', 'Floor 3')
     await choose(page, 'Seat', 'Seat 301')
-    await page.getByRole('button', { name: 'Create ticket' }).click()
+    await page.getByRole('button', { name: 'Submit ticket' }).click()
 
     await expect(page).toHaveURL(/\/tickets\/\d+$/)
     await expect(page.getByText('Ticket created.')).toBeVisible()
@@ -103,7 +101,6 @@ test('an employee reports an issue and follows it through', async ({ page }) => 
     await expect(page.getByText(/^1 active ticket · last update /)).toBeVisible()
     const table = page.getByRole('table', { name: 'My tickets' })
     await expect(table.getByRole('row')).toHaveCount(2)
-    await expect(table).toContainText('High')
     await expect(table).toContainText('Just me')
 
     await page.getByRole('searchbox', { name: 'Search' }).fill('no such ticket')

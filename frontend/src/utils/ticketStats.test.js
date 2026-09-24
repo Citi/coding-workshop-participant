@@ -4,13 +4,11 @@ import { makeTicket, TICKETS } from '../test/fixtures'
 import { summarizeTickets } from './ticketStats'
 
 describe('summarizeTickets', () => {
-  it('counts every status and the active tickets by urgency', () => {
+  it('counts every status and the active tickets', () => {
     const stats = summarizeTickets(TICKETS)
 
     expect(stats.activeCount).toBe(3)
     expect(stats.byStatus).toEqual({ open: 1, in_progress: 1, blocked: 1, resolved: 0, closed: 1 })
-    // The closed (medium) ticket is not counted as active.
-    expect(stats.activeByUrgency).toEqual({ low: 0, medium: 2, high: 1 })
   })
 
   it('picks the most recently updated ticket that is not closed', () => {
@@ -34,7 +32,6 @@ describe('summarizeTickets', () => {
     expect(summarizeTickets([])).toEqual({
       activeCount: 0,
       byStatus: { open: 0, in_progress: 0, blocked: 0, resolved: 0, closed: 0 },
-      activeByUrgency: { low: 0, medium: 0, high: 0 },
       mostRecentActive: null,
       lastUpdatedAt: null,
     })

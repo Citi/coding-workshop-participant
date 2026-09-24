@@ -9,11 +9,10 @@ import { PRIORITIES, SCOPES, STATUSES } from '../../utils/ticketFormat'
 import EscalatedChip from './EscalatedChip'
 import PriorityChip from './PriorityChip'
 import StatusLabel from './StatusLabel'
-import UrgencyLabel from './UrgencyLabel'
 
 /**
- * The top of a staff ticket page: "#id title", its priority, status, urgency and impact,
- * the short description, and the employee's escalation reason when they asked for review.
+ * The top of a staff ticket page: "#id title", its priority, status and impact, and the
+ * employee's escalation reason when they asked for review.
  * Staff screens only, since it shows priority.
  */
 function StaffTicketSummary({ ticket: t }) {
@@ -28,14 +27,10 @@ function StaffTicketSummary({ ticket: t }) {
           <PriorityChip priority={t.priority} />
           <StatusLabel status={t.status} />
           <Typography component="span" color="text.secondary">
-            Urgency: <UrgencyLabel urgency={t.urgency} />
-          </Typography>
-          <Typography component="span" color="text.secondary">
             Impact: {SCOPES[t.affected_scope]}
           </Typography>
           {t.escalation_requested && <EscalatedChip />}
         </Stack>
-        <Typography sx={{ mt: 1 }}>{t.short_description}</Typography>
       </Box>
 
       {t.escalation_requested && (
@@ -52,10 +47,8 @@ StaffTicketSummary.propTypes = {
   ticket: PropTypes.shape({
     ticket_id: PropTypes.number.isRequired,
     title: PropTypes.string.isRequired,
-    short_description: PropTypes.string.isRequired,
     priority: PropTypes.oneOf(Object.keys(PRIORITIES)).isRequired,
     status: PropTypes.oneOf(Object.keys(STATUSES)).isRequired,
-    urgency: PropTypes.string.isRequired,
     affected_scope: PropTypes.oneOf(Object.keys(SCOPES)).isRequired,
     escalation_requested: PropTypes.bool.isRequired,
     escalation_reason: PropTypes.string,

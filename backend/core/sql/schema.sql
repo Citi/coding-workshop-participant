@@ -74,13 +74,11 @@ CREATE UNIQUE INDEX IF NOT EXISTS seats_floor_number_ci_key ON seats (floor_id, 
 CREATE TABLE IF NOT EXISTS tickets (
     ticket_id            INTEGER GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
     title                TEXT NOT NULL,
-    short_description    TEXT NOT NULL,
     description          TEXT NOT NULL,
     category             TEXT NOT NULL CHECK (category IN (
                              'network', 'hardware', 'printer', 'hvac',
                              'electrical', 'furniture', 'building_facilities', 'other'
                          )),
-    urgency              TEXT NOT NULL CHECK (urgency IN ('low', 'medium', 'high')),
     affected_scope       TEXT NOT NULL CHECK (affected_scope IN ('me', 'floor', 'building')),
     priority             TEXT NOT NULL CHECK (priority IN ('P1', 'P2', 'P3')),
     status               TEXT NOT NULL DEFAULT 'open' CHECK (status IN (
@@ -103,6 +101,12 @@ CREATE TABLE IF NOT EXISTS tickets (
     -- and the seat to the floor is checked in ticket_service before insert.
     CHECK (seat_id IS NULL OR floor_id IS NOT NULL)
 );
+
+-- Tickets no longer have an employee-chosen urgency or a short description: the title and
+-- full description say what's wrong, and priority comes from who is affected. Databases
+-- created before this drop the columns here.
+ALTER TABLE tickets DROP COLUMN IF EXISTS urgency;
+ALTER TABLE tickets DROP COLUMN IF EXISTS short_description;
 
 CREATE INDEX IF NOT EXISTS idx_tickets_created_by ON tickets (created_by_user_id);
 CREATE INDEX IF NOT EXISTS idx_tickets_assigned_to ON tickets (assigned_to_user_id);

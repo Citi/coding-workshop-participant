@@ -15,7 +15,6 @@ import useIsDesktop from '../../hooks/useIsDesktop'
 import useIsMobile from '../../hooks/useIsMobile'
 import { formatDateTime, formatLocation, SCOPES } from '../../utils/ticketFormat'
 import StatusChip from '../tickets/StatusChip'
-import UrgencyLabel from '../tickets/UrgencyLabel'
 
 // One line per cell; the full text is in the cell's tooltip.
 const oneLine = { overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }
@@ -39,7 +38,6 @@ function TicketCards({ tickets }) {
               {formatLocation(t)}
             </Typography>
             <Box sx={{ display: 'flex', flexWrap: 'wrap', columnGap: 2, rowGap: 0.5, mt: 0.5, fontSize: 13, color: 'text.secondary' }}>
-              <UrgencyLabel urgency={t.urgency} />
               <span>{SCOPES[t.affected_scope]}</span>
               <span>Updated {formatDateTime(t.updated_at)}</span>
             </Box>
@@ -53,10 +51,10 @@ function TicketCards({ tickets }) {
 TicketCards.propTypes = { tickets: PropTypes.array.isRequired }
 
 /**
- * The employee's tickets. Desktop: a full table. Tablet: no Impact column, and the
- * location sits under the title so the title keeps its room. Phone: stacked cards. Long titles and locations stay on one line in the table, with
+ * The employee's tickets. Desktop: a full table. Tablet: the location sits under the
+ * title so the title keeps its room. Phone: stacked cards. Long titles and locations stay on one line in the table, with
  * the full text on hover; cards wrap them instead. Each ticket links to its details.
- * Never shows priority: employees see urgency and impact.
+ * Never shows priority: employees see impact (who is affected) and status.
  */
 function TicketList({ tickets }) {
   const isMobile = useIsMobile()
@@ -73,8 +71,7 @@ function TicketList({ tickets }) {
             <TableCell sx={headCell}>{isDesktop ? 'Title' : 'Title and location'}</TableCell>
             {isDesktop && <TableCell sx={{ ...headCell, width: '24%' }}>Location</TableCell>}
             <TableCell sx={{ ...headCell, width: 128 }}>Status</TableCell>
-            <TableCell sx={{ ...headCell, width: 104 }}>Urgency</TableCell>
-            {isDesktop && <TableCell sx={{ ...headCell, width: 104 }}>Impact</TableCell>}
+            <TableCell sx={{ ...headCell, width: 120 }}>Impact</TableCell>
             <TableCell sx={{ ...headCell, width: 150, pr: 2.5 }}>Updated</TableCell>
           </TableRow>
         </TableHead>
@@ -102,10 +99,7 @@ function TicketList({ tickets }) {
                 <TableCell>
                   <StatusChip status={t.status} size="small" />
                 </TableCell>
-                <TableCell sx={{ fontSize: '13px !important' }}>
-                  <UrgencyLabel urgency={t.urgency} />
-                </TableCell>
-                {isDesktop && <TableCell sx={{ fontSize: '13px !important' }}>{SCOPES[t.affected_scope]}</TableCell>}
+                <TableCell sx={{ fontSize: '13px !important' }}>{SCOPES[t.affected_scope]}</TableCell>
                 <TableCell sx={{ pr: 2.5, whiteSpace: 'nowrap', fontSize: '13px !important', color: 'text.secondary' }}>
                   {formatDateTime(t.updated_at)}
                 </TableCell>
@@ -124,7 +118,6 @@ TicketList.propTypes = {
       ticket_id: PropTypes.number.isRequired,
       title: PropTypes.string.isRequired,
       status: PropTypes.string.isRequired,
-      urgency: PropTypes.string.isRequired,
       affected_scope: PropTypes.string.isRequired,
       building_name: PropTypes.string.isRequired,
       updated_at: PropTypes.string.isRequired,

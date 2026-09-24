@@ -19,7 +19,6 @@ import StatusLabel from '../components/tickets/StatusLabel'
 import TicketFacts from '../components/tickets/TicketFacts'
 import TicketNotes from '../components/tickets/TicketNotes'
 import TicketWorkflow from '../components/tickets/TicketWorkflow'
-import UrgencyLabel from '../components/tickets/UrgencyLabel'
 import useApiData from '../hooks/useApiData'
 import { addNote, getMyTicket, listNotes, listStatusHistory } from '../services/ticketService'
 import { SCOPES } from '../utils/ticketFormat'
@@ -111,13 +110,9 @@ function TicketDetailsPage() {
         <Stack direction="row" sx={{ mt: 1, flexWrap: 'wrap', columnGap: 3, rowGap: 1 }}>
           <StatusLabel status={t.status} />
           <Typography component="span" color="text.secondary">
-            Urgency: <UrgencyLabel urgency={t.urgency} />
-          </Typography>
-          <Typography component="span" color="text.secondary">
             Impact: {SCOPES[t.affected_scope]}
           </Typography>
         </Stack>
-        <Typography sx={{ mt: 1 }}>{t.short_description}</Typography>
       </Box>
 
       <Panel title="Progress">

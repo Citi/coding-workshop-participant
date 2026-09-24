@@ -17,11 +17,11 @@ describe('showCounts', () => {
 
 describe('myTicketsQuery', () => {
   it.each([
-    [{ show: 'active', urgency: '', q: '' }, { view: 'active' }],
-    [{ show: 'closed', urgency: '', q: '' }, { view: 'closed' }],
-    [{ show: 'all', urgency: '', q: '' }, {}],
-    [{ show: 'blocked', urgency: '', q: '' }, { status: 'blocked' }],
-    [{ show: 'active', urgency: 'high', q: 'printer' }, { view: 'active', urgency: 'high', q: 'printer' }],
+    [{ show: 'active', q: '' }, { view: 'active' }],
+    [{ show: 'closed', q: '' }, { view: 'closed' }],
+    [{ show: 'all', q: '' }, {}],
+    [{ show: 'blocked', q: '' }, { status: 'blocked' }],
+    [{ show: 'active', q: 'printer' }, { view: 'active', q: 'printer' }],
   ])('%j -> %j', (filters, expected) => {
     expect(myTicketsQuery(filters)).toEqual(expected)
   })

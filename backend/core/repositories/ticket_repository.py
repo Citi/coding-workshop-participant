@@ -12,7 +12,6 @@ def list_for_creator(
     user_id: int,
     *,
     status: str | None,
-    urgency: str | None,
     closed: bool | None,
     search: str | None,
 ) -> list[dict[str, Any]]:
@@ -23,8 +22,8 @@ def list_for_creator(
     return conn.execute(
         """
         SELECT
-            t.ticket_id, t.title, t.short_description, t.category, t.status,
-            t.urgency, t.affected_scope, t.escalation_requested,
+            t.ticket_id, t.title, t.category, t.status,
+            t.affected_scope, t.escalation_requested,
             t.building_id, b.building_name, t.floor_id, f.floor_number,
             t.seat_id, s.seat_number, t.created_at, t.updated_at
         FROM tickets t
@@ -33,18 +32,16 @@ def list_for_creator(
         LEFT JOIN seats s ON s.seat_id = t.seat_id
         WHERE t.created_by_user_id = %(user_id)s
           AND (%(status)s::text IS NULL OR t.status = %(status)s)
-          AND (%(urgency)s::text IS NULL OR t.urgency = %(urgency)s)
           AND (%(closed)s::boolean IS NULL OR (t.status = 'closed') = %(closed)s)
           AND (%(search)s::text IS NULL
                OR t.title ILIKE %(pattern)s
-               OR t.short_description ILIKE %(pattern)s
+               OR t.description ILIKE %(pattern)s
                OR t.ticket_id::text = %(search)s)
         ORDER BY t.updated_at DESC, t.ticket_id DESC
         """,
         {
             "user_id": user_id,
             "status": status,
-            "urgency": urgency,
             "closed": closed,
             "search": search,
             "pattern": like_pattern(search) if search else None,
@@ -60,8 +57,8 @@ def get_detail(conn: psycopg.Connection, ticket_id: int) -> dict[str, Any] | Non
     return conn.execute(
         """
         SELECT
-            t.ticket_id, t.title, t.short_description, t.description, t.category,
-            t.urgency, t.affected_scope, t.status, t.building_id,
+            t.ticket_id, t.title, t.description, t.category,
+            t.affected_scope, t.status, t.building_id,
             t.floor_id, t.seat_id, t.created_by_user_id, t.assigned_to_user_id,
             t.escalation_requested, t.escalation_reason, t.blocked_reason,
             t.created_at, t.updated_at, t.acknowledged_at, t.assigned_at, t.resolved_at,
@@ -83,7 +80,6 @@ def list_all(
     *,
     status: str | None,
     priority: str | None,
-    urgency: str | None,
     category: str | None,
     building_id: int | None,
     assigned: bool | None,
@@ -100,8 +96,8 @@ def list_all(
     return conn.execute(
         """
         SELECT
-            t.ticket_id, t.title, t.short_description, t.category, t.status,
-            t.urgency, t.affected_scope, t.priority, t.escalation_requested,
+            t.ticket_id, t.title, t.category, t.status,
+            t.affected_scope, t.priority, t.escalation_requested,
             t.building_id, b.building_name, t.floor_id, f.floor_number,
             t.seat_id, s.seat_number, t.created_at, t.updated_at,
             t.created_by_user_id, creator.full_name AS created_by_name,
@@ -114,7 +110,6 @@ def list_all(
         LEFT JOIN users engineer ON engineer.user_id = t.assigned_to_user_id
         WHERE (%(status)s::text IS NULL OR t.status = %(status)s)
           AND (%(priority)s::text IS NULL OR t.priority = %(priority)s)
-          AND (%(urgency)s::text IS NULL OR t.urgency = %(urgency)s)
           AND (%(category)s::text IS NULL OR t.category = %(category)s)
           AND (%(building_id)s::integer IS NULL OR t.building_id = %(building_id)s)
           AND (%(assigned)s::boolean IS NULL
@@ -124,7 +119,7 @@ def list_all(
           AND (%(closed)s::boolean IS NULL OR (t.status = 'closed') = %(closed)s)
           AND (%(search)s::text IS NULL
                OR t.title ILIKE %(pattern)s
-               OR t.short_description ILIKE %(pattern)s
+               OR t.description ILIKE %(pattern)s
                OR creator.full_name ILIKE %(pattern)s
                OR creator.email ILIKE %(pattern)s
                OR t.ticket_id::text = %(search)s)
@@ -133,7 +128,6 @@ def list_all(
         {
             "status": status,
             "priority": priority,
-            "urgency": urgency,
             "category": category,
             "building_id": building_id,
             "assigned": assigned,
@@ -179,8 +173,8 @@ def get_admin_detail(conn: psycopg.Connection, ticket_id: int) -> dict[str, Any]
     return conn.execute(
         """
         SELECT
-            t.ticket_id, t.title, t.short_description, t.description, t.category,
-            t.urgency, t.affected_scope, t.priority, t.status, t.building_id,
+            t.ticket_id, t.title, t.description, t.category,
+            t.affected_scope, t.priority, t.status, t.building_id,
             t.floor_id, t.seat_id, t.created_by_user_id, t.assigned_to_user_id,
             t.escalation_requested, t.escalation_reason, t.blocked_reason,
             t.created_at, t.updated_at, t.acknowledged_at, t.assigned_at, t.resolved_at,
@@ -344,10 +338,8 @@ def insert(
     conn: psycopg.Connection,
     *,
     title: str,
-    short_description: str,
     description: str,
     category: str,
-    urgency: str,
     affected_scope: str,
     priority: str,
     building_id: int,
@@ -359,19 +351,19 @@ def insert(
     return conn.execute(
         """
         INSERT INTO tickets (
-            title, short_description, description, category, urgency,
+            title, description, category,
             affected_scope, priority, building_id, floor_id, seat_id, created_by_user_id
         )
-        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
         RETURNING
-            ticket_id, title, short_description, description, category, urgency,
+            ticket_id, title, description, category,
             affected_scope, status, building_id, floor_id, seat_id,
             created_by_user_id, assigned_to_user_id, escalation_requested,
             escalation_reason, blocked_reason, created_at, updated_at,
             acknowledged_at, assigned_at, resolved_at
         """,
         (
-            title, short_description, description, category, urgency,
+            title, description, category,
             affected_scope, priority, building_id, floor_id, seat_id, created_by_user_id,
         ),
     ).fetchone()

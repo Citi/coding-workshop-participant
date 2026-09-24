@@ -1025,7 +1025,7 @@
             "description": "",
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"title\": \"Wi-Fi keeps dropping\",\n  \"short_description\": \"Disconnects every few minutes\",\n  \"description\": \"Since this morning my laptop loses Wi-Fi every 5-10 minutes.\",\n  \"category\": \"network\",\n  \"urgency\": \"medium\",\n  \"affected_scope\": \"floor\",\n  \"building_id\": {{buildingId}}\n}",
+              "raw": "{\n  \"title\": \"Wi-Fi keeps dropping\",\n  \"description\": \"Since this morning my laptop loses Wi-Fi every 5-10 minutes.\",\n  \"category\": \"network\",\n  \"affected_scope\": \"floor\",\n  \"building_id\": {{buildingId}}\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -1068,7 +1068,7 @@
             "description": "",
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"title\": \"Wi-Fi keeps dropping\",\n  \"short_description\": \"Disconnects every few minutes\",\n  \"description\": \"Since this morning my laptop loses Wi-Fi every 5-10 minutes.\",\n  \"category\": \"network\",\n  \"urgency\": \"medium\",\n  \"affected_scope\": \"building\",\n  \"building_id\": {{missingId}}\n}",
+              "raw": "{\n  \"title\": \"Wi-Fi keeps dropping\",\n  \"description\": \"Since this morning my laptop loses Wi-Fi every 5-10 minutes.\",\n  \"category\": \"network\",\n  \"affected_scope\": \"building\",\n  \"building_id\": {{missingId}}\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -1111,7 +1111,7 @@
             "description": "Scope 'me' needs building, floor and seat. The server sets status=open, the creator and an internal priority (never returned).",
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"title\": \"Wi-Fi keeps dropping\",\n  \"short_description\": \"Disconnects every few minutes\",\n  \"description\": \"Since this morning my laptop loses Wi-Fi every 5-10 minutes.\",\n  \"category\": \"network\",\n  \"urgency\": \"medium\",\n  \"affected_scope\": \"me\",\n  \"building_id\": {{buildingId}},\n  \"floor_id\": {{floorId}},\n  \"seat_id\": {{seatId}}\n}",
+              "raw": "{\n  \"title\": \"Wi-Fi keeps dropping\",\n  \"description\": \"Since this morning my laptop loses Wi-Fi every 5-10 minutes.\",\n  \"category\": \"network\",\n  \"affected_scope\": \"me\",\n  \"building_id\": {{buildingId}},\n  \"floor_id\": {{floorId}},\n  \"seat_id\": {{seatId}}\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -1127,6 +1127,9 @@
                 "exec": [
                   "pm.test('Status is 201', () => pm.response.to.have.status(201));",
                   "pm.test('Internal priority is hidden', () => pm.expect(pm.response.json()).to.not.have.property('priority'));",
+                  "pm.test('No urgency or short description', () => {",
+                  "  pm.expect(pm.response.json()).to.not.have.any.keys('urgency', 'short_description');",
+                  "});",
                   "",
                   "const ticket = pm.response.json();",
                   "pm.test('Status is open', () => pm.expect(ticket.status).to.eql('open'));",
@@ -1157,7 +1160,7 @@
                 }
               ]
             },
-            "description": "Optional filters: view (active|closed), status, urgency, q (text or exact ticket id). Newest update first."
+            "description": "Optional filters: view (active|closed), status, q (text in the title or full description, or an exact ticket id). Newest update first."
           },
           "event": [
             {
@@ -1243,6 +1246,44 @@
                   "pm.test('Validation error location', () => {",
                   "  const locs = pm.response.json().detail.map((e) => e.loc.join('.'));",
                   "  pm.expect(locs, 'error at query.priority').to.include(\"query.priority\");",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "List my tickets - urgency filter rejected (422)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/tickets?urgency=high",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "tickets"
+              ],
+              "query": [
+                {
+                  "key": "urgency",
+                  "value": "high"
+                }
+              ]
+            },
+            "description": "Tickets no longer have an urgency, so the filter is an unknown query param: 422."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 422', () => pm.response.to.have.status(422));",
+                  "pm.test('Validation error location', () => {",
+                  "  const locs = pm.response.json().detail.map((e) => e.loc.join('.'));",
+                  "  pm.expect(locs, 'error at query.urgency').to.include(\"query.urgency\");",
                   "});"
                 ]
               }
@@ -1952,6 +1993,45 @@
                 "exec": [
                   "pm.test('Status is 422', () => pm.response.to.have.status(422));",
                   "pm.test('Points at the priority param', () => pm.expect(pm.response.json().detail[0].loc).to.eql(['query', 'priority']));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "List all tickets - urgency filter rejected (422)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/admin/tickets?urgency=high",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "admin",
+                "tickets"
+              ],
+              "query": [
+                {
+                  "key": "urgency",
+                  "value": "high"
+                }
+              ]
+            },
+            "description": "Tickets no longer have an urgency, so the filter is an unknown query param: 422."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 422', () => pm.response.to.have.status(422));",
+                  "pm.test('Validation error location', () => {",
+                  "  const locs = pm.response.json().detail.map((e) => e.loc.join('.'));",
+                  "  pm.expect(locs, 'error at query.urgency').to.include(\"query.urgency\");",
+                  "});"
                 ]
               }
             }
@@ -4408,7 +4488,7 @@
             "description": "Uses the employee's token. This folder's own ticket, so closing it doesn't disturb the others.",
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"title\": \"Desk lamp flickers\",\n  \"short_description\": \"Flickers all day\",\n  \"description\": \"The lamp at my desk flickers constantly.\",\n  \"category\": \"electrical\",\n  \"urgency\": \"medium\",\n  \"affected_scope\": \"me\",\n  \"building_id\": {{buildingId}},\n  \"floor_id\": {{floorId}},\n  \"seat_id\": {{seatId}}\n}",
+              "raw": "{\n  \"title\": \"Desk lamp flickers\",\n  \"description\": \"The lamp at my desk flickers constantly.\",\n  \"category\": \"electrical\",\n  \"affected_scope\": \"me\",\n  \"building_id\": {{buildingId}},\n  \"floor_id\": {{floorId}},\n  \"seat_id\": {{seatId}}\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -6066,7 +6146,7 @@
             "description": "Uses the employee's token.",
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"title\": \"Annex door sticks\",\n  \"short_description\": \"Hard to open\",\n  \"description\": \"The main door of the annex sticks.\",\n  \"category\": \"building_facilities\",\n  \"urgency\": \"low\",\n  \"affected_scope\": \"building\",\n  \"building_id\": {{facilityBuildingId}}\n}",
+              "raw": "{\n  \"title\": \"Annex door sticks\",\n  \"description\": \"The main door of the annex sticks.\",\n  \"category\": \"building_facilities\",\n  \"affected_scope\": \"building\",\n  \"building_id\": {{facilityBuildingId}}\n}",
               "options": {
                 "raw": {
                   "language": "json"

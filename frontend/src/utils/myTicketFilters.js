@@ -28,16 +28,15 @@ export function showCounts({ activeCount, byStatus }) {
 }
 
 /**
- * The list request for the chosen chip, urgency and search: the same query parameters
- * GET /tickets has always taken. Empty values are left out.
- * @param {{show: string, urgency: string, q: string}} filters
- * @returns {{view?: string, status?: string, urgency?: string, q?: string}}
+ * The list request for the chosen chip and search, in GET /tickets query parameters.
+ * Empty values are left out.
+ * @param {{show: string, q: string}} filters
+ * @returns {{view?: string, status?: string, q?: string}}
  */
-export function myTicketsQuery({ show, urgency, q }) {
+export function myTicketsQuery({ show, q }) {
   const query = {}
   if (show === 'active' || show === 'closed') query.view = show
   else if (show !== 'all') query.status = show
-  if (urgency) query.urgency = urgency
   if (q) query.q = q
   return query
 }

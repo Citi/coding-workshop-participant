@@ -25,7 +25,7 @@ router = APIRouter(prefix="/tickets", tags=["tickets"])
 def list_my_tickets(
     user: EmployeeUser, filters: Annotated[TicketFilters, Query()]
 ) -> list[dict[str, Any]]:
-    """List the caller's tickets. Filter by status, urgency, view and search text."""
+    """List the caller's tickets. Filter by status, view and search text (title, description, #)."""
     return ticket_service.list_my_tickets(user["user_id"], filters)
 
 

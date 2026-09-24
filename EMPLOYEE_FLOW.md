@@ -30,7 +30,6 @@ Show basic visual statistics for the employee’s tickets, including:
   - Blocked
   - Resolved
   - Closed
-- Tickets by urgency / priority
 
 ### Ticket List
 
@@ -39,7 +38,7 @@ Show the employee’s submitted tickets with core metadata:
 - Ticket ID
 - Title
 - Status
-- Urgency / priority
+- Impact (who is affected): Just me / My floor / Building
 - Last updated date
 - Building
 - Floor
@@ -47,10 +46,8 @@ Show the employee’s submitted tickets with core metadata:
 
 Employees should be able to:
 
-- Search tickets
-- Filter tickets
+- Search tickets by title, description or ticket number
 - Filter by status
-- Filter by urgency / priority
 - Toggle between active and closed tickets
 - Click a ticket to open its full details
 
@@ -63,8 +60,7 @@ Employee selects **Create New Ticket** and provides:
 ### Basic Information
 
 - Title
-- Short description
-- Full description
+- Description
 - Category
 
 Category options:
@@ -92,35 +88,23 @@ Examples:
 - Floor-wide issue → Building → Floor
 - Workstation issue → Building → Floor → Seat
 
-### Urgency and Affected Scope
+### Affected Scope
 
-Employee selects:
+Employee answers **Who is affected?**:
 
-**Urgency**
-
-- Low
-- Medium
-- High
-
-Urgency can be explained with examples such as:
-
-- “I cannot work at all.”
-- “This is preventing part of my work.”
-- “This is inconvenient but I can still work.”
-
-**Affected Scope**
-
-- Me / Seat / Local Workstation
-- Floor
+- Just me (Seat / Local Workstation)
+- My floor
 - Building
 
-Affected scope and urgency can help determine an initial internal priority.
+Affected scope alone sets the initial internal priority:
 
-Example starting mapping:
+- Just me → P3
+- My floor → P2
+- Building → P1
 
-- Me / Seat / Local Workstation → generally lower priority
-- Floor → generally higher priority
-- Building → generally highest priority
+Employees never see priority; they see impact (who is affected) and status.
+
+Tickets have no urgency level and no short description.
 
 The Facility Admin can review and override the final priority.
 
@@ -153,7 +137,6 @@ Every employee ticket must:
 - Be linked to the employee who submitted it
 - Have a title and description
 - Have a category
-- Have an urgency level
 - Have an affected scope
 - Have a priority
 - Have a status
@@ -181,7 +164,7 @@ Shared incidents appear on the Employee Dashboard under **Happening Near Me**.
 Each shared incident can show:
 
 - Title
-- Short description
+- Description
 - Category
 - Relevant location
 - Affected scope

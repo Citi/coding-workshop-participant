@@ -5,8 +5,6 @@ import Grid from '@mui/material/Grid'
 import MenuItem from '@mui/material/MenuItem'
 import TextField from '@mui/material/TextField'
 
-import useApiData from '../../hooks/useApiData'
-import { listBuildings, listFloors, listSeats } from '../../services/locationService'
 
 /**
  * One dropdown of the Building -> Floor -> Seat chain.
@@ -60,17 +58,16 @@ LevelSelect.propTypes = {
 }
 
 /**
- * Cascading location picker. Floors load once a building is chosen and seats once a
- * floor is chosen; changing a level clears the levels below it.
+ * Cascading location picker. The page loads the lists (useLocationOptions) so it can also
+ * describe the choice elsewhere; changing a level clears the levels below it.
  *
  * @param {{building_id: string, floor_id: string, seat_id: string}} props.values
+ * @param {ReturnType<import('../../hooks/useLocationOptions').default>} props.locations
  * @param {{floor: boolean, seat: boolean}} props.required which levels the scope needs
  * @param {(changes: object) => void} props.onChange receives the changed ids
  */
-function LocationPicker({ values, required, errors, disabled, onChange }) {
-  const buildings = useApiData(listBuildings)
-  const floors = useApiData(listFloors, { buildingId: values.building_id }, { skip: !values.building_id })
-  const seats = useApiData(listSeats, { floorId: values.floor_id }, { skip: !values.floor_id })
+function LocationPicker({ values, locations, required, errors, disabled, onChange }) {
+  const { buildings, floors, seats } = locations
 
   const handleChange = (name, value) => {
     if (name === 'building_id') onChange({ building_id: value, floor_id: '', seat_id: '' })
@@ -147,6 +144,11 @@ LocationPicker.propTypes = {
     building_id: PropTypes.string.isRequired,
     floor_id: PropTypes.string.isRequired,
     seat_id: PropTypes.string.isRequired,
+  }).isRequired,
+  locations: PropTypes.shape({
+    buildings: PropTypes.object.isRequired,
+    floors: PropTypes.object.isRequired,
+    seats: PropTypes.object.isRequired,
   }).isRequired,
   required: PropTypes.shape({ floor: PropTypes.bool, seat: PropTypes.bool }).isRequired,
   errors: PropTypes.objectOf(PropTypes.string).isRequired,

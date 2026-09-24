@@ -7,24 +7,24 @@ import pytest
 def triage(client, api, create_ticket, jane, eve, loc, engineers, run_sql) -> dict[str, int]:
     """Four tickets from two employees that differ in every filterable field.
 
-    wifi     Jane  P3  medium  network     Building A  open         unassigned
-    printer  Eve   P2  high    printer     Building A  in_progress  Sam
-    lamp     Jane  P1  low     electrical  Building B  closed       Kim
-    chair    Eve   P3  high    furniture   Building B  open         unassigned, escalated
+    wifi     Jane  P3  network     Building A  open         unassigned
+    printer  Eve   P2  printer     Building A  in_progress  Sam
+    lamp     Jane  P1  electrical  Building B  closed       Kim
+    chair    Eve   P3  furniture   Building B  open         unassigned, escalated
     """
     wifi = create_ticket(jane)["ticket_id"]
     printer = create_ticket(
-        eve, title="Printer jam", short_description="Tray 2 is stuck",
-        category="printer", urgency="high", affected_scope="floor", seat_id=None,
+        eve, title="Printer jam", description="Tray 2 is stuck",
+        category="printer", affected_scope="floor", seat_id=None,
     )["ticket_id"]
     lamp = create_ticket(
-        jane, title="Lamp broken", short_description="Lobby lights flicker",
+        jane, title="Lamp broken",
         description="The lobby lights flicker all day.", category="electrical",
-        urgency="low", affected_scope="building", building_id=loc["B"], floor_id=None, seat_id=None,
+        affected_scope="building", building_id=loc["B"], floor_id=None, seat_id=None,
     )["ticket_id"]
     chair = create_ticket(
-        eve, title="Chair wobbles", short_description="One leg is loose",
-        category="furniture", urgency="high",
+        eve, title="Chair wobbles", description="One leg is loose",
+        category="furniture",
         building_id=loc["B"], floor_id=loc["B1"], seat_id=loc["B101"],
     )["ticket_id"]
 
@@ -96,7 +96,6 @@ def test_list_rows_carry_triage_fields(client, api, admin, triage, engineers) ->
         ({"status": "in_progress"}, {"printer"}),
         ({"priority": "P1"}, {"lamp"}),
         ({"priority": "P3"}, {"wifi", "chair"}),
-        ({"urgency": "high"}, {"printer", "chair"}),
         ({"category": "printer"}, {"printer"}),
         ({"building_id": "B"}, {"lamp", "chair"}),
         ({"assignment": "unassigned"}, {"wifi", "chair"}),
@@ -107,7 +106,8 @@ def test_list_rows_carry_triage_fields(client, api, admin, triage, engineers) ->
         ({"view": "active"}, {"wifi", "printer", "chair"}),
         ({"view": "closed"}, {"lamp"}),
         ({"q": "WI-FI"}, {"wifi"}),
-        ({"q": "tray"}, {"printer"}),
+        ({"q": "tray"}, {"printer"}),  # in the full description
+        ({"q": "FLICKER"}, {"lamp"}),
         ({"q": "eve other"}, {"printer", "chair"}),
         ({"q": "EVE@ACME"}, {"printer", "chair"}),
         ({"q": "nothing matches"}, set()),
@@ -137,6 +137,7 @@ def test_list_is_empty_without_tickets(client, api, admin) -> None:
         {"priority": "P4"},
         {"priority": ""},
         {"category": "plumbing"},
+        {"urgency": "high"},  # tickets no longer have an urgency
         {"assignment": "none"},
         {"assigned_to": "0"},
         {"building_id": "abc"},

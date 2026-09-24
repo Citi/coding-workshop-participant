@@ -2,21 +2,26 @@ import { useState } from 'react'
 import PropTypes from 'prop-types'
 import Alert from '@mui/material/Alert'
 import Box from '@mui/material/Box'
+import Breadcrumbs from '@mui/material/Breadcrumbs'
 import Button from '@mui/material/Button'
 import Card from '@mui/material/Card'
-import CardContent from '@mui/material/CardContent'
 import CircularProgress from '@mui/material/CircularProgress'
-import Divider from '@mui/material/Divider'
 import Link from '@mui/material/Link'
-import MenuItem from '@mui/material/MenuItem'
 import Stack from '@mui/material/Stack'
 import TextField from '@mui/material/TextField'
 import Typography from '@mui/material/Typography'
-import ArrowBackIcon from '@mui/icons-material/ArrowBack'
+import CheckIcon from '@mui/icons-material/Check'
+import DomainIcon from '@mui/icons-material/Domain'
+import LayersOutlinedIcon from '@mui/icons-material/LayersOutlined'
+import PersonOutlineIcon from '@mui/icons-material/PersonOutlineOutlined'
 import { Link as RouterLink, useNavigate } from 'react-router'
 
-import ChoiceField from '../components/ChoiceField'
+import TileRadioGroup from '../components/TileRadioGroup'
+import { CATEGORY_ICONS } from '../components/tickets/CategoryIcon'
 import LocationPicker from '../components/tickets/LocationPicker'
+import NewTicketSummary from '../components/tickets/NewTicketSummary'
+import useIsDesktop from '../hooks/useIsDesktop'
+import useLocationOptions, { describeLocation } from '../hooks/useLocationOptions'
 import { ApiError } from '../services/apiClient'
 import { createTicket } from '../services/ticketService'
 import { CATEGORIES } from '../utils/ticketFormat'
@@ -30,42 +35,59 @@ import {
 
 const EMPTY_FORM = {
   title: '',
-  short_description: '',
   description: '',
   category: '',
-  urgency: '',
   affected_scope: '',
   building_id: '',
   floor_id: '',
   seat_id: '',
 }
 
-// Examples from EMPLOYEE_FLOW.md help people pick consistently.
-const URGENCY_OPTIONS = [
-  { value: 'low', label: 'Low', hint: "It's inconvenient, but I can still work." },
-  { value: 'medium', label: 'Medium', hint: 'It stops part of my work.' },
-  { value: 'high', label: 'High', hint: "I can't work at all." },
-]
+const CATEGORY_OPTIONS = Object.entries(CATEGORIES).map(([value, label]) => ({
+  value,
+  label,
+  icon: CATEGORY_ICONS[value],
+}))
 
 const SCOPE_OPTIONS = [
-  { value: 'me', label: 'Just me', hint: 'my seat or workstation' },
-  { value: 'floor', label: 'My floor', hint: 'others on the floor are affected' },
-  { value: 'building', label: 'Building', hint: 'the whole building is affected' },
-]
+  { value: 'me', label: 'Just me', icon: PersonOutlineIcon },
+  { value: 'floor', label: 'My floor', icon: LayersOutlinedIcon },
+  { value: 'building', label: 'Whole building', icon: DomainIcon },
+].map((option) => ({ ...option, selectedIcon: CheckIcon }))
 
-function Section({ title, children }) {
+/** What the "Where" step asks for, given who is affected. */
+const WHERE_HINTS = {
+  '': 'Pick only the levels that apply.',
+  me: 'Just you: pick your building, floor and seat.',
+  floor: 'Your floor: pick the building and floor.',
+  building: 'The whole building: pick the building.',
+}
+
+/** "1 · What's wrong": a numbered step, named for screen readers without the number. */
+function Section({ number, title, hint, children }) {
+  const id = `section-${number}`
   return (
-    <Box component="section" aria-label={title}>
-      <Typography component="h2" variant="h6" sx={{ mb: 2 }}>
-        {title}
-      </Typography>
-      <Stack spacing={2}>{children}</Stack>
+    <Box component="section" aria-labelledby={id} sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+      <Box sx={{ display: 'flex', flexWrap: 'wrap', alignItems: 'baseline', columnGap: 1.25, rowGap: 0.25 }}>
+        <Typography
+          id={id}
+          component="h2"
+          sx={{ fontSize: 13, fontWeight: 600, letterSpacing: '0.06em', textTransform: 'uppercase', color: 'text.secondary' }}
+        >
+          <span aria-hidden="true">{number} · </span>
+          {title}
+        </Typography>
+        {hint && <Typography sx={{ fontSize: 13, color: 'text.secondary' }}>{hint}</Typography>}
+      </Box>
+      {children}
     </Box>
   )
 }
 
 Section.propTypes = {
+  number: PropTypes.number.isRequired,
   title: PropTypes.string.isRequired,
+  hint: PropTypes.string,
   children: PropTypes.node.isRequired,
 }
 
@@ -75,17 +97,31 @@ function counted(value, limit, error) {
 }
 
 /**
- * Report a facility issue: what's wrong, how urgent, and where (Building -> Floor ->
- * Seat, as much as the affected scope needs). The API sets status and the internal
- * priority, which employees never see.
+ * Report a facility issue in three steps: what's wrong (title, description and a category
+ * tile), who is affected, and where (Building -> Floor -> Seat, as much as that scope
+ * needs). A live summary sits beside the form on desktop and above the
+ * buttons on smaller screens. The API sets status and the internal priority, which
+ * employees never see.
  */
 function CreateTicketPage() {
   const navigate = useNavigate()
+  const isDesktop = useIsDesktop()
   const [values, setValues] = useState(EMPTY_FORM)
   const [errors, setErrors] = useState({})
   const [formError, setFormError] = useState('')
   const [submitting, setSubmitting] = useState(false)
+  const locations = useLocationOptions(values)
   const required = requiredLocation(values.affected_scope)
+  const labelOf = (options, value) => options.find((option) => option.value === value)?.label ?? ''
+  const summary = (
+    <NewTicketSummary
+      rows={[
+        ['Category', CATEGORIES[values.category] ?? ''],
+        ['Location', describeLocation(values, locations)],
+        ['Affects', labelOf(SCOPE_OPTIONS, values.affected_scope)],
+      ]}
+    />
+  )
 
   /** Apply changes; re-check any field already showing an error (scope affects floor/seat). */
   const update = (changes) => {
@@ -155,72 +191,59 @@ function CreateTicketPage() {
   )
 
   return (
-    <Stack spacing={3}>
-      <Box>
-        <Link component={RouterLink} to="/dashboard" sx={{ display: 'inline-flex', alignItems: 'center', gap: 0.5, mb: 1 }}>
-          <ArrowBackIcon fontSize="small" aria-hidden="true" />
-          Back to dashboard
+    <Stack spacing={2.5}>
+      <Breadcrumbs aria-label="Breadcrumb">
+        <Link component={RouterLink} to="/dashboard" underline="hover" color="text.secondary">
+          Dashboard
         </Link>
-        <Typography variant="h4" component="h1">
+        <Typography aria-current="page" sx={{ fontWeight: 600, color: 'text.primary' }}>
           Report an issue
         </Typography>
-        <Typography color="text.secondary">
-          Tell us what&apos;s wrong and where. Fields marked * are required.
-        </Typography>
-      </Box>
+      </Breadcrumbs>
 
-      <Card>
-        <CardContent sx={{ p: { xs: 2, sm: 4 } }}>
+      <Box sx={{ display: 'flex', gap: 3, alignItems: 'flex-start' }}>
+        <Card sx={{ flex: 1.65, minWidth: 0, p: { xs: 2, sm: 3.5 } }}>
           <form onSubmit={handleSubmit} noValidate>
-            <Stack spacing={4}>
+            <Stack spacing={3.5}>
+              <Box>
+                <Typography variant="h4" component="h1" sx={{ fontSize: { xs: 22, sm: 24 } }}>
+                  Report an issue
+                </Typography>
+                <Typography color="text.secondary" sx={{ fontSize: 14 }}>
+                  Tell us what&apos;s wrong and where. Fields marked * are required.
+                </Typography>
+              </Box>
+
               {formError && <Alert severity="error">{formError}</Alert>}
 
-              <Section title="What's wrong?">
+              <Section number={1} title="What's wrong">
                 {textField('title', 'Title', {
                   helperText: counted(values.title, LIMITS.title, errors.title),
                 })}
-                {textField('short_description', 'Short description', {
-                  helperText: counted(values.short_description, LIMITS.short_description, errors.short_description),
-                })}
-                {textField('category', 'Category', {
-                  select: true,
-                  helperText: errors.category || ' ',
-                  onChange: (event) => handleChoice('category', event.target.value),
-                  onBlur: undefined,
-                  children: Object.entries(CATEGORIES).map(([code, label]) => (
-                    <MenuItem key={code} value={code}>
-                      {label}
-                    </MenuItem>
-                  )),
-                })}
                 {textField('description', 'Full description', {
                   multiline: true,
-                  minRows: 4,
+                  minRows: 3,
                   helperText: counted(values.description, LIMITS.description, errors.description),
                 })}
-              </Section>
-
-              <Divider />
-
-              <Section title="How urgent is it?">
-                <ChoiceField
-                  name="urgency"
-                  label="Urgency"
-                  options={URGENCY_OPTIONS}
-                  value={values.urgency}
+                <TileRadioGroup
+                  name="category"
+                  label="Category"
+                  options={CATEGORY_OPTIONS}
+                  value={values.category}
                   onChange={handleChoice}
-                  error={errors.urgency}
+                  error={errors.category}
                   required
                   disabled={submitting}
+                  columns={{ xs: 1, sm: 2, md: 4 }}
                 />
               </Section>
 
-              <Divider />
-
-              <Section title="Where is it?">
-                <ChoiceField
+              <Section number={2} title="Who is affected?">
+                <TileRadioGroup
                   name="affected_scope"
-                  label="Impact: who is affected?"
+                  label="Who is affected?"
+                  hideLabel
+                  variant="segmented"
                   options={SCOPE_OPTIONS}
                   value={values.affected_scope}
                   onChange={handleChoice}
@@ -228,8 +251,12 @@ function CreateTicketPage() {
                   required
                   disabled={submitting}
                 />
+              </Section>
+
+              <Section number={3} title="Where" hint={WHERE_HINTS[values.affected_scope]}>
                 <LocationPicker
                   values={values}
+                  locations={locations}
                   required={required}
                   errors={errors}
                   disabled={submitting}
@@ -237,7 +264,13 @@ function CreateTicketPage() {
                 />
               </Section>
 
-              <Stack direction={{ xs: 'column-reverse', sm: 'row' }} spacing={2} sx={{ justifyContent: 'flex-end' }}>
+              {!isDesktop && summary}
+
+              <Stack
+                direction={{ xs: 'column-reverse', sm: 'row' }}
+                spacing={1.5}
+                sx={{ justifyContent: 'flex-end', borderTop: 1, borderColor: 'divider', pt: 2 }}
+              >
                 <Button component={RouterLink} to="/dashboard" disabled={submitting}>
                   Cancel
                 </Button>
@@ -248,13 +281,15 @@ function CreateTicketPage() {
                   disabled={submitting}
                   startIcon={submitting ? <CircularProgress size={18} color="inherit" /> : null}
                 >
-                  {submitting ? 'Creating ticket…' : 'Create ticket'}
+                  {submitting ? 'Submitting…' : 'Submit ticket'}
                 </Button>
               </Stack>
             </Stack>
           </form>
-        </CardContent>
-      </Card>
+        </Card>
+
+        {isDesktop && <Box sx={{ flex: 1, minWidth: 0, position: 'sticky', top: 24 }}>{summary}</Box>}
+      </Box>
     </Stack>
   )
 }

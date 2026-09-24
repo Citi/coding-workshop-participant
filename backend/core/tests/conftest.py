@@ -188,10 +188,8 @@ def ticket_payload(loc: dict[str, int]) -> Callable[..., dict[str, Any]]:
     def _payload(**overrides: Any) -> dict[str, Any]:
         body = {
             "title": "Wi-Fi keeps dropping",
-            "short_description": "Disconnects every few minutes",
             "description": "My laptop loses Wi-Fi every 5-10 minutes.",
             "category": "network",
-            "urgency": "medium",
             "affected_scope": "me",
             "building_id": loc["A"],
             "floor_id": loc["A3"],

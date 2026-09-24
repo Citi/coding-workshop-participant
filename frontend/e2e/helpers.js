@@ -63,10 +63,8 @@ export async function createTicketViaApi(request, user, overrides = {}) {
     headers,
     data: {
       title: 'Lobby door sticks',
-      short_description: 'Hard to open',
       description: 'The main lobby door needs a hard push.',
       category: 'building_facilities',
-      urgency: 'medium',
       affected_scope: 'building',
       building_id: buildings.find((b) => b.building_name === 'Building A').building_id,
       ...overrides,

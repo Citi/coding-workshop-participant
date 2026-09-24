@@ -19,7 +19,7 @@ import { firstNameOf, greetingFor } from '../utils/people'
 import { formatAgo } from '../utils/ticketFormat'
 import { summarizeTickets } from '../utils/ticketStats'
 
-const DEFAULT_FILTERS = { show: 'active', urgency: '', q: '' }
+const DEFAULT_FILTERS = { show: 'active', q: '' }
 
 function SummarySkeleton() {
   return (
@@ -50,8 +50,8 @@ function summaryLine({ activeCount, lastUpdatedAt }) {
 
 /**
  * Employee home: a greeting, the most recently updated active ticket with its progress
- * and the team's latest message, and "My tickets" with status chips, search and an
- * urgency filter. Never shows priority.
+ * and the team's latest message, and "My tickets" with status chips and a search box.
+ * Never shows priority.
  */
 function DashboardPage() {
   const { user } = useAuth()
@@ -59,7 +59,7 @@ function DashboardPage() {
   const [filters, setFilters] = useState(DEFAULT_FILTERS)
   const search = useDebouncedValue(filters.q.trim(), 300)
   const list = useMyTickets(myTicketsQuery({ ...filters, q: search }))
-  const filtersActive = filters.show !== 'active' || filters.urgency !== '' || filters.q.trim() !== ''
+  const filtersActive = filters.show !== 'active' || filters.q.trim() !== ''
   const stats = summary.tickets.length > 0 ? summarizeTickets(summary.tickets) : null
 
   let content

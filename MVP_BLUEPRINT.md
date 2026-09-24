@@ -4,7 +4,7 @@ User_table:
 user_id, email, full_name, phonenumber, role(employee, engineer, admin), password hash
 
 Ticket table:
-ticket_id, status, title, urgency, updated_at, short_description, building_id(fk), floor_id(fk), seat_id(fk), created_by_user_id(fk->user_table), assigned_to_user_id(fk->user_table), description, category, affected scope(Me = P3, floor = P2, Building = P1), created_at, escalation_requested (T/F), escalation_reason, priority, blocked_reason, assigned_at, resolved_at, acknowledged_at
+ticket_id, status, title, updated_at, building_id(fk), floor_id(fk), seat_id(fk), created_by_user_id(fk->user_table), assigned_to_user_id(fk->user_table), description, category, affected scope(Me = P3, floor = P2, Building = P1), created_at, escalation_requested (T/F), escalation_reason, priority, blocked_reason, assigned_at, resolved_at, acknowledged_at
 
 Ticket notes table:
 Note_id, Ticket_id(fk->ticket_id), user_id(fk->user_table), note_text, created_at
@@ -13,7 +13,7 @@ Ticket feedback table:
 feedback_id (PK), ticket_id (FK → ticket.ticket_id), user_id (FK → user_table.user_id), communication_rating, resolution_rating, comment, created_at
 
 Shared incidents table:
-Shared_incident_id, title, short description, category, affected scope, status, progress update, building(fk), floor_id(fk), created_by_user_ID(fk), created at, and updated_at
+Shared_incident_id, title, description, category, affected scope, status, progress update, building(fk), floor_id(fk), created_by_user_ID(fk), created at, and updated_at
 
 Shared incidents tickets table:
 Shared_incident_id(fk), ticket_id(fk) -> make it composite primary key

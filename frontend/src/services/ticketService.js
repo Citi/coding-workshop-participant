@@ -2,7 +2,7 @@ import { api } from './apiClient'
 
 /**
  * The caller's own tickets, most recently updated first.
- * @param {{view?: 'active'|'closed', status?: string, urgency?: string, q?: string}} [filters]
+ * @param {{view?: 'active'|'closed', status?: string, q?: string}} [filters]
  *   Empty values are ignored. "active" means everything not closed.
  * @param {{signal?: AbortSignal}} [options]
  */
@@ -52,10 +52,8 @@ export function requestEscalation(ticketId, reason) {
 export function createTicket(values) {
   const body = {
     title: values.title.trim(),
-    short_description: values.short_description.trim(),
     description: values.description.trim(),
     category: values.category,
-    urgency: values.urgency,
     affected_scope: values.affected_scope,
     building_id: Number(values.building_id),
   }

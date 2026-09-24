@@ -7,10 +7,8 @@ from schemas import LoginRequest, RegisterRequest, TicketCreate, TicketFilters
 
 VALID_TICKET = {
     "title": "t",
-    "short_description": "s",
     "description": "d",
     "category": "network",
-    "urgency": "low",
     "building_id": 1,
 }
 

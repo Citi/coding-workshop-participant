@@ -8,7 +8,6 @@ import {
   formatLocation,
   SCOPES,
 } from '../../utils/ticketFormat'
-import UrgencyLabel from './UrgencyLabel'
 
 /**
  * The ticket's facts as a description list: two columns on larger screens.
@@ -18,7 +17,6 @@ function TicketFacts({ ticket }) {
   const facts = [
     ['Category', CATEGORIES[ticket.category]],
     ['Location', formatLocation(ticket)],
-    ['Urgency', <UrgencyLabel key="urgency" urgency={ticket.urgency} />],
     ['Impact', SCOPES[ticket.affected_scope]],
     ['Assigned engineer', ticket.assigned_to_name ?? 'Not assigned yet'],
     ['Created', formatDateTime(ticket.created_at)],
@@ -56,7 +54,6 @@ function TicketFacts({ ticket }) {
 TicketFacts.propTypes = {
   ticket: PropTypes.shape({
     category: PropTypes.string.isRequired,
-    urgency: PropTypes.string.isRequired,
     affected_scope: PropTypes.string.isRequired,
     assigned_to_name: PropTypes.string,
     created_at: PropTypes.string.isRequired,

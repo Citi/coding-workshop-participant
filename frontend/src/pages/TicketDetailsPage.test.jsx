@@ -27,11 +27,9 @@ vi.mock('../services/ticketService', () => ({
 const TICKET = makeTicket({
   ticket_id: 5,
   title: 'Printer jam',
-  short_description: 'Tray 2 stuck',
   description: 'Every job jams.\nTried restarting.',
   category: 'printer',
   status: 'in_progress',
-  urgency: 'high',
   affected_scope: 'floor',
   floor_number: 2,
   seat_number: null,
@@ -143,7 +141,6 @@ describe('TicketDetailsPage: the ticket', () => {
     renderPage()
     await heading()
 
-    expect(screen.getByText('Tray 2 stuck')).toBeInTheDocument()
     const workflow = within(panel('Progress')).getByRole('list', { name: 'Ticket workflow' })
     expect(within(workflow).getAllByRole('listitem').find((li) => li.getAttribute('aria-current'))).toHaveTextContent(
       'In Progress (current status)',
@@ -157,7 +154,6 @@ describe('TicketDetailsPage: the ticket', () => {
     expect(facts).toMatchObject({
       Category: 'Printer / Peripheral',
       Location: 'Building A · Floor 2',
-      Urgency: 'High',
       Impact: 'My floor',
       'Assigned engineer': 'Sam Tech',
     })

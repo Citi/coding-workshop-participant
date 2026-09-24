@@ -57,7 +57,6 @@ def list_my_queue(user_id: int, filters: EngineerTicketFilters) -> list[dict[str
             conn,
             status=filters.status,
             priority=filters.priority,
-            urgency=None,
             category=None,
             building_id=filters.building_id,
             assigned=None,

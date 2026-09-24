@@ -21,7 +21,6 @@ function fakeApi(filters = {}, tickets = TICKETS) {
   if (filters.view === 'active') result = result.filter((t) => t.status !== 'closed')
   if (filters.view === 'closed') result = result.filter((t) => t.status === 'closed')
   if (filters.status) result = result.filter((t) => t.status === filters.status)
-  if (filters.urgency) result = result.filter((t) => t.urgency === filters.urgency)
   if (filters.q) result = result.filter((t) => t.title.toLowerCase().includes(filters.q.toLowerCase()))
   return Promise.resolve(result)
 }
@@ -202,7 +201,6 @@ describe('DashboardPage: my tickets list', () => {
     const firstRow = within(table()).getAllByRole('row')[1]
     expect(firstRow).toHaveTextContent('#5')
     expect(firstRow).toHaveTextContent('In Progress')
-    expect(firstRow).toHaveTextContent('High')
     expect(firstRow).toHaveTextContent('My floor')
     expect(firstRow).toHaveTextContent('Building A · Floor 2')
   })
@@ -238,14 +236,11 @@ describe('DashboardPage: my tickets list', () => {
     expect(chip('All')).toHaveAttribute('aria-pressed', 'true')
   })
 
-  it('filters by urgency', async () => {
-    const user = renderDashboard()
+  it('has no urgency filter or column: tickets no longer have an urgency', async () => {
+    renderDashboard()
     await screen.findByRole('table')
-
-    await user.click(screen.getByRole('combobox', { name: 'Urgency' }))
-    await user.click(screen.getByRole('option', { name: 'High' }))
-    await waitFor(() => expect(rowTitles()).toEqual(['Printer jam']))
-    expect(lastFilters()).toEqual({ view: 'active', urgency: 'high' })
+    expect(screen.queryByRole('combobox', { name: 'Urgency' })).not.toBeInTheDocument()
+    expect(document.body).not.toHaveTextContent(/urgency/i)
   })
 
   it('searches once typing pauses', async () => {
@@ -336,11 +331,11 @@ describe('DashboardPage: my tickets list', () => {
     expect(screen.queryByRole('button', { name: 'Go to next page' })).not.toBeInTheDocument()
   })
 
-  it('puts the location under the title and drops Impact on tablets', async () => {
+  it('puts the location under the title on tablets', async () => {
     renderDashboard({ width: 820 })
     await screen.findByRole('table')
     const headers = within(table()).getAllByRole('columnheader').map((th) => th.textContent)
-    expect(headers).toEqual(['#', 'Title and location', 'Status', 'Urgency', 'Updated'])
+    expect(headers).toEqual(['#', 'Title and location', 'Status', 'Impact', 'Updated'])
     const titleCell = within(table()).getAllByRole('row')[1].querySelectorAll('td')[1]
     expect(titleCell).toHaveTextContent('Printer jamBuilding A · Floor 2')
   })
@@ -349,7 +344,7 @@ describe('DashboardPage: my tickets list', () => {
     renderDashboard({ width: 1280 })
     await screen.findByRole('table')
     const headers = within(table()).getAllByRole('columnheader').map((th) => th.textContent)
-    expect(headers).toEqual(['#', 'Title', 'Location', 'Status', 'Urgency', 'Impact', 'Updated'])
+    expect(headers).toEqual(['#', 'Title', 'Location', 'Status', 'Impact', 'Updated'])
   })
 
   it('uses cards instead of a table on phones', async () => {

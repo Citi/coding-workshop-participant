@@ -4,7 +4,7 @@ User\_table:
 user\_id, email, full\_name, phonenumber, role(employee, engineer, admin), password hash
 
 Ticket table:  
-ticket\_id, status, title, urgency, updated\_at, short\_description, building\_id(fk), floor\_id(fk), seat\_id(fk), created\_by\_user\_id(fk-\>user\_table), assigned\_to\_user\_id(fk-\>user\_table), description, category, affected scope(Me \= P3, floor \= P2, Building \= P1), created\_at, escalation\_requested (T/F), escalation\_reason, priority, blocked\_reason, assigned\_at, resolved\_at, acknowledged\_at
+ticket\_id, status, title, updated\_at, building\_id(fk), floor\_id(fk), seat\_id(fk), created\_by\_user\_id(fk-\>user\_table), assigned\_to\_user\_id(fk-\>user\_table), description, category, affected scope(Me \= P3, floor \= P2, Building \= P1), created\_at, escalation\_requested (T/F), escalation\_reason, priority, blocked\_reason, assigned\_at, resolved\_at, acknowledged\_at
 
 Ticket notes table:  
 Note\_id, Ticket\_id(fk-\>ticket\_id), user\_id(fk-\>user\_table), note\_text, created\_at
@@ -13,7 +13,7 @@ Ticket feedback table:
 feedback\_id (PK), ticket\_id (FK → ticket.ticket\_id), user\_id (FK → user\_table.user\_id), communication\_rating, resolution\_rating, comment, created\_at
 
 Shared incidents table:  
-Shared\_incident\_id, title, short description, category, affected scope, status, progress update, building(fk), floor\_id(fk), created\_by\_user\_ID(fk), created at, and updated\_at
+Shared\_incident\_id, title, description, category, affected scope, status, progress update, building(fk), floor\_id(fk), created\_by\_user\_ID(fk), created at, and updated\_at
 
 Shared incidents tickets table:  
 Shared\_incident\_id(fk), ticket\_id(fk) \-\> make it composite primary key

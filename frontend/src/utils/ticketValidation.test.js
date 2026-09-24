@@ -4,10 +4,8 @@ import { requiredLocation, validateTicketField, validateTicketForm } from './tic
 
 const VALID = {
   title: 'Printer jam',
-  short_description: 'Tray 2 is stuck',
   description: 'Every job jams in tray 2.',
   category: 'printer',
-  urgency: 'medium',
   affected_scope: 'building',
   building_id: '1',
   floor_id: '',
@@ -23,10 +21,8 @@ describe('ticket validation', () => {
     const empty = Object.fromEntries(Object.keys(VALID).map((k) => [k, '']))
     expect(validateTicketForm(empty)).toEqual({
       title: 'Give the issue a short title.',
-      short_description: 'Sum up the issue in a sentence.',
       description: "Describe what's happening.",
       category: 'Choose a category.',
-      urgency: 'Choose how urgent this is.',
       affected_scope: "Choose who's affected.",
       building_id: 'Choose a building.',
     })
@@ -46,7 +42,6 @@ describe('ticket validation', () => {
 
   it.each([
     ['title', 150],
-    ['short_description', 280],
     ['description', 5000],
   ])('limits %s to %i characters and ignores surrounding spaces', (field, limit) => {
     expect(validateTicketField(field, { ...VALID, [field]: `  ${'x'.repeat(limit)}  ` })).toBe('')

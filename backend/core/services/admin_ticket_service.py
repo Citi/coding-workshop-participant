@@ -33,7 +33,6 @@ def list_tickets(filters: AdminTicketFilters) -> list[dict[str, Any]]:
             conn,
             status=filters.status,
             priority=filters.priority,
-            urgency=filters.urgency,
             category=filters.category,
             building_id=filters.building_id,
             assigned=assigned,

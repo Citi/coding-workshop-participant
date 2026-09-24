@@ -16,7 +16,6 @@ Category = Literal[
     "network", "hardware", "printer", "hvac",
     "electrical", "furniture", "building_facilities", "other",
 ]
-Urgency = Literal["low", "medium", "high"]
 AffectedScope = Literal["me", "floor", "building"]
 TicketStatus = Literal["open", "in_progress", "blocked", "resolved", "closed"]
 
@@ -112,10 +111,8 @@ class TicketCreate(BaseModel):
     """A new ticket from an employee. Status, creator and the internal priority are set by the server."""
 
     title: Annotated[TrimmedText, StringConstraints(max_length=150)]
-    short_description: Annotated[TrimmedText, StringConstraints(max_length=280)]
     description: Annotated[TrimmedText, StringConstraints(max_length=5000)]
     category: Category
-    urgency: Urgency
     affected_scope: AffectedScope
     building_id: DbId
     floor_id: DbId | None = None
@@ -142,7 +139,6 @@ class TicketFilters(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     status: TicketStatus | None = None
-    urgency: Urgency | None = None
     # "active" is everything not closed, so resolved tickets awaiting closure still show.
     view: Literal["active", "closed"] | None = None
     q: Annotated[str, StringConstraints(strip_whitespace=True, max_length=100)] | None = None
@@ -153,10 +149,8 @@ class TicketListItem(BaseModel):
 
     ticket_id: int
     title: str
-    short_description: str
     category: Category
     status: TicketStatus
-    urgency: Urgency
     affected_scope: AffectedScope
     escalation_requested: bool
     building_id: int
@@ -174,10 +168,8 @@ class TicketResponse(BaseModel):
 
     ticket_id: int
     title: str
-    short_description: str
     description: str
     category: Category
-    urgency: Urgency
     affected_scope: AffectedScope
     status: TicketStatus
     building_id: int
@@ -255,7 +247,6 @@ class AdminTicketFilters(BaseModel):
 
     status: TicketStatus | None = None
     priority: Priority | None = None
-    urgency: Urgency | None = None
     category: Category | None = None
     building_id: DbId | None = None
     assignment: Literal["unassigned", "assigned"] | None = None

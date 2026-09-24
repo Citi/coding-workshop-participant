@@ -110,7 +110,6 @@ def list_my_tickets(user_id: int, filters: TicketFilters) -> list[dict[str, Any]
             conn,
             user_id,
             status=filters.status,
-            urgency=filters.urgency,
             closed=closed,
             search=filters.q or None,
         )
@@ -126,10 +125,8 @@ def create_ticket(user_id: int, data: TicketCreate) -> dict[str, Any]:
         ticket = ticket_repository.insert(
             conn,
             title=data.title,
-            short_description=data.short_description,
             description=data.description,
             category=data.category,
-            urgency=data.urgency,
             affected_scope=data.affected_scope,
             priority=PRIORITY_BY_SCOPE[data.affected_scope],
             building_id=data.building_id,

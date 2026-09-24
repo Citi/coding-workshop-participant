@@ -3,7 +3,6 @@ import Button from '@mui/material/Button'
 import Card from '@mui/material/Card'
 import InputAdornment from '@mui/material/InputAdornment'
 import LinearProgress from '@mui/material/LinearProgress'
-import MenuItem from '@mui/material/MenuItem'
 import Skeleton from '@mui/material/Skeleton'
 import TablePagination from '@mui/material/TablePagination'
 import TextField from '@mui/material/TextField'
@@ -13,7 +12,6 @@ import PropTypes from 'prop-types'
 
 import usePagination from '../../hooks/usePagination'
 import { SHOW_OPTIONS } from '../../utils/myTicketFilters'
-import { URGENCIES } from '../../utils/ticketFormat'
 import ErrorState from '../ErrorState'
 import StatusFilterChips from './StatusFilterChips'
 import TicketList from './TicketList'
@@ -76,7 +74,7 @@ ListBody.propTypes = {
 }
 
 /**
- * "My tickets": status chips with counts, search and an urgency filter above the list.
+ * "My tickets": status chips with counts and a search box above the list.
  * The page owns the filters and the request; this lays them out and pages the results.
  */
 function MyTicketsPanel({ filters, counts, onChange, list, filtersActive, onClearFilters }) {
@@ -91,34 +89,24 @@ function MyTicketsPanel({ filters, counts, onChange, list, filtersActive, onClea
           </Typography>
           <StatusFilterChips value={filters.show} counts={counts} onChange={(show) => onChange({ ...filters, show })} />
         </Box>
-        <Box sx={{ display: 'flex', flexDirection: { xs: 'column', sm: 'row' }, gap: 1.5 }}>
-          <TextField
-            label="Search"
-            placeholder="Title, description or ticket #"
-            type="search"
-            size="small"
-            value={filters.q}
-            onChange={set('q')}
-            sx={{ flex: 1 }}
-            slotProps={{
-              input: {
-                startAdornment: (
-                  <InputAdornment position="start">
-                    <SearchIcon aria-hidden="true" />
-                  </InputAdornment>
-                ),
-              },
-            }}
-          />
-          <TextField select label="Urgency" size="small" value={filters.urgency} onChange={set('urgency')} sx={{ minWidth: 160 }}>
-            <MenuItem value="">All urgencies</MenuItem>
-            {Object.entries(URGENCIES).map(([code, { label }]) => (
-              <MenuItem key={code} value={code}>
-                {label}
-              </MenuItem>
-            ))}
-          </TextField>
-        </Box>
+        <TextField
+          label="Search"
+          placeholder="Title, description or ticket #"
+          type="search"
+          size="small"
+          value={filters.q}
+          onChange={set('q')}
+          fullWidth
+          slotProps={{
+            input: {
+              startAdornment: (
+                <InputAdornment position="start">
+                  <SearchIcon aria-hidden="true" />
+                </InputAdornment>
+              ),
+            },
+          }}
+        />
       </Box>
       {/* Keyed by the filters so a new filter starts back on page one. */}
       <ListBody key={JSON.stringify(filters)} list={list} filtersActive={filtersActive} onClearFilters={onClearFilters} />
@@ -129,7 +117,6 @@ function MyTicketsPanel({ filters, counts, onChange, list, filtersActive, onClea
 MyTicketsPanel.propTypes = {
   filters: PropTypes.shape({
     show: PropTypes.oneOf(SHOW_OPTIONS).isRequired,
-    urgency: PropTypes.string.isRequired,
     q: PropTypes.string.isRequired,
   }).isRequired,
   counts: PropTypes.objectOf(PropTypes.number).isRequired,

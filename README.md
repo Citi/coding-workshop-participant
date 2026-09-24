@@ -34,6 +34,12 @@ PGPASSWORD=test psql -h localhost -U test -d codingworkshop \
   -f backend/core/sql/schema.sql -f backend/core/sql/seed.sql
 ```
 
+To also get a Facility Admin you can sign in as, plus the demo people and tickets, run the same setup task AWS uses (see Deployment, "Setting up the database in AWS"). It runs both SQL files too:
+
+```sh
+cd backend/core && ../.venv/bin/python -c 'from function import handler; print(handler({"setup_task": "seed", "admin_email": "admin@acme.inc", "admin_password": "choose-a-password", "demo_data": True}, None))'
+```
+
 To start over with empty tables, run `backend/core/sql/reset.sql` first, then the command above. It deletes all data and refuses to run against anything but a local server.
 
 ### Run the backend
@@ -105,6 +111,8 @@ Each run rebuilds the test schema from `sql/`, and every test starts with no use
 | `test_engineer_status.py` | Status changes: start, block and unblock (reason kept, then cleared), resolve and reopen (`resolved_at` set, then cleared), the whole workflow recorded in order, the employee seeing reasons but not priority, workload following along; every move the workflow refuses (409 with a hint), missing or bad reasons and statuses (422), other people's tickets (404) |
 | `test_tickets.py`, `test_ticket_actions.py` | Create, list/filter/search, details, notes, escalation, and one employee never seeing another's tickets |
 | `test_status_history.py` | Creating a ticket records it as opened, a reopened ticket keeps every step in order, the table's constraints, and `schema.sql` backfilling tickets made before the history existed |
+| `test_setup_tasks.py` | The Lambda setup task (see "Setting up the database in AWS"): builds an empty database, creates an admin who can sign in, re-runs change nothing, an existing account is never changed or promoted, bad admin details are refused without touching the database or echoing the password, and HTTP events still reach the API (a `setup_task` in a request body is just a 422) |
+| `test_demo_data.py` | The demo data: who and what it adds, every status and dashboard count represented, its people can't sign in, every ticket's history follows the real workflow (engineer moves by the assigned engineer, closes and send-backs by an admin, reasons where required), fields agree with the status, timestamps in order and in the past, loaded only once, needs an admin, and a failure leaves nothing behind |
 
 CI runs `bandit -r ./backend`. `backend/.bandit` skips `tests/` folders there, since tests use `assert` and fake passwords on purpose.
 
@@ -221,17 +229,17 @@ Create a ticket (employees only). The server sets `status` to `open` and the cre
 
 ```sh
 curl -X POST http://localhost:8000/api/core/tickets -H "Authorization: Bearer $TOKEN" -H 'Content-Type: application/json' \
-  -d '{"title":"Wi-Fi keeps dropping","short_description":"Disconnects every few minutes",
+  -d '{"title":"Wi-Fi keeps dropping",
        "description":"Since this morning my laptop loses Wi-Fi every 5-10 minutes.",
-       "category":"network","urgency":"medium","affected_scope":"me",
+       "category":"network","affected_scope":"me",
        "building_id":1,"floor_id":3,"seat_id":3}'
-# 201 {"ticket_id":1,...,"urgency":"medium","affected_scope":"me","status":"open",...}
+# 201 {"ticket_id":1,...,"affected_scope":"me","status":"open",...}
 ```
 
 | Problem | Status |
 |---|---|
 | `affected_scope` is `floor` without `floor_id`, or `me` without `seat_id`, or `seat_id` without `floor_id` | 422 |
-| Unknown category/urgency/scope, blank title | 422 |
+| Unknown category/scope, blank title or description | 422 |
 | Floor not in the building, seat not on the floor, unknown building/floor/seat | 400 |
 | A building, floor or seat an admin has deactivated | 400 `Building A is no longer available` (or `Floor 3 …`, `Seat 301 …`) |
 
@@ -239,7 +247,7 @@ List my tickets, most recently updated first. Only the caller's own tickets are 
 
 ```sh
 curl 'http://localhost:8000/api/core/tickets' -H "Authorization: Bearer $TOKEN"
-curl 'http://localhost:8000/api/core/tickets?view=active&urgency=high' -H "Authorization: Bearer $TOKEN"
+curl 'http://localhost:8000/api/core/tickets?view=active&status=open' -H "Authorization: Bearer $TOKEN"
 curl 'http://localhost:8000/api/core/tickets?q=printer' -H "Authorization: Bearer $TOKEN"
 ```
 
@@ -247,8 +255,7 @@ curl 'http://localhost:8000/api/core/tickets?q=printer' -H "Authorization: Beare
 |---|---|
 | `view` | `active` (everything not closed) or `closed` |
 | `status` | `open`, `in_progress`, `blocked`, `resolved`, `closed` |
-| `urgency` | `low`, `medium`, `high` |
-| `q` | Case-insensitive text in title or short description, or an exact ticket id |
+| `q` | Case-insensitive text in title or full description, or an exact ticket id |
 
 Filters combine with AND. An unknown value, or an unknown parameter such as `priority`, returns 422.
 
@@ -289,7 +296,7 @@ curl -X POST http://localhost:8000/api/core/tickets/5/escalation -H "Authorizati
 
 #### Facility Admin: all tickets
 
-Admins only; `$ADMIN_TOKEN` is an admin's login token. Admin accounts are set up in SQL (see Known limitations); engineers can be promoted through the API below.
+Admins only; `$ADMIN_TOKEN` is an admin's login token. The first admin account is created by the setup task (see Deployment, "Setting up the database in AWS"; it works locally too) or in SQL (see Known limitations); engineers can be promoted through the API below.
 
 List every ticket, whoever created it. Sorted for triage: priority first (P1, P2, P3), then the oldest created first. Each row is the employee list row plus `priority`, `created_by_user_id`, `created_by_name`, `assigned_to_user_id` and `assigned_to_name`.
 
@@ -307,13 +314,12 @@ curl 'http://localhost:8000/api/core/admin/tickets?q=eve%20other' -H "Authorizat
 | `view` | `active` (everything not closed) or `closed` |
 | `status` | `open`, `in_progress`, `blocked`, `resolved`, `closed` |
 | `priority` | `P1`, `P2`, `P3` |
-| `urgency` | `low`, `medium`, `high` |
 | `category` | `network`, `hardware`, `printer`, `hvac`, `electrical`, `furniture`, `building_facilities`, `other` |
 | `building_id` | A building id |
 | `assignment` | `unassigned` (the triage queue) or `assigned` |
 | `assigned_to` | An engineer's user id |
 | `escalated` | `true` or `false` |
-| `q` | Case-insensitive text in title, short description, requester name or requester email, or an exact ticket id |
+| `q` | Case-insensitive text in title, full description, requester name or requester email, or an exact ticket id |
 
 Filters combine with AND, so `assignment=unassigned&assigned_to=4` is always empty. An unknown value or parameter returns 422.
 
@@ -480,7 +486,7 @@ curl 'http://localhost:8000/api/core/engineer/tickets?q=elevator' -H "Authorizat
 | `status` | `open`, `in_progress`, `blocked`, `resolved`, `closed` |
 | `priority` | `P1`, `P2`, `P3` |
 | `building_id` | A building id |
-| `q` | Case-insensitive text in title, short description, requester name or email, or an exact ticket id |
+| `q` | Case-insensitive text in title, full description, requester name or email, or an exact ticket id |
 
 Filters combine with AND. There's no assignee filter, because the queue is always yours: an unknown parameter such as `assigned_to` is a 422.
 
@@ -574,11 +580,48 @@ In AWS the secret stays the same across deploys. Rotating it signs every user ou
 
 See [bin/README.md](bin/README.md). The deploy scripts change real AWS resources, so check before running them.
 
+### Setting up the database in AWS
+
+The deploy creates an empty Aurora database, with no tables, and until the tables exist, registering and signing in return 500. Aurora is in a private network, so `psql` can't reach it from your machine. Instead, the Lambda sets up its own database: invoke it directly with a `setup_task` payload ([backend/core/setup_tasks.py](backend/core/setup_tasks.py)). The public URL can't trigger this, because browser requests arrive in a different event shape. Only AWS credentials that can call `lambda:InvokeFunction` can.
+
+After a deploy, run this once with the participant credentials. It creates the tables and demo locations, the first Facility Admin account, and the demo data:
+
+```sh
+read -rs ADMIN_PASSWORD   # type the admin password; it isn't shown or saved in your shell history
+aws lambda invoke \
+  --function-name "coding-workshop-core-$PARTICIPANT_ID" \
+  --cli-binary-format raw-in-base64-out \
+  --payload "{\"setup_task\":\"seed\",\"admin_email\":\"admin@acme.inc\",\"admin_password\":\"$ADMIN_PASSWORD\",\"demo_data\":true}" \
+  out.json
+cat out.json
+# {"ok": true, "task": "seed", "sql_files": ["schema.sql", "seed.sql"],
+#  "admin": {"email": "admin@acme.inc", "created": true},
+#  "demo_data": {"created": true, "people": 7, "tickets": 25}}
+```
+
+Then sign in on the CloudFront URL as `admin@acme.inc`.
+
+| Payload field | Meaning |
+|---|---|
+| `setup_task` | Always `"seed"`: runs `sql/schema.sql`, then `sql/seed.sql` |
+| `admin_email`, `admin_password` | Optional. Creates a Facility Admin, using the registration rules (`@acme.inc`, 8+ character password). If the email is already taken, that account is left exactly as it is: no new password, no promotion. |
+| `admin_name` | Optional display name, default `Facility Admin` |
+| `demo_data` | Optional, `true` to add the demo people and tickets from [backend/core/demo_data.py](backend/core/demo_data.py): 2 engineers, 5 employees and 25 tickets in every status, with notes and history. Needs an admin to exist (this run's or an earlier one). None of these people can sign in. |
+
+Every run is safe to repeat: the SQL files skip what exists, and the demo data is skipped if its people are already there. It all runs in one transaction, so a failed run changes nothing. After a change to `schema.sql`, deploy and run it again without the admin fields to update Aurora:
+
+```sh
+aws lambda invoke --function-name "coding-workshop-core-$PARTICIPANT_ID" \
+  --cli-binary-format raw-in-base64-out --payload '{"setup_task":"seed"}' out.json
+```
+
+Bad input returns `{"ok": false, "error": "..."}` without changing anything, and the error never repeats the password. A database failure shows up as `"FunctionError": "Unhandled"` in the CLI output. See the Lambda logs for it: `aws logs tail /aws/lambda/coding-workshop-core-$PARTICIPANT_ID`. Leave `"` and `\` out of the password, or the payload isn't valid JSON.
+
 ## Known limitations
 
 - **Access tokens in `localStorage`.** The frontend keeps its signed JWT (1 hour, no refresh tokens) in `localStorage` ([frontend/src/services/session.js](frontend/src/services/session.js)) and sends it as `Authorization: Bearer <token>`. A token there could be read by an injected script (XSS); React's output escaping and the short expiry limit that risk.
 - List endpoints return every matching record, with no pagination yet.
-- Employees, engineers and Facility Admins each have their pages. Facility admins have a dashboard (`/admin`: count cards that filter the list, the unassigned queue with quick assign, each engineer's workload, then all tickets with search and filters) a details page (`/admin/tickets/:id`) where they can assign or reassign the ticket, and close a resolved ticket or send it back (notes are read-only for them), a People page (`/admin/people`) to move people between employee and engineer, and a Facilities page (`/admin/facilities`: buildings beside the chosen one's floor accordions and seat chips, a building dropdown on phones) to add, rename, deactivate or reactivate, and delete buildings, floors and seats. The dashboard's Building filter lists inactive buildings too (marked), and `?building=<id>` opens it filtered to one. Engineers' Building filter still uses the employee list (`GET /buildings`), so it leaves out inactive buildings even when an engineer has tickets there. With many unassigned tickets the queue section gets long; it isn't paged or capped. Engineers have My queue (`/engineer`: the current or next ticket, counts, and their tickets with search and filters) and a details page (`/engineer/tickets/:id`) where they can add notes and move the ticket along: start, block (with a reason), unblock, resolve (with a summary) and reopen. Only the moves the workflow allows are offered, and "Up next" can be started from the dashboard. Admins can move people between employee and engineer (`PUT /admin/users/{id}/role`), but admin accounts are only set up in SQL: set their `role_id` in the `users` table to the `admin` row in `roles`.
+- Employees, engineers and Facility Admins each have their pages. Facility admins have a dashboard (`/admin`: count cards that filter the list, the unassigned queue with quick assign, each engineer's workload, then all tickets with search and filters) a details page (`/admin/tickets/:id`) where they can assign or reassign the ticket, and close a resolved ticket or send it back (notes are read-only for them), a People page (`/admin/people`) to move people between employee and engineer, and a Facilities page (`/admin/facilities`: buildings beside the chosen one's floor accordions and seat chips, a building dropdown on phones) to add, rename, deactivate or reactivate, and delete buildings, floors and seats. The dashboard's Building filter lists inactive buildings too (marked), and `?building=<id>` opens it filtered to one. Engineers' Building filter still uses the employee list (`GET /buildings`), so it leaves out inactive buildings even when an engineer has tickets there. With many unassigned tickets the queue section gets long; it isn't paged or capped. Engineers have My queue (`/engineer`: the current or next ticket, counts, and their tickets with search and filters) and a details page (`/engineer/tickets/:id`) where they can add notes and move the ticket along: start, block (with a reason), unblock, resolve (with a summary) and reopen. Only the moves the workflow allows are offered, and "Up next" can be started from the dashboard. Admins can move people between employee and engineer (`PUT /admin/users/{id}/role`), but admin accounts can't be created through the API: use the setup task's `admin_email` (see Deployment), or in SQL set their `role_id` in the `users` table to the `admin` row in `roles`.
 - Status history is written when a ticket is created and on every status change (engineers moving it along, admins closing it or sending it back). Any new endpoint that changes status must call `ticket_repository.set_status` and `insert_status_change` in the same transaction, or the history will miss that step. Tickets have no `closed_at` column: the close time is the history row's `changed_at`.
-- Ticket **priority** (P1/P2/P3) is stored for engineer and admin triage but is not part of the employee API: no employee response includes it and employees can't filter by it. Employees see the urgency and impact they chose, and the status. The admin ticket routes return priority, filter by it and sort by it. Admins can't change it yet.
+- Ticket **priority** (P1/P2/P3) is stored for engineer and admin triage but is not part of the employee API: no employee response includes it and employees can't filter by it. Employees see the impact they chose (who is affected) and the status. Tickets have no urgency or short description: both were removed at the managers' request. The admin ticket routes return priority, filter by it and sort by it. Admins can't change it yet.
 - Deploy packaging: Terraform builds the Lambda zip with pip on the machine running it (`build_in_docker = false`), so compiled packages (psycopg-binary, pydantic-core) need Linux x86_64 wheels before deploying from a Mac. The zip also includes `backend/core/tests/`, which is harmless.

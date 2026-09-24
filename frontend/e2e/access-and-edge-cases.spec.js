@@ -152,6 +152,17 @@ test.describe('on a phone', () => {
     await expect(page.getByRole('list', { name: 'Ticket workflow' })).toHaveCSS('flex-direction', 'column')
     expect(await page.evaluate(() => document.documentElement.scrollWidth > window.innerWidth)).toBe(false)
   })
+
+  test('the report form fits the screen, with tiles in one column', async ({ page, request }) => {
+    const owner = await registerViaApi(request, { name: 'Phone Reporter', email: uniqueEmail('phone-report') })
+
+    await signIn(page, owner.email)
+    await page.goto('/tickets/new')
+    await expect(page.getByRole('heading', { level: 1, name: 'Report an issue' })).toBeVisible()
+    await page.getByRole('radio', { name: 'Printer / Peripheral' }).check()
+    await expect(page.getByRole('complementary', { name: 'Summary' })).toContainText('Printer / Peripheral')
+    expect(await page.evaluate(() => document.documentElement.scrollWidth > window.innerWidth)).toBe(false)
+  })
 })
 
 test.describe('on a tablet', () => {
