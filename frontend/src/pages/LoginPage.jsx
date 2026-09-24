@@ -2,14 +2,13 @@ import { useState } from 'react'
 import Alert from '@mui/material/Alert'
 import Button from '@mui/material/Button'
 import CircularProgress from '@mui/material/CircularProgress'
-import Link from '@mui/material/Link'
 import Stack from '@mui/material/Stack'
 import TextField from '@mui/material/TextField'
-import Typography from '@mui/material/Typography'
-import { Link as RouterLink, useLocation, useNavigate } from 'react-router'
+import { useLocation, useNavigate } from 'react-router'
 
 import useAuth from '../auth/useAuth'
 import AuthCard from '../components/AuthCard'
+import PasswordField from '../components/PasswordField'
 import { ApiError } from '../services/apiClient'
 import { login } from '../services/authService'
 import { homePathFor } from '../utils/roles'
@@ -91,11 +90,10 @@ function LoginPage() {
             disabled={submitting}
             fullWidth
           />
-          <TextField
+          <PasswordField
             id="login-password"
             name="password"
             label="Password"
-            type="password"
             autoComplete="current-password"
             required
             // Just registered: the email is filled in, so start on the password.
@@ -117,13 +115,6 @@ function LoginPage() {
           >
             {submitting ? 'Signing in…' : 'Sign in'}
           </Button>
-
-          <Typography variant="body2" sx={{ textAlign: 'center' }}>
-            New here?{' '}
-            <Link component={RouterLink} to="/register">
-              Create an account
-            </Link>
-          </Typography>
         </Stack>
       </form>
     </AuthCard>

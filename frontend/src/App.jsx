@@ -2,6 +2,7 @@ import { Navigate, Route, Routes } from 'react-router'
 
 import useAuth from './auth/useAuth'
 import AppLayout from './components/AppLayout'
+import AuthLayout from './components/AuthLayout'
 import AdminDashboardPage from './pages/AdminDashboardPage'
 import AdminTicketDetailsPage from './pages/AdminTicketDetailsPage'
 import CreateTicketPage from './pages/CreateTicketPage'
@@ -33,12 +34,14 @@ function HomeRedirect() {
 function App() {
   return (
     <Routes>
-      <Route element={<AppLayout />}>
-        <Route index element={<HomeRedirect />} />
-        <Route element={<GuestRoute />}>
+      <Route element={<GuestRoute />}>
+        <Route element={<AuthLayout />}>
           <Route path="login" element={<LoginPage />} />
           <Route path="register" element={<RegisterPage />} />
         </Route>
+      </Route>
+      <Route element={<AppLayout />}>
+        <Route index element={<HomeRedirect />} />
         <Route element={<ProtectedRoute roles={['employee']} />}>
           <Route path="dashboard" element={<DashboardPage />} />
           <Route path="tickets/new" element={<CreateTicketPage />} />

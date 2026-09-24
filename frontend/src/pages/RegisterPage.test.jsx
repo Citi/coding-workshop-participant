@@ -1,4 +1,4 @@
-import { screen, waitFor } from '@testing-library/react'
+import { screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
@@ -45,7 +45,10 @@ describe('RegisterPage', () => {
       expect(field(label)).toBeRequired()
     }
     expect(field('Phone (optional)')).not.toBeRequired()
-    expect(screen.getByRole('link', { name: 'Sign in' })).toHaveAttribute('href', '/login')
+    const account = screen.getByRole('navigation', { name: 'Account' })
+    expect(within(account).getByRole('link', { current: 'page' })).toHaveTextContent('Create account')
+    expect(within(account).getByRole('link', { name: 'Sign in' })).toHaveAttribute('href', '/login')
+    expect(screen.getByText('New accounts start as Employee. A Facility Admin can give you Engineer access.')).toBeInTheDocument()
   })
 
   it('blocks an empty submit, explains each field and focuses the first', async () => {
@@ -181,5 +184,39 @@ describe('RegisterPage', () => {
       expect(screen.getByRole('alert')).toHaveTextContent('Something went wrong. Please try again.'),
     )
     expect(screen.queryByText(/Cannot read properties/)).not.toBeInTheDocument()
+  })
+
+  it('explains the password rule, then rates the password as it is typed', async () => {
+    const user = renderPage()
+    const filledBars = () => screen.queryAllByTestId('strength-bar').filter((bar) => bar.dataset.filled === 'true')
+    expect(field('Password')).toHaveAccessibleDescription('At least 8 characters.')
+    expect(screen.queryAllByTestId('strength-bar')).toHaveLength(0)
+
+    await user.type(field('Password'), 'abc')
+    expect(field('Password')).toHaveAccessibleDescription('Too short · at least 8 characters')
+    expect(filledBars()).toHaveLength(1)
+
+    await user.type(field('Password'), 'defgh')
+    expect(field('Password')).toHaveAccessibleDescription('Fair · at least 8 characters')
+
+    await user.clear(field('Password'))
+    await user.type(field('Password'), 'Long-password1')
+    expect(field('Password')).toHaveAccessibleDescription('Strong · at least 8 characters')
+    expect(filledBars()).toHaveLength(4)
+  })
+
+  it('shows an error instead of the meter', async () => {
+    const user = renderPage()
+    await user.type(field('Password'), 'short')
+    await user.tab()
+    expect(field('Password')).toHaveAccessibleDescription('Use at least 8 characters.')
+    expect(screen.queryAllByTestId('strength-bar')).toHaveLength(0)
+  })
+
+  it('shows each password on its own', async () => {
+    const user = renderPage()
+    await user.click(screen.getByRole('button', { name: 'Show confirm password' }))
+    expect(field('Confirm password')).toHaveAttribute('type', 'text')
+    expect(field('Password')).toHaveAttribute('type', 'password')
   })
 })

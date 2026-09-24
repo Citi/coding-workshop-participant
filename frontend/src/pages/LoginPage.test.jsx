@@ -1,4 +1,4 @@
-import { screen, waitFor } from '@testing-library/react'
+import { screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
@@ -47,7 +47,9 @@ describe('LoginPage', () => {
     renderPage()
     expect(emailField()).toBeRequired()
     expect(passwordField()).toBeRequired()
-    expect(screen.getByRole('link', { name: 'Create an account' })).toHaveAttribute('href', '/register')
+    const account = screen.getByRole('navigation', { name: 'Account' })
+    expect(within(account).getByRole('link', { current: 'page' })).toHaveTextContent('Sign in')
+    expect(within(account).getByRole('link', { name: 'Create account' })).toHaveAttribute('href', '/register')
     expect(screen.queryByRole('alert')).not.toBeInTheDocument()
   })
 
@@ -149,5 +151,33 @@ describe('LoginPage', () => {
     await waitFor(() =>
       expect(screen.getByRole('alert')).toHaveTextContent('Something went wrong. Please try again.'),
     )
+  })
+
+  it('shows and hides the password', async () => {
+    const user = renderPage()
+    await user.type(passwordField(), 'secret-123')
+    expect(passwordField()).toHaveAttribute('type', 'password')
+
+    await user.click(screen.getByRole('button', { name: 'Show password' }))
+    expect(passwordField()).toHaveAttribute('type', 'text')
+    expect(screen.getByRole('button', { name: 'Hide password' })).toHaveAttribute('aria-pressed', 'true')
+
+    await user.click(screen.getByRole('button', { name: 'Hide password' }))
+    expect(passwordField()).toHaveAttribute('type', 'password')
+    expect(passwordField()).toHaveValue('secret-123')
+  })
+
+  it('switches to Create account', async () => {
+    const user = renderPage()
+    await user.click(screen.getByRole('link', { name: 'Create account' }))
+    expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent('Create your account')
+  })
+
+  it('shows the brand panel with the ticket flow', () => {
+    renderPage()
+    expect(screen.getByRole('link', { name: 'ACME Facilities Incident Desk' })).toHaveAttribute('href', '/')
+    expect(screen.getByText('Report it once. Follow it until it’s fixed.')).toBeInTheDocument()
+    const flow = screen.getByRole('list', { name: 'How a ticket moves' })
+    expect(within(flow).getAllByRole('listitem').map((li) => li.textContent)).toEqual(['Open', 'In Progress', 'Resolved', 'Closed'])
   })
 })

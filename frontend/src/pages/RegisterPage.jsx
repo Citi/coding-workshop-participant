@@ -1,16 +1,21 @@
 import { useState } from "react";
 import Alert from "@mui/material/Alert";
+import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
 import CircularProgress from "@mui/material/CircularProgress";
-import Link from "@mui/material/Link";
 import Stack from "@mui/material/Stack";
 import TextField from "@mui/material/TextField";
-import Typography from "@mui/material/Typography";
-import { Link as RouterLink, useNavigate } from "react-router";
+import PropTypes from "prop-types";
+import { useNavigate } from "react-router";
 
 import AuthCard from "../components/AuthCard";
+import PasswordField from "../components/PasswordField";
 import { ApiError } from "../services/apiClient";
 import { register } from "../services/authService";
+import {
+  MIN_PASSWORD_LENGTH,
+  passwordStrength,
+} from "../utils/passwordStrength";
 import {
   REGISTER_FIELDS,
   validateRegisterField,
@@ -37,17 +42,59 @@ const FIELD_PROPS = {
   phone_number: { label: "Phone (optional)", type: "tel", autoComplete: "tel" },
   password: {
     label: "Password",
-    type: "password",
     autoComplete: "new-password",
     required: true,
-    hint: "At least 8 characters.",
   },
   confirm_password: {
     label: "Confirm password",
-    type: "password",
     autoComplete: "new-password",
     required: true,
   },
+};
+
+const PASSWORD_FIELDS = ["password", "confirm_password"];
+
+/** Meter colors from too short (1) to strong (4); the empty bars are light grey. */
+const STRENGTH_COLORS = { 1: "#B3261E", 2: "#E08A00", 3: "#056DAE", 4: "#2E7D4F" };
+
+/**
+ * Hint under the password: the minimum length, plus a four-bar meter and a label
+ * ("Strong · at least 8 characters") once the user starts typing.
+ */
+function PasswordHint({ password }) {
+  const rule = `at least ${MIN_PASSWORD_LENGTH} characters`;
+  const strength = passwordStrength(password);
+  if (!strength) return `At least ${MIN_PASSWORD_LENGTH} characters.`;
+  return (
+    <>
+      <Box
+        aria-hidden="true"
+        sx={{ display: "flex", gap: 0.5, mt: 0.5, mb: 0.75 }}
+      >
+        {[1, 2, 3, 4].map((bar) => (
+          <Box
+            key={bar}
+            data-testid="strength-bar"
+            data-filled={bar <= strength.score}
+            sx={{
+              flex: 1,
+              height: 4,
+              borderRadius: 0.25,
+              bgcolor:
+                bar <= strength.score
+                  ? STRENGTH_COLORS[strength.score]
+                  : "#DDE5EC",
+            }}
+          />
+        ))}
+      </Box>
+      {`${strength.label} · ${rule}`}
+    </>
+  );
+}
+
+PasswordHint.propTypes = {
+  password: PropTypes.string.isRequired,
 };
 
 /**
@@ -112,7 +159,8 @@ function RegisterPage() {
   return (
     <AuthCard
       title="Create your account"
-      subtitle="Report and track facility issues at ACME."
+      subtitle="Use your ACME work email."
+      footnote="New accounts start as Employee. A Facility Admin can give you Engineer access."
     >
       <form onSubmit={handleSubmit} noValidate>
         <Stack spacing={2.5}>
@@ -120,8 +168,18 @@ function RegisterPage() {
 
           {REGISTER_FIELDS.map((field) => {
             const { hint, ...props } = FIELD_PROPS[field];
+            const Field = PASSWORD_FIELDS.includes(field)
+              ? PasswordField
+              : TextField;
+            const helperText =
+              errors[field] ||
+              (field === "password" ? (
+                <PasswordHint password={values.password} />
+              ) : (
+                hint || " "
+              ));
             return (
-              <TextField
+              <Field
                 key={field}
                 id={`register-${field}`}
                 name={field}
@@ -129,9 +187,11 @@ function RegisterPage() {
                 onChange={handleChange}
                 onBlur={handleBlur}
                 error={Boolean(errors[field])}
-                helperText={errors[field] || hint || " "}
+                helperText={helperText}
                 disabled={submitting}
                 fullWidth
+                // The strength meter is a block, which can't sit inside the default <p>.
+                slotProps={{ formHelperText: { component: "div" } }}
                 {...props}
               />
             );
@@ -148,13 +208,6 @@ function RegisterPage() {
           >
             {submitting ? "Creating account…" : "Create account"}
           </Button>
-
-          <Typography variant="body2" sx={{ textAlign: "center" }}>
-            Already have an account?{" "}
-            <Link component={RouterLink} to="/login">
-              Sign in
-            </Link>
-          </Typography>
         </Stack>
       </form>
     </AuthCard>

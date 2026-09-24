@@ -117,6 +117,17 @@ test('an engineer lands on their own queue and never calls the employee API', as
 test.describe('on a phone', () => {
   test.use({ viewport: { width: 375, height: 812 }, isMobile: true, hasTouch: true })
 
+  test('sign in and register fit the screen, with the form near the top', async ({ page }) => {
+    for (const [path, title] of [['/login', 'Sign in'], ['/register', 'Create your account']]) {
+      await page.goto(path)
+      const heading = page.getByRole('heading', { level: 1, name: title })
+      await expect(heading).toBeVisible()
+      // The brand panel shrinks to a short header, so the form starts in the first screen.
+      expect((await heading.boundingBox()).y).toBeLessThan(400)
+      expect(await page.evaluate(() => document.documentElement.scrollWidth > window.innerWidth)).toBe(false)
+    }
+  })
+
   test('the dashboard and ticket details fit the screen', async ({ page, request }) => {
     const owner = await registerViaApi(request, { name: 'Phone User', email: uniqueEmail('phone') })
     const ticket = await createTicketViaApi(request, owner)
