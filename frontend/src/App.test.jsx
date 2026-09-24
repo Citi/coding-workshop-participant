@@ -61,7 +61,7 @@ describe('routing for guests', () => {
 describe('routing when signed in', () => {
   it.each(['/', '/dashboard', '/login', '/register'])('%s shows the dashboard', (route) => {
     renderWithProviders(<App />, { route, user: JANE })
-    expect(heading()).toHaveTextContent('My dashboard')
+    expect(heading()).toHaveTextContent(/^Good (morning|afternoon|evening), Jane$/)
   })
 })
 

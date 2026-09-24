@@ -42,13 +42,12 @@ test('an employee reports an issue and follows it through', async ({ page }) => 
     await page.getByLabel(/^Password/).fill(PASSWORD)
     await page.getByRole('button', { name: 'Sign in' }).click()
 
-    await expect(page.getByRole('heading', { level: 1, name: 'My dashboard' })).toBeVisible()
-    await expect(page.getByText('Welcome back, Jordan.')).toBeVisible()
+    await expect(page.getByRole('heading', { level: 1, name: /^Good (morning|afternoon|evening), Jordan$/ })).toBeVisible()
     await expect(page.getByRole('heading', { name: "You haven't reported any issues yet" })).toBeVisible()
   })
 
   await test.step('create a ticket, choosing Building -> Floor -> Seat', async () => {
-    await page.getByRole('link', { name: 'Create New Ticket' }).click()
+    await page.getByRole('main').getByRole('link', { name: 'Report an issue' }).click()
     await page.getByLabel(/^Title/).fill(title)
     await page.getByLabel(/^Short description/).fill('Lamp at my desk flickers')
     await choose(page, 'Category', 'Electrical / Power')
@@ -100,9 +99,8 @@ test('an employee reports an issue and follows it through', async ({ page }) => 
   await test.step('see it on the dashboard and find it by search', async () => {
     await page.getByRole('link', { name: 'Back to dashboard' }).click()
 
-    await expect(page.locator('#highlight-title')).toContainText(title)
-    const activeTile = page.getByRole('heading', { name: 'Active tickets' }).locator('..')
-    await expect(activeTile).toContainText('1')
+    await expect(page.getByRole('region', { name: title })).toContainText('Your active ticket')
+    await expect(page.getByText(/^1 active ticket · last update /)).toBeVisible()
     const table = page.getByRole('table', { name: 'My tickets' })
     await expect(table.getByRole('row')).toHaveCount(2)
     await expect(table).toContainText('High')

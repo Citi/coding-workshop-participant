@@ -1,6 +1,7 @@
+import { getContrastRatio } from '@mui/material/styles'
 import { describe, expect, it } from 'vitest'
 
-import { formatAge, formatDateTime, formatEngineerLoad, formatLocation } from './ticketFormat'
+import { formatAge, formatAgo, formatDateTime, formatEngineerLoad, formatLocation, STATUSES } from './ticketFormat'
 
 describe('formatLocation', () => {
   it.each([
@@ -42,5 +43,23 @@ describe('formatEngineerLoad', () => {
     [{ full_name: 'Sam Tech', active_count: 3, p1_count: 1 }, 'Sam Tech · 3 active, 1 P1'],
   ])('%o -> %s', (engineer, expected) => {
     expect(formatEngineerLoad(engineer)).toBe(expected)
+  })
+})
+
+describe('formatAgo', () => {
+  const now = Date.parse('2026-09-22T12:00:00Z')
+  it.each([
+    ['2026-09-22T11:59:30Z', 'just now'],
+    ['2026-09-22T11:48:00Z', '12 min ago'],
+    ['2026-09-22T09:00:00Z', '3 h ago'],
+    ['2026-09-20T12:00:00Z', '2 d ago'],
+  ])('%s -> %s', (iso, expected) => {
+    expect(formatAgo(iso, now)).toBe(expected)
+  })
+})
+
+describe('STATUSES chip colors', () => {
+  it.each(Object.entries(STATUSES))('%s chip text passes AA contrast on its tint', (_code, { chip }) => {
+    expect(getContrastRatio(chip.fg, chip.bg)).toBeGreaterThanOrEqual(4.5)
   })
 })

@@ -95,3 +95,19 @@ const ENGINEER_MOVES = {
 export function engineerMoves(status) {
   return ENGINEER_MOVES[status] ?? []
 }
+
+/**
+ * When the ticket last reached each main-path status, from its status history, e.g.
+ * { open: '...', in_progress: '...' }. A status reached twice (after a reopen) keeps
+ * its latest time. Blocked rows are ignored: it is a side state, not a step.
+ * @param {Array<{to_status: string, changed_at: string}>} history
+ * @returns {Record<string, string>}
+ */
+export function stepTimes(history) {
+  const times = {}
+  for (const { to_status: to, changed_at: at } of history) {
+    if (!MAIN_PATH.includes(to)) continue
+    if (!times[to] || Date.parse(at) > Date.parse(times[to])) times[to] = at
+  }
+  return times
+}

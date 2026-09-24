@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 
-import { MAIN_PATH, describeStatusChange, engineerMoves, workflowState } from './ticketWorkflow'
+import { MAIN_PATH, describeStatusChange, engineerMoves, stepTimes, workflowState } from './ticketWorkflow'
 
 const states = (status) => workflowState(status).steps.map((s) => s.state)
 
@@ -72,5 +72,35 @@ describe('engineerMoves', () => {
       ['Unblock', false],
       ['Reopen', false],
     ])
+  })
+})
+
+describe('stepTimes', () => {
+  const row = (to, at) => ({ to_status: to, changed_at: at })
+
+  it('is empty without history', () => {
+    expect(stepTimes([])).toEqual({})
+  })
+
+  it('keeps the latest time per main-path status and skips Blocked', () => {
+    expect(
+      stepTimes([
+        row('open', '2026-09-22T09:00:00Z'),
+        row('in_progress', '2026-09-22T10:00:00Z'),
+        row('blocked', '2026-09-22T11:00:00Z'),
+        row('in_progress', '2026-09-22T12:00:00Z'),
+        row('resolved', '2026-09-22T13:00:00Z'),
+      ]),
+    ).toEqual({
+      open: '2026-09-22T09:00:00Z',
+      in_progress: '2026-09-22T12:00:00Z',
+      resolved: '2026-09-22T13:00:00Z',
+    })
+  })
+
+  it('does not depend on row order', () => {
+    expect(stepTimes([row('open', '2026-09-22T12:00:00Z'), row('open', '2026-09-22T09:00:00Z')])).toEqual({
+      open: '2026-09-22T12:00:00Z',
+    })
   })
 })

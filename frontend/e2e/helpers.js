@@ -78,9 +78,12 @@ export async function createTicketViaApi(request, user, overrides = {}) {
 
 /**
  * Sign in through the real form and wait for the role's start page.
- * @param {{password?: string, home?: string}} [options] home: the start page's h1
+ * @param {{password?: string, home?: string | RegExp}} [options] home: the start page's h1
  */
-export async function signIn(page, email, { password = PASSWORD, home = 'My dashboard' } = {}) {
+/** The employee dashboard's h1, a time-of-day greeting: "Good morning, Priya". */
+export const EMPLOYEE_HOME = /^Good (morning|afternoon|evening), /
+
+export async function signIn(page, email, { password = PASSWORD, home = EMPLOYEE_HOME } = {}) {
   await page.goto('/login')
   await page.getByLabel(/^Work email/).fill(email)
   await page.getByLabel(/^Password/).fill(password)

@@ -13,13 +13,17 @@ def insert(
     full_name: str,
     phone_number: str | None,
     password_hash: str,
+    role: str = "employee",
 ) -> dict[str, Any] | None:
-    """Insert an employee and return it, or None if the email is already taken."""
+    """Insert a user and return it, or None if the email is already taken.
+
+    Registration always creates employees; only the setup task passes another role.
+    """
     return conn.execute(
         """
         WITH u AS (
             INSERT INTO users (email, full_name, phone_number, password_hash, role_id)
-            VALUES (%s, %s, %s, %s, (SELECT role_id FROM roles WHERE role_name = 'employee'))
+            VALUES (%s, %s, %s, %s, (SELECT role_id FROM roles WHERE role_name = %s))
             ON CONFLICT (email) DO NOTHING
             RETURNING user_id, email, full_name, phone_number, role_id, created_at
         )
@@ -28,7 +32,7 @@ def insert(
         FROM u
         JOIN roles r ON r.role_id = u.role_id
         """,
-        (email, full_name, phone_number, password_hash),
+        (email, full_name, phone_number, password_hash, role),
     ).fetchone()
 
 

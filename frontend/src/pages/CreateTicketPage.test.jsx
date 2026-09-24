@@ -1,4 +1,4 @@
-import { screen, waitFor } from '@testing-library/react'
+import { screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
@@ -83,7 +83,9 @@ describe('CreateTicketPage: layout', () => {
   it('is reached from the dashboard and needs sign-in', async () => {
     const user = userEvent.setup()
     renderWithProviders(<App />, { route: '/dashboard', user: JANE })
-    await user.click(await screen.findByRole('link', { name: 'Create New Ticket' }))
+    // The page's own button, not the sidebar link of the same name.
+    await screen.findByRole('heading', { name: "You haven't reported any issues yet" })
+    await user.click(within(screen.getByRole('main')).getByRole('link', { name: 'Report an issue' }))
     expect(screen.getByRole('heading', { level: 1, name: 'Report an issue' })).toBeInTheDocument()
   })
 

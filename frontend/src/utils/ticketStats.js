@@ -10,6 +10,7 @@ import { STATUSES, URGENCIES } from './ticketFormat'
  *   byStatus: Record<string, number>,
  *   activeByUrgency: Record<string, number>,
  *   mostRecentActive: object | null,
+ *   lastUpdatedAt: string | null,
  * }}
  */
 export function summarizeTickets(tickets) {
@@ -17,9 +18,11 @@ export function summarizeTickets(tickets) {
   const activeByUrgency = Object.fromEntries(Object.keys(URGENCIES).map((u) => [u, 0]))
   let activeCount = 0
   let mostRecentActive = null
+  let lastUpdatedAt = null
 
   for (const ticket of tickets) {
     byStatus[ticket.status] += 1
+    if (!lastUpdatedAt || Date.parse(ticket.updated_at) > Date.parse(lastUpdatedAt)) lastUpdatedAt = ticket.updated_at
     if (ticket.status === 'closed') continue
     activeCount += 1
     activeByUrgency[ticket.urgency] += 1
@@ -28,5 +31,5 @@ export function summarizeTickets(tickets) {
     }
   }
 
-  return { activeCount, byStatus, activeByUrgency, mostRecentActive }
+  return { activeCount, byStatus, activeByUrgency, mostRecentActive, lastUpdatedAt }
 }

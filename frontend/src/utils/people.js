@@ -11,3 +11,25 @@ export function initialsFor(fullName) {
   const last = words.length > 1 ? words[words.length - 1][0] : ''
   return `${first}${last}`.toUpperCase()
 }
+
+/**
+ * The first word of a name, for greetings: "Priya Shah" -> "Priya". Blank names give "".
+ * @param {string | null | undefined} fullName
+ * @returns {string}
+ */
+export function firstNameOf(fullName) {
+  return (fullName ?? '').trim().split(/\s+/)[0] ?? ''
+}
+
+/**
+ * "Good morning" before noon, "Good afternoon" until 6 PM, "Good evening" otherwise,
+ * in the viewer's local time.
+ * @param {Date} [date]
+ * @returns {string}
+ */
+export function greetingFor(date = new Date()) {
+  const hour = date.getHours()
+  if (hour >= 5 && hour < 12) return 'Good morning'
+  if (hour >= 12 && hour < 18) return 'Good afternoon'
+  return 'Good evening'
+}

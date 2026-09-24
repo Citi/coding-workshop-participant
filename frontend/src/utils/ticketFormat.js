@@ -4,12 +4,12 @@
  */
 
 export const STATUSES = {
-  open: { label: 'Open', dot: '#056DAE' },
+  open: { label: 'Open', dot: '#056DAE', chip: { bg: '#E3F0FA', fg: '#04568A' } },
   // Sky blue is too light for text, but fine for a dot that sits next to its label.
-  in_progress: { label: 'In Progress', dot: '#00BDF2' },
-  blocked: { label: 'Blocked', dot: '#E65100' },
-  resolved: { label: 'Resolved', dot: '#2E7D32' },
-  closed: { label: 'Closed', dot: '#757575' },
+  in_progress: { label: 'In Progress', dot: '#00BDF2', chip: { bg: '#FFF1D6', fg: '#8A5300' } },
+  blocked: { label: 'Blocked', dot: '#E65100', chip: { bg: '#FDE3E3', fg: '#B3261E' } },
+  resolved: { label: 'Resolved', dot: '#2E7D32', chip: { bg: '#DFF3E6', fg: '#1E6B3A' } },
+  closed: { label: 'Closed', dot: '#757575', chip: { bg: '#ECEFF2', fg: '#4A5561' } },
 }
 
 // Employees see urgency and impact, which they chose themselves. Priority is an
@@ -96,6 +96,16 @@ export function formatAge(iso, now = Date.now()) {
   if (minutes < 60) return `${minutes} min`
   if (minutes < 24 * 60) return `${Math.floor(minutes / 60)} h`
   return `${Math.floor(minutes / (24 * 60))} d`
+}
+
+/**
+ * How long ago, for update lines: "just now", "12 min ago", "3 h ago", "2 d ago".
+ * @param {string} iso
+ * @param {number} [now] epoch ms, for tests
+ */
+export function formatAgo(iso, now = Date.now()) {
+  const age = formatAge(iso, now)
+  return age === 'just now' ? age : `${age} ago`
 }
 
 /**

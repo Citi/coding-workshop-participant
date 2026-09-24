@@ -1,12 +1,14 @@
 """FastAPI app for the core service, exposed to AWS Lambda through Mangum."""
 
 import logging
+from typing import Any
 
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from mangum import Mangum
 
+import setup_tasks
 from config import settings
 from errors import (
     AppError,
@@ -71,5 +73,15 @@ app.include_router(tickets.router, prefix=API_PREFIX)
 app.include_router(admin.router, prefix=API_PREFIX)
 app.include_router(engineer.router, prefix=API_PREFIX)
 
-# Lambda entry point: Terraform wires Python services to function.handler.
-handler = Mangum(app, lifespan="off")
+_asgi_handler = Mangum(app, lifespan="off")
+
+
+def handler(event: dict[str, Any], context: Any) -> dict[str, Any]:
+    """Lambda entry point: Terraform wires Python services to function.handler.
+
+    Events with a top-level "setup_task" key come from `aws lambda invoke` and go to
+    setup_tasks (see there). Everything else is an HTTP request for the API.
+    """
+    if isinstance(event, dict) and "setup_task" in event:
+        return setup_tasks.run(event)
+    return _asgi_handler(event, context)

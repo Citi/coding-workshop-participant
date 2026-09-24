@@ -45,7 +45,11 @@ const theme = createTheme({
   components: {
     MuiAppBar: { defaultProps: { elevation: 0 } },
     MuiButton: { defaultProps: { disableElevation: true } },
-    MuiCard: { defaultProps: { variant: 'outlined' } },
+    // Mockup surfaces: a hairline border and 12px corners.
+    MuiCard: {
+      defaultProps: { variant: 'outlined' },
+      styleOverrides: { root: { borderColor: brand.line, borderRadius: 12 } },
+    },
   },
 })
 

@@ -36,7 +36,17 @@ describe('summarizeTickets', () => {
       byStatus: { open: 0, in_progress: 0, blocked: 0, resolved: 0, closed: 0 },
       activeByUrgency: { low: 0, medium: 0, high: 0 },
       mostRecentActive: null,
+      lastUpdatedAt: null,
     })
     expect(summarizeTickets([makeTicket({ status: 'closed' })]).mostRecentActive).toBeNull()
+  })
+
+  it('finds the latest update across all tickets, closed ones included', () => {
+    const tickets = [
+      makeTicket({ ticket_id: 1, status: 'open', updated_at: '2026-09-22T10:00:00Z' }),
+      makeTicket({ ticket_id: 2, status: 'closed', updated_at: '2026-09-22T13:00:00Z' }),
+      makeTicket({ ticket_id: 3, status: 'open', updated_at: '2026-09-22T09:00:00-05:00' }), // 14:00 UTC
+    ]
+    expect(summarizeTickets(tickets).lastUpdatedAt).toBe('2026-09-22T09:00:00-05:00')
   })
 })

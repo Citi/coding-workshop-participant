@@ -89,7 +89,7 @@ describe('LoginPage', () => {
     await signInAs(user)
 
     expect(login).toHaveBeenCalledWith({ email: 'jane@acme.inc', password: 'password123' })
-    expect(await screen.findByRole('heading', { level: 1, name: 'My dashboard' })).toBeInTheDocument()
+    expect(await screen.findByRole('heading', { level: 1, name: /^Good (morning|afternoon|evening), Jane$/ })).toBeInTheDocument()
     expect(screen.getByText('Jane Doe')).toBeInTheDocument()
     expect(getSession()).toEqual(SESSION)
   })
@@ -101,7 +101,7 @@ describe('LoginPage', () => {
 
     await signInAs(user)
 
-    expect(await screen.findByRole('heading', { level: 1, name: 'My dashboard' })).toBeInTheDocument()
+    expect(await screen.findByRole('heading', { level: 1, name: /^Good (morning|afternoon|evening), Jane$/ })).toBeInTheDocument()
   })
 
   it.each([
@@ -127,7 +127,7 @@ describe('LoginPage', () => {
     expect(submitButton()).toHaveTextContent('Signing in…')
     expect(emailField()).toBeDisabled()
     finish(SESSION)
-    await screen.findByRole('heading', { level: 1, name: 'My dashboard' })
+    await screen.findByRole('heading', { level: 1, name: /^Good (morning|afternoon|evening), Jane$/ })
   })
 
   it('shows a wrong password as one message and stays signed out', async () => {
