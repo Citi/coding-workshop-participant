@@ -83,19 +83,40 @@ fi
 
 # Retrieve temporary AWS credentials from workshop API
 echo "INFO: Retrieving temporary AWS credentials..."
-JSON=$(curl -H "x-id: $PARTICIPANT_ID" -H "x-code: $PARTICIPANT_CODE" $PARTICIPANT_URL) || {
-    echo "ERROR: Failed to retrieve temporary AWS credentials. Aborting..."
+RESPONSE_FILE=$(mktemp)
+HTTP_CODE=$(curl -sS --retry 3 --retry-delay 2 -o "$RESPONSE_FILE" -w '%{http_code}' \
+    -H "x-id: $PARTICIPANT_ID" -H "x-code: $PARTICIPANT_CODE" "$PARTICIPANT_URL") || {
+    rm -f "$RESPONSE_FILE"
+    echo "ERROR: Could not reach the workshop API at $PARTICIPANT_URL. Aborting..."
     exit 1
 }
 
+# curl exits 0 on 4xx/5xx, so the status has to be checked explicitly
+if [ "$HTTP_CODE" != "200" ]; then
+    echo "ERROR: Workshop API returned HTTP $HTTP_CODE: $(cat "$RESPONSE_FILE")"
+    rm -f "$RESPONSE_FILE"
+    echo "ERROR: Failed to retrieve temporary AWS credentials. Aborting..."
+    exit 1
+fi
+
+JSON=$(cat "$RESPONSE_FILE")
+rm -f "$RESPONSE_FILE"
+
 # Configure AWS CLI profile with temporary credentials
 echo "INFO: Setting up the AWS CLI..."
-AWS_ACCESS_KEY_ID="$(echo $JSON | jq -r '.AccessKeyId')"
-aws configure set aws_access_key_id $AWS_ACCESS_KEY_ID
-AWS_SECRET_ACCESS_KEY="$(echo $JSON | jq -r '.SecretAccessKey')"
-aws configure set aws_secret_access_key $AWS_SECRET_ACCESS_KEY
-AWS_SESSION_TOKEN="$(echo $JSON | jq -r '.SessionToken')"
-aws configure set aws_session_token $AWS_SESSION_TOKEN
+AWS_ACCESS_KEY_ID="$(echo "$JSON" | jq -r '.AccessKeyId // empty')"
+AWS_SECRET_ACCESS_KEY="$(echo "$JSON" | jq -r '.SecretAccessKey // empty')"
+AWS_SESSION_TOKEN="$(echo "$JSON" | jq -r '.SessionToken // empty')"
+
+# Writing empty values here would shadow any ambient role for every later AWS call
+if [ -z "$AWS_ACCESS_KEY_ID" ] || [ -z "$AWS_SECRET_ACCESS_KEY" ] || [ -z "$AWS_SESSION_TOKEN" ]; then
+    echo "ERROR: Workshop API response did not contain credentials. Aborting..."
+    exit 1
+fi
+
+aws configure set aws_access_key_id "$AWS_ACCESS_KEY_ID"
+aws configure set aws_secret_access_key "$AWS_SECRET_ACCESS_KEY"
+aws configure set aws_session_token "$AWS_SESSION_TOKEN"
 
 # Auto-detect AWS Account ID from credentials
 echo "INFO: Auto-detecting AWS Account ID..."

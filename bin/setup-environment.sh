@@ -85,6 +85,13 @@ is_executable() {
     [ -f "$1" ] && [ -x "$1" ]
 }
 
+# Downloads a (possibly large) file with visible progress: one line per 64 MB, so a slow or stuck mirror is obvious in the
+# terminal and in the log. wget's default is 20 attempts, which can turn one bad mirror into a very long silent wait.
+download_file() {
+    local url="$1" dest="$2"
+    wget --progress=dot:giga --tries=3 --timeout=30 --waitretry=5 "$url" -O "$dest"
+}
+
 # Retry function with exponential backoff
 retry_command() {
     local max_attempts="$1"
@@ -803,9 +810,13 @@ install_apache_spark() {
     print_info "Installing Apache Spark $SPARK_VERSION..."
 
     local spark_filename="spark-${SPARK_VERSION}-bin-hadoop3.tgz"
+    # Fastest first. dlcdn and downloads.apache.org are mirrors/CDN of the current releases; archive.apache.org keeps every
+    # release but is throttled to under 1 MB/s, so downloading the ~570 MB tarball from it takes ten minutes or more. It is
+    # the last resort, for a version that is no longer current.
     local -a spark_mirrors=(
-        "https://archive.apache.org/dist/spark/spark-${SPARK_VERSION}/$spark_filename"
         "https://dlcdn.apache.org/spark/spark-${SPARK_VERSION}/$spark_filename"
+        "https://downloads.apache.org/spark/spark-${SPARK_VERSION}/$spark_filename"
+        "https://archive.apache.org/dist/spark/spark-${SPARK_VERSION}/$spark_filename"
     )
 
     mkdir -p "$ACTUAL_HOME/.local"
@@ -815,10 +826,14 @@ install_apache_spark() {
     local download_success=false
     for mirror_url in "${spark_mirrors[@]}"; do
         print_info "Trying mirror: $mirror_url"
-        if wget -q --timeout=30 "$mirror_url" -O spark.tgz 2>/dev/null && tar -tzf spark.tgz >/dev/null 2>&1; then
+        # Not quiet and not silenced: a download this large must show that it is making progress (and the reason when it
+        # is not). --tries bounds wget's default of 20 attempts; --timeout is per read, so a stalled mirror gives up.
+        if download_file "$mirror_url" spark.tgz && tar -tzf spark.tgz >/dev/null 2>&1; then
             download_success=true
             break
         fi
+        print_info "That mirror did not work; trying the next one"
+        rm -f spark.tgz
     done
 
     if [ "$download_success" = true ] && tar -xzf spark.tgz && [ -d "spark-${SPARK_VERSION}-bin-hadoop3" ]; then

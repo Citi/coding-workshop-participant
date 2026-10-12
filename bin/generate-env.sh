@@ -67,10 +67,7 @@ else
 fi
 
 # Initialize terraform with the correct backend so outputs come from the right state
-terraform init -reconfigure \
-    -backend-config="bucket=$BUCKET_NAME" \
-    -backend-config="region=${AWS_REGION:-us-east-1}" \
-    > /dev/null 2>&1
+terraform init -reconfigure -backend-config="bucket=$BUCKET_NAME" -backend-config="region=${AWS_REGION:-us-east-1}" > /dev/null 2>&1
 
 # Retrieve API base URL from Terraform outputs
 ALL_OUTPUTS=$(terraform output -json 2>/dev/null || echo "{}")

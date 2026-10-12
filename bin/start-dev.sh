@@ -379,10 +379,7 @@ if ! aws s3 ls 2>/dev/null | grep -q "$BUCKET_NAME"; then
 fi
 
 # Ensure terraform is initialized against the correct LocalStack backend
-terraform init -reconfigure \
-    -backend-config="bucket=$BUCKET_NAME" \
-    -backend-config="region=${AWS_REGION:-us-east-1}" \
-    > /tmp/tf-init.log 2>&1 || {
+terraform init -reconfigure -backend-config="bucket=$BUCKET_NAME" -backend-config="region=${AWS_REGION:-us-east-1}" > /tmp/tf-init.log 2>&1 || {
     echo -e "  ✗ Terraform init failed:"
     tail -n 20 /tmp/tf-init.log | sed 's/^/    /'
     exit 1
@@ -528,12 +525,6 @@ echo "Services Status:"
 echo "  • LocalStack:  Running on localhost:4566"
 echo "  • PostgreSQL:  Running on localhost:5432"
 echo "  • MongoDB:     Running on localhost:27017"
-
-if [ "$REACT_RUNNING" = true ]; then
-    echo "  • Frontend:   Already running on localhost:3000"
-else
-    echo "  • Frontend:   Ready to start"
-fi
 echo ""
 
 if [ "$REACT_RUNNING" = true ]; then
