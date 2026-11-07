@@ -2,18 +2,7 @@
 
 Run this Terraform root **once, in your own AWS account** — not the
 platform's — to create the IAM role the Organizer Console assumes to
-provision, back up, and clean up your event's resources (FR-CRED-1).
-
-This is the exact, version-controlled policy document
-non-functional-requirements.md's NFR-ARCH-4/NFR-SEC-3 describe. The
-platform's CodeBuild project (in the *platform's* account) runs the
-`.organizer/infra/` Terraform module for your event **by assuming this
-role**, so the role carries what that Terraform needs in your account —
-the same permissions `.organizer/bin/create-codebuild.sh` gives its service
-role — and no more: no CodeBuild permissions (nothing is created in your
-account for building), no `route53:*` (the workshop DNS record lives in the
-platform's account), no database access, no `ses:*` (platform-owned,
-NFR-ARCH-9).
+provision, back up, and clean up your event's resources.
 
 A session of this role lasts up to four hours; the build re-assumes it by
 itself if a run is longer.
@@ -24,7 +13,7 @@ itself if a run is longer.
 cd infra/cross-account
 
 # Generate an external ID -- a value only you and the platform know.
-# This is the actual security boundary (FR-CRED-1): keep it as secret
+# This is the actual security boundary: keep it as secret
 # as a password, and never reuse one from another integration.
 openssl rand -hex 16
 
@@ -66,18 +55,18 @@ A role can still be given an *inline* policy by the Terraform that creates it; n
 ## Updating
 
 When a new console release changes this template (tracked in this
-file's own git history — NFR-SEC-3's "audited and diffed release over
-release"), re-run `terraform apply` with the same variables to update
-the role's policy in place. The role ARN and external ID do not change,
+file's own git history — "audited and diffed release over release"),
+re-run `terraform apply` with the same variables to update the role's
+policy in place. The role ARN and external ID do not change,
 so nothing needs re-entering in the console.
 
 ## Removing
 
 `terraform destroy` removes the role. The console will report the
-event's AWS connection as invalid on its next readiness check
-(FR-CRED-4) — reconnect with a new role to keep provisioning. Pasted session
-credentials are no longer accepted: the build can only reach your account by
-assuming this role.
+event's AWS connection as invalid on its next readiness check —
+reconnect with a new role to keep provisioning. Pasted session
+credentials are no longer accepted: the build can only reach your
+account by assuming this role.
 
 ## Moving from the older template
 

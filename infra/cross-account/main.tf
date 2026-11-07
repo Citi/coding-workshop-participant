@@ -1,34 +1,3 @@
-# NFR-ARCH-4, NFR-SEC-3: "the platform publishes and version-controls
-# the exact IAM policy document organizers must attach to the
-# cross-account role, so it can be audited and diffed release over
-# release." This file IS that published document.
-#
-# The platform's CodeBuild project (in the PLATFORM's account) runs the
-# `.organizer/infra` Terraform for your event by assuming THIS role, so the
-# role carries what that Terraform needs -- the same permissions
-# `.organizer/bin/create-codebuild.sh` gives the service role of the
-# legacy per-account project, minus what the platform does itself:
-#   - NO codebuild:* -- nothing is created in your account for building;
-#     builds run in the platform's account and reach yours only through
-#     this role.
-#   - NO route53:* -- the workshop DNS record lives in the platform's
-#     account and is updated with the platform's own credentials.
-#   - NO database permissions (event/participant data lives in the
-#     platform's own Aurora DSQL, not here), NO ses:* (platform-owned,
-#     NFR-ARCH-9).
-# backend/tests/test_cross_account_role_template.py fails if this falls behind
-# create-codebuild.sh's policy (other than the two exclusions above and the narrowings listed
-# below), so a permission the Terraform needs cannot be missing here without a test saying so.
-#
-# What this role deliberately cannot do, which create-codebuild.sh's policy could:
-#   - iam:*, kms:*, sts:* on every resource. IAM is limited to the coding-workshop- roles, the one service role
-#     WorkSpaces needs, and a short list of AWS managed policies that may be attached (never AdministratorAccess);
-#     nothing here creates or schedules the deletion of a KMS key; sts is GetCallerIdentity only.
-#   - deleting a VPC, subnet, route table, internet gateway, security group, VPC endpoint, directory or WorkSpace that
-#     does not carry the tag application=coding-workshop. Every resource the workshop and network Terraform create
-#     carries it (provider default_tags), so the role can clean up after itself and cannot remove yours.
-# A second, much smaller role (backup) is created next to this one for the backup job, which only reads.
-
 terraform {
   required_providers {
     aws = {
@@ -42,14 +11,8 @@ data "aws_partition" "this" {}
 data "aws_caller_identity" "this" {}
 
 locals {
-  # .organizer/bin/create-codebuild.sh's own naming convention -- every
-  # resource this role's policy scopes by name uses this same prefix,
-  # so a resource this account's existing per-event pipeline didn't
-  # create can never match.
   name_prefix = "coding-workshop-"
 
-  # Every AWS managed policy the Terraform in .organizer/infra attaches to a role. A test keeps this equal to what the
-  # Terraform names.
   managed_policy_arns = [
     for path in [
       "service-role/AWSLambdaVPCAccessExecutionRole",
@@ -65,9 +28,6 @@ locals {
     ] : "arn:${data.aws_partition.this.partition}:iam::aws:policy/${path}"
   ]
 
-  # AWS managed policies a module the Terraform uses only reads, never attaches: terraform-aws-modules/lambda reads
-  # AWSLambdaENIManagementAccess for attach_network_policy and copies it into an inline policy. Readable, so not in
-  # managed_policy_arns, which is also the list AttachOnlyTheseManagedPolicies allows to be attached.
   readable_managed_policy_arns = concat(local.managed_policy_arns, [
     for path in [
       "service-role/AWSLambdaENIManagementAccess",
@@ -78,11 +38,6 @@ locals {
 resource "aws_iam_role" "this" {
   name = var.role_name
 
-  # FR-CRED-1: "an IAM Role ARN ... with an external ID, which the
-  # platform assumes via STS." The external ID condition is the actual
-  # security boundary here, not the principal restriction alone --
-  # anyone who learns this role's ARN still cannot assume it without
-  # also knowing var.external_id.
   assume_role_policy = jsonencode({
     Version = "2012-10-17"
     Statement = [{
@@ -95,8 +50,6 @@ resource "aws_iam_role" "this" {
     }]
   })
 
-  # The build re-assumes this role by itself when a session runs out, so this only bounds
-  # how long one session may be; four hours covers a whole provisioning run in one.
   max_session_duration = 14400
 }
 
@@ -108,11 +61,6 @@ resource "aws_iam_role_policy" "this" {
 }
 
 data "aws_iam_policy_document" "this" {
-  # FR-CRED-4's readiness check reads this role's own policy back
-  # (adapters/aws/readiness_checker.py's iam:ListRolePolicies/
-  # iam:GetRolePolicy calls) to diff it against this same published
-  # template -- the role needs permission to introspect itself for that
-  # to work at all.
   statement {
     sid       = "SelfIntrospection"
     effect    = "Allow"
@@ -120,10 +68,6 @@ data "aws_iam_policy_document" "this" {
     resources = [aws_iam_role.this.arn]
   }
 
-  # FR-CRED-4: "a reachable S3 bucket for Terraform state." When the organizer supplies a bucket of their own
-  # (variables.tf's terraform_state_bucket_arn) the role is scoped to exactly that one -- object-level access plus
-  # listing, no bucket management. Left out, the console creates its own state buckets, named coding-workshop-...,
-  # which the S3Buckets statement below already covers (including creating and deleting them).
   dynamic "statement" {
     for_each = var.terraform_state_bucket_arn == null ? [] : [var.terraform_state_bucket_arn]
     content {
@@ -134,9 +78,6 @@ data "aws_iam_policy_document" "this" {
     }
   }
 
-  # What the workshop Terraform needs from services whose APIs cannot be narrowed by resource (create-time
-  # identifiers, describe/list calls). Mirrors the first statement of create-codebuild.sh's policy, without
-  # codebuild:*, route53:*, iam:*, kms:* and sts:* (see the header).
   statement {
     sid    = "ServicesWithoutResourceScoping"
     effect = "Allow"
@@ -147,11 +88,6 @@ data "aws_iam_policy_document" "this" {
     resources = ["*"]
   }
 
-  # Deleting what is not the console's. The workshop and network Terraform tag everything they create with
-  # application=coding-workshop (provider default_tags), and a delete of one of these kinds of resource is refused
-  # unless the resource has it. Only deletes: creation and ordinary changes carry no such condition, so a first run in
-  # a fresh account does not depend on tag-on-create behaviour. Every action named here supports the aws:ResourceTag
-  # condition key for the resource it acts on (an action that did not would be denied outright, tag or not).
   statement {
     sid    = "NeverDeleteWhatIsNotTagged"
     effect = "Deny"
@@ -204,9 +140,6 @@ data "aws_iam_policy_document" "this" {
     ]
   }
 
-  # The AWS managed policies the workshop Terraform attaches (infra/iam.tf, infra/locals.tf) and nothing else, so a role
-  # this one creates cannot be given AdministratorAccess. Reading a managed policy needs no more than naming it; the
-  # ones a module only reads are listed too.
   statement {
     sid       = "IamManagedPolicies"
     effect    = "Allow"
@@ -214,9 +147,6 @@ data "aws_iam_policy_document" "this" {
     resources = local.readable_managed_policy_arns
   }
 
-  # IamRoles lets the role manage the coding-workshop- roles, which includes attaching policies to them; this keeps what it
-  # may attach to the AWS managed policies listed above. (A role can still be given an inline policy, which no condition
-  # can limit; closing that needs a permissions boundary on the roles the Terraform creates.)
   statement {
     sid       = "AttachOnlyTheseManagedPolicies"
     effect    = "Deny"
@@ -229,7 +159,6 @@ data "aws_iam_policy_document" "this" {
     }
   }
 
-  # WorkSpaces and Directory Service create their own service-linked roles the first time they are used in an account.
   statement {
     sid       = "ServiceLinkedRoles"
     effect    = "Allow"
@@ -292,11 +221,6 @@ data "aws_iam_policy_document" "this" {
   }
 }
 
-# ---------------------------------------------------------------------------------------------------------------------
-# The backup role. A backup only finds an event's WorkSpaces, starts the stopped ones so their files can be read, and
-# copies the participants' code out of the event's own bucket; it needs none of the workshop Terraform's rights. The
-# console uses this role for backups when you give it its ARN, and the workshop role above when you do not.
-# ---------------------------------------------------------------------------------------------------------------------
 resource "aws_iam_role" "backup" {
   count = var.create_backup_role ? 1 : 0
 
