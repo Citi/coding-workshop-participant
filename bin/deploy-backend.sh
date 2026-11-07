@@ -88,7 +88,7 @@ fi
 # Initialize Terraform with backend configuration
 if [ -n "$PARTICIPANT_ID" ]; then
     echo "INFO: Using custom backend configuration..."
-    terraform init -reconfigure -backend-config="bucket=coding-workshop-tfstate-${PARTICIPANT_ID:-abcd1234}" -backend-config="region=${AWS_REGION:-us-east-1}"
+    terraform init -reconfigure -backend-config="bucket=coding-workshop-tfstate-${PARTICIPANT_ID:-abcd1234}" -backend-config="region=${AWS_REGION}"
 else
     echo "WARN: No backend.config found. Using default backend configuration."
     echo "INFO: For multi-participant workshops, run: ./bin/setup-participant.sh"
