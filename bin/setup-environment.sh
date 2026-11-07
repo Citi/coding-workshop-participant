@@ -960,6 +960,10 @@ configure_sshd() {
     fi
 
     local sshd_config="/etc/ssh/sshd_config"
+    # Ubuntu 22.04's sshd_config starts with "Include /etc/ssh/sshd_config.d/*.conf", and sshd keeps the first value it
+    # reads, so a drop-in there that says "PasswordAuthentication no" (cloud images ship one) beats this file's "yes".
+    # This drop-in sorts first, so its "yes" is the one that counts.
+    local sshd_dropin="/etc/ssh/sshd_config.d/00-coding-workshop.conf"
     local config_changed=false
 
     # Ensure openssh-server is installed
@@ -982,13 +986,20 @@ configure_sshd() {
         print_status "Backed up original SSH configuration"
     fi
 
+    if [ -d "$(dirname "$sshd_dropin")" ] && ! sudo grep -qx "PasswordAuthentication yes" "$sshd_dropin" 2>/dev/null; then
+        printf '%s\n' "# Written by setup-environment.sh: the workshop's backup signs in with this WorkSpace's password." \
+            "PasswordAuthentication yes" | sudo tee "$sshd_dropin" > /dev/null
+        print_status "Password sign-in set ahead of the other sshd_config.d settings"
+        config_changed=true
+    fi
+
     # Check if configuration already has the required settings
     local pw_auth_correct=$(sudo grep -q "^PasswordAuthentication yes$" "$sshd_config" && echo "true" || echo "false")
     local pam_correct=$(sudo grep -q "^UsePAM yes$" "$sshd_config" && echo "true" || echo "false")
     local pubkey_correct=$(sudo grep -q "^PubkeyAuthentication yes$" "$sshd_config" && echo "true" || echo "false")
 
     # If all settings are already correct, no changes needed
-    if [ "$pw_auth_correct" = "true" ] && [ "$pam_correct" = "true" ] && [ "$pubkey_correct" = "true" ]; then
+    if [ "$config_changed" = "false" ] && [ "$pw_auth_correct" = "true" ] && [ "$pam_correct" = "true" ] && [ "$pubkey_correct" = "true" ]; then
         print_info "SSH configuration already properly configured"
 
         # Verify service is running and enabled
@@ -1069,6 +1080,7 @@ configure_sshd() {
         print_error "SSH configuration syntax check failed"
         print_info "Restoring from backup..."
         sudo cp "$temp_backup" "$sshd_config"
+        sudo rm -f "$sshd_dropin"
         rm -f "$temp_backup"
         add_failure "Failed to configure SSH - configuration restored"
         return
@@ -1103,6 +1115,12 @@ configure_sshd() {
         if sudo systemctl enable sshd 2>/dev/null || sudo systemctl enable ssh 2>/dev/null; then
             print_status "SSH service enabled to start on boot"
         fi
+    fi
+
+    # What sshd actually uses, not what this file says: anything else that still turns password sign-in off shows here.
+    if ! sudo sshd -T 2>/dev/null | grep -qi "^passwordauthentication yes$"; then
+        add_failure "SSH password sign-in is still off (see: sudo sshd -T | grep -i passwordauthentication); the workshop backup cannot sign in"
+        return
     fi
 
     # Display connection information
