@@ -2,7 +2,7 @@
 
 > [Main Guide](../README.md) | [Validation Guide](../validation.md) | [Full Stack Guide](../full-stack.md) | **Senior Engineering Guide**
 
-This guide is for candidates attending the **one-day Senior Engineering Coding Workshop** for **Senior Full Stack Java & React Engineering Lead** roles. Read it before the day. No other preparation is needed, and there is no take-home task.
+This guide is for candidates attending the **one-day Senior Engineering Coding Workshop** for **Senior Full Stack Java & React Engineer** roles. Read it before the day. No other preparation is needed, and there is no take-home task.
 
 * [What this workshop is](#what-this-workshop-is)
 * [The day](#the-day)
@@ -25,7 +25,7 @@ The workshop is the interview. In one day you will do the work this role does:
 
 | Time | What happens |
 | :--- | :----------- |
-| **08:30** | Arrive, sign in to your pre-configured workspace, activate your Claude Code subscription. |
+| **08:30** | Arrive, sign in to your pre-configured workspace, activate your AI coding agent access. |
 | **09:00** | Welcome and briefing; you receive the business problem by email. |
 | **09:30** | Discovery and design. The **business stakeholder** is available all day at the stakeholder desk. |
 | **From 10:30** | **Design checkpoint** (20 minutes, your slot is on your card): present your plan to your evaluation panel. |
@@ -47,12 +47,12 @@ The panel will then ask questions. Rough is fine — we want to see your thinkin
 
 ### 1:1 with the panel (45 minutes)
 
-A structured technical and leadership conversation, grounded in what you did today: your solution and its code, your design decisions, how you directed the AI agent, technical depth in the role's technology (Java / Spring Boot, SQL, microservices, event-driven design, React, cloud, containers), and how you lead teams and delivery. Expect "why?" and "show me" questions. It's fine to say "I don't know"; tell us how you would find out.
+A structured technical and leadership conversation, grounded in what you did today: your solution and its code, your design decisions, how you directed the AI agent, technical depth in your chosen stack and the role's fundamentals (APIs, SQL and relational databases, microservices and event-driven design, React, cloud, containers), how you'd adapt to a different stack, and how you lead teams and delivery. Expect "why?" and "show me" questions. It's fine to say "I don't know"; tell us how you would find out.
 
 ## Ground rules
 
 * **Ask the stakeholder.** Ask anything about the business, users, rules and priorities. Questions are asked privately, one candidate at a time. Technical choices are yours: the stakeholder won't tell you how to build it.
-* **Use AI.** Claude Code is provided, and GitHub Copilot is available. We expect the agent to write much of the code **under your direction**. You are accountable for every line.
+* **Use AI.** Use GitHub Copilot, Claude Code or another AI coding agent (a Claude Code subscription is provided). We expect the agent to write much of the code **under your direction**. You are accountable for every line.
 * **Internet and documentation are allowed.** Help from other people (in the room or remotely) is not: the work must be yours.
 * **Environment problems are not your problem.** If the workspace, tools or cloud environment misbehave, tell an organizer straight away. They will fix it, and time lost to the environment is not held against you.
 * **Organizers won't coach.** This is a senior workshop: you won't get hints on the solution.
@@ -65,7 +65,7 @@ Push these to the repository you are given, by 16:00:
 | File | Purpose |
 | :--- | :------ |
 | `DESIGN.md` | Problem summary, MVP scope and out-of-scope, assumptions, architecture, data model, API contracts, key decisions and trade-offs, risks, and what you would do next. Start it in the morning — it's your checkpoint material. |
-| `CLAUDE.md` (or your agent's equivalent) | The instructions, conventions and constraints you gave your AI coding agent. |
+| Agent instructions (e.g. `CLAUDE.md`, `.github/copilot-instructions.md`) | The instructions, conventions and constraints you gave your AI coding agent. |
 | `AI-WORKLOG.md` | A short, honest log of how you used the agent: the tasks you gave it, what it got wrong, what you rejected or rewrote, and how you verified its output. Bullet points are fine. |
 | `README.md` | How to run, test and deploy your solution. |
 | Code and tests | A working MVP with tests that prove the most important rules. Commit as you go; small, meaningful commits are better than one large one. |
@@ -82,7 +82,7 @@ Two evaluators assess every candidate independently against the same written sta
 * **Implementation & Code Quality**: working, end-to-end software with sound structure, error handling and security.
 * **Testing & Quality Engineering**: tests that prove the parts that matter.
 * **Experience & Operability**: a usable, responsive product that others can run and understand.
-* **Technical Depth**: depth in the role's technology stack.
+* **Technical Depth & Adaptability**: depth in your chosen stack and the role's fundamentals, and ease working across stacks.
 * **Presentation & Communication**: clear explanations to technical and non-technical audiences.
 
 **Leadership and behaviours**
@@ -95,7 +95,7 @@ How much you build matters, but **how you lead the work matters as much**. A sma
 
 ## Technology and repository
 
-* **Front end:** React (Material UI available). **Back end:** Java, Python or NodeJS, running as AWS Lambda services. **Database:** PostgreSQL. **Cloud:** AWS serverless, via the repository's Terraform and scripts.
+* **Front end:** React (Material UI available). **Back end:** Java, Python or NodeJS (your choice; all three are weighted equally), running as AWS Lambda services. **Database:** PostgreSQL. **Cloud:** AWS serverless, via the repository's Terraform and scripts.
 * Your workspace is pre-configured. The [Validation Guide](../validation.md) explains the environment, and the [Full Stack Guide](../full-stack.md) is a useful **technical reference** (architecture, service layout, environment variables, how to test and deploy). Its *Evaluation Expectations* section describes the entry-level workshop; for this workshop, use [What we evaluate](#what-we-evaluate) above.
 * New back-end services go **one level under `backend/`**. Start from `backend/_examples/{java|python|nodejs}-service`. See the [Backend Guide](../../backend/README.md).
 
