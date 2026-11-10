@@ -2,7 +2,7 @@
 
 > [Main Guide](../README.md) | [Validation Guide](../validation.md) | [Full Stack Guide](../full-stack.md) | **Senior Engineering Guide**
 
-This guide is for candidates attending the **one-day Senior Engineering Coding Workshop** for **Senior Full Stack Java & React Engineer** roles. Read it before the day. No other preparation is needed, and there is no take-home task.
+This guide is for candidates attending the **one-day Senior Engineering Coding Workshop** for **Senior Full Stack Engineer** roles. Read it before the day. No other preparation is needed, and there is no take-home task.
 
 * [What this workshop is](#what-this-workshop-is)
 * [The day](#the-day)
@@ -68,7 +68,8 @@ Push these to the repository you are given, by 16:00:
 | Agent instructions (e.g. `CLAUDE.md`, `.github/copilot-instructions.md`) | The instructions, conventions and constraints you gave your AI coding agent. |
 | `AI-WORKLOG.md` | A short, honest log of how you used the agent: the tasks you gave it, what it got wrong, what you rejected or rewrote, and how you verified its output. Bullet points are fine. |
 | `README.md` | How to run, test and deploy your solution. |
-| Code and tests | A working MVP with tests that prove the most important rules. Commit as you go; small, meaningful commits are better than one large one. |
+| Deployment | Your MVP **deployed to AWS** with the repository's scripts and working end to end. This is part of the minimum, not a stretch goal. |
+| Code and tests | A working MVP that meets the scenario's minimum, with tests that prove the most important rules. Commit as you go; small, meaningful commits are better than one large one. |
 
 ## What we evaluate
 
@@ -102,7 +103,8 @@ How much you build matters, but **how you lead the work matters as much**. A sma
 ## Tips from the organizers
 
 * Talk to the stakeholder early. The best plans come from the best questions.
-* Get a thin slice working end to end before you widen it.
+* Each scenario lists a **minimum** for the MVP and some **stretch goals**. Complete the minimum before the stretch.
+* Get a thin slice working end to end **and deployed to AWS** early, then redeploy as you go. Cloud deployment takes time; don't leave the first one until the afternoon.
 * Give the agent small, well-specified tasks with acceptance criteria, and check the result before moving on.
 * Put the most important business rules under test first.
 * Keep `DESIGN.md` and `AI-WORKLOG.md` current as you go. They make your checkpoint and 1:1 easier.
