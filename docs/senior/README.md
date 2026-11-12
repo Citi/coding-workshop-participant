@@ -18,7 +18,7 @@ The workshop is the interview. In one day you will do the work this role does:
 
 1. **Discover**: understand a business problem from a non-technical stakeholder. The problem statement is written at a high level **on purpose**; the details you need come from asking good questions.
 2. **Design**: decide the MVP, the architecture, the data model and the API contracts, and plan the work.
-3. **Lead the build**: deliver working, tested software by directing an AI coding agent the way you would lead a team of engineers. You design and structure the work, hand well-defined tasks to the agent, and review, correct and own what it produces.
+3. **Lead the build**: deliver working, tested software by directing an AI coding agent the way you would lead a team of engineers. You own everything it produces.
 4. **Defend**: explain your decisions, trade-offs and next steps to an evaluation panel, and discuss your technical depth and leadership experience.
 
 ## The day
@@ -36,14 +36,7 @@ The workshop is the interview. In one day you will do the work this role does:
 
 ### Design checkpoint (20 minutes)
 
-Spend about 10 minutes presenting, from your screen or your `DESIGN.md`:
-
-* What you learned from the stakeholder, and your MVP scope: what's in, what's out, and why
-* Assumptions and the top risks
-* Architecture, data model and key API contracts
-* How you've broken the work down for your AI coding agent, and what you'll build first
-
-The panel will then ask questions. Rough is fine — we want to see your thinking, not slides.
+Spend about 10 minutes presenting your plan, in whatever form you choose: how you understand the problem, what you will deliver, and how you will deliver it. The panel will then ask questions. We want to see your thinking, not slides.
 
 ### 1:1 with the panel (45 minutes)
 
@@ -60,16 +53,10 @@ A structured technical and leadership conversation, grounded in what you did tod
 
 ## What to deliver
 
-Push these to the repository you are given, by 16:00:
+* A working MVP that meets the scenario's **minimum**, **deployed to AWS** with the repository's scripts and working end to end. Deployment is part of the minimum, not a stretch goal.
+* Everything pushed to the repository you are given by **16:00**.
 
-| File | Purpose |
-| :--- | :------ |
-| `DESIGN.md` | Problem summary, MVP scope and out-of-scope, assumptions, architecture, data model, API contracts, key decisions and trade-offs, risks, and what you would do next. Start it in the morning — it's your checkpoint material. |
-| Agent instructions (e.g. `CLAUDE.md`, `.github/copilot-instructions.md`) | The instructions, conventions and constraints you gave your AI coding agent. |
-| `AI-WORKLOG.md` | A short, honest log of how you used the agent: the tasks you gave it, what it got wrong, what you rejected or rewrote, and how you verified its output. Bullet points are fine. |
-| `README.md` | How to run, test and deploy your solution. |
-| Deployment | Your MVP **deployed to AWS** with the repository's scripts and working end to end. This is part of the minimum, not a stretch goal. |
-| Code and tests | A working MVP that meets the scenario's minimum, with tests that prove the most important rules. Commit as you go; small, meaningful commits are better than one large one. |
+What else goes into the repository is your call. We look at it the way a team inheriting your work would: could someone else understand what you built and why, run it, test it, and carry it forward, with or without an AI agent?
 
 ## What we evaluate
 
@@ -79,7 +66,7 @@ Two evaluators assess every candidate independently against the same written sta
 
 * **Requirements & Scoping**: turning an ambiguous problem into a clear, measurable, prioritized MVP.
 * **Design & Architecture**: a sound, right-sized design: data model, boundaries, API contracts, security, non-functional needs and trade-offs.
-* **AI-Agent Orchestration**: decomposing, specifying, giving context to, verifying and correcting the AI agent's work.
+* **AI-Agent Orchestration**: how effectively you direct and oversee your AI coding agent.
 * **Implementation & Code Quality**: working, end-to-end software with sound structure, error handling and security.
 * **Testing & Quality Engineering**: tests that prove the parts that matter.
 * **Experience & Operability**: a usable, responsive product that others can run and understand.
@@ -105,7 +92,4 @@ How much you build matters, but **how you lead the work matters as much**. A sma
 * Talk to the stakeholder early. The best plans come from the best questions.
 * Each scenario lists a **minimum** for the MVP and some **stretch goals**. Complete the minimum before the stretch.
 * Get a thin slice working end to end **and deployed to AWS** early, then redeploy as you go. Cloud deployment takes time; don't leave the first one until the afternoon.
-* Give the agent small, well-specified tasks with acceptance criteria, and check the result before moving on.
-* Put the most important business rules under test first.
-* Keep `DESIGN.md` and `AI-WORKLOG.md` current as you go. They make your checkpoint and 1:1 easier.
 * Commit and push regularly. Don't leave it until 15:59.
