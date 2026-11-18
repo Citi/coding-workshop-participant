@@ -1,8 +1,10 @@
 import { useCallback, useEffect, useState } from 'react';
 import { Section, StatCard, StatusBadge } from '../components/Badges';
 import IncidentTable from '../components/IncidentTable';
+import useAction from '../hooks/useAction';
+import { setMyAvailability } from '../services/adminService';
 import { getDashboard } from '../services/incidentService';
-import { AVAILABILITY_LABELS, STATUS_LABELS, sumCounts, titleCase } from '../utils/format';
+import { AVAILABILITY_LABELS, STATUS_LABELS, categoryLabel, sumCounts } from '../utils/format';
 
 function EmployeeView({ data }) {
   const c = data.status_counts;
@@ -25,11 +27,49 @@ function EmployeeView({ data }) {
   );
 }
 
-function EngineerView({ data }) {
+const AVAILABILITY_HINTS = {
+  available: 'You can receive new assignments.',
+  busy: 'Admins can still assign you, but will see you are busy.',
+  on_leave: 'Admins can’t assign you new tickets while you are on leave.',
+  offline: 'Admins can’t assign you new tickets while you are offline.',
+};
+
+function AvailabilitySwitch({ value, onChanged }) {
+  const { run, busy, error } = useAction();
+  return (
+    <section className="panel availability-panel" aria-labelledby="avail-label">
+      <div className="availability-row">
+        <div>
+          <h2 id="avail-label">My availability</h2>
+          <p className="muted small">{AVAILABILITY_HINTS[value]}</p>
+        </div>
+        <div className="segmented" role="radiogroup" aria-labelledby="avail-label">
+          {Object.entries(AVAILABILITY_LABELS).map(([v, label]) => (
+            <button
+              key={v}
+              type="button"
+              role="radio"
+              aria-checked={v === value}
+              className={`seg seg-${v} ${v === value ? 'on' : ''}`}
+              disabled={busy}
+              onClick={() => v !== value && run(() => setMyAvailability(v)).then((ok) => ok && onChanged())}
+            >
+              {label}
+            </button>
+          ))}
+        </div>
+      </div>
+      {error && <div className="alert alert-error" role="alert">{error}</div>}
+    </section>
+  );
+}
+
+function EngineerView({ data, reload }) {
   const c = data.status_counts;
   const p = data.profile;
   return (
     <>
+      {p && <AvailabilitySwitch value={p.availability} onChanged={reload} />}
       <div className="stat-grid">
         <StatCard label="New assignments" value={c.assigned ?? 0} tone="info" />
         <StatCard label="In progress" value={c.in_progress ?? 0} tone="warn" />
@@ -40,7 +80,7 @@ function EngineerView({ data }) {
           tone={p && p.remaining_capacity <= 0 ? 'danger' : 'ok'}
           hint={
             p
-              ? `${AVAILABILITY_LABELS[p.availability]} · ${p.specializations.map(titleCase).join(', ')}`
+              ? `${AVAILABILITY_LABELS[p.availability]} · ${p.specializations.map(categoryLabel).join(', ')}`
               : 'No engineer profile'
           }
         />
@@ -96,7 +136,7 @@ function AdminView({ data }) {
                         {AVAILABILITY_LABELS[e.availability]}
                       </span>
                     </div>
-                    <div className="muted small">{e.specializations.map(titleCase).join(', ')}</div>
+                    <div className="muted small">{e.specializations.map(categoryLabel).join(', ')}</div>
                     <div className="meter" aria-label={`${e.active_tickets} of ${e.max_active_tickets} tickets`}>
                       <div className={`meter-fill ${pct >= 100 ? 'full' : ''}`} style={{ width: `${pct}%` }} />
                     </div>
@@ -190,7 +230,7 @@ export default function Dashboard({ user }) {
 
       {error && <div className="alert alert-error" role="alert">{error}</div>}
       {!data && loading && <p className="muted">Loading dashboard…</p>}
-      {data && View && <View data={data} />}
+      {data && View && <View data={data} reload={load} />}
     </>
   );
 }

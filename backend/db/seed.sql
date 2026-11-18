@@ -12,7 +12,7 @@
 
 BEGIN;
 
-TRUNCATE incident_history, incident_notes, incidents, engineer_profiles,
+TRUNCATE notifications, incident_history, incident_notes, incidents, engineer_profiles,
          seats, floors, buildings, users
 RESTART IDENTITY CASCADE;
 

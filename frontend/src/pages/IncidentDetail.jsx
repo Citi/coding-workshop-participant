@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { PriorityBadge, Section, StatusBadge } from '../components/Badges';
 import IncidentForm from '../components/IncidentForm';
 import { navigate } from '../router';
+import { markAllRead } from '../services/notificationService';
 import {
   addNote, assignEngineer, changeStatus, deleteIncident, escalateIncident, getEngineers,
   getIncident, updateIncident,
@@ -291,6 +292,8 @@ export default function IncidentDetail({ id, user }) {
     setError('');
     try {
       setIncident(await getIncident(id));
+      // Viewing an incident counts as reading its notifications
+      markAllRead(id).catch(() => {});
     } catch (err) {
       setError(err.message);
     }

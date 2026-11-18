@@ -8,7 +8,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from starlette.exceptions import HTTPException
 
-from app.api.routes import auth, dashboard, engineers, facilities, incidents
+from app.api.routes import auth, dashboard, engineers, facilities, incidents, notifications
 from app.core import config
 
 logger = logging.getLogger()
@@ -44,6 +44,7 @@ app.include_router(incidents.router)
 app.include_router(dashboard.router)
 app.include_router(facilities.router)
 app.include_router(engineers.router)
+app.include_router(notifications.router)
 
 if config.CORS_ORIGINS:
     app.add_middleware(

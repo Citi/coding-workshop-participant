@@ -15,6 +15,7 @@ from app.schemas.incident import (
     NoteCreate, StatusChange,
 )
 from app.services import incidents as svc
+from app.services import notifications as notify
 from app.services import permissions as perms
 
 router = APIRouter(prefix="/incidents", tags=["incidents"])
@@ -91,6 +92,8 @@ def create_incident(body: IncidentCreate, db: DbSession, user: CurrentUser):
     svc.validate_location(db, body.building_id, body.floor_id, body.seat_id)
     inc = Incident(**body.model_dump(), reported_by_id=user.id)
     db.add(inc)
+    db.flush()  # assigns id and INC- reference
+    notify.incident_created(db, inc, user)
     _commit(db)
     return _reload(db, inc.id, user)
 
@@ -124,10 +127,21 @@ def update_incident(incident_id: int, body: IncidentUpdate, db: DbSession, user:
         seat_id = changes["seat_id"] if "seat_id" in changes else inc.seat_id
         svc.validate_location(db, building_id, floor_id, seat_id)
 
+    old_priority = inc.priority
+    was_escalated = inc.is_escalated
+    changed = [f for f, v in changes.items() if getattr(inc, f) != v]
     for field, value in changes.items():
         setattr(inc, field, value)
     if changes.get("is_escalated") is False:
         inc.escalated_at = None
+
+    if "priority" in changed:
+        notify.priority_changed(db, inc, user, old_priority.value, inc.priority.value)
+    if "is_escalated" in changed and was_escalated:
+        notify.escalation_cleared(db, inc, user)
+    details = [f for f in changed if f not in ("priority", "is_escalated")]
+    if details:
+        notify.details_updated(db, inc, user, details)
     _commit(db)
     return _reload(db, incident_id, user)
 
@@ -136,6 +150,7 @@ def update_incident(incident_id: int, body: IncidentUpdate, db: DbSession, user:
 def delete_incident(incident_id: int, db: DbSession, user: AdminUser):
     """Permanently delete an incident with its notes and history (admin only)."""
     inc = svc.get_incident_or_404(db, incident_id, user)
+    notify.incident_deleted(db, inc, user)
     db.delete(inc)
     _commit(db)
     return Response(status_code=status.HTTP_204_NO_CONTENT)
@@ -153,6 +168,7 @@ def change_status(incident_id: int, body: StatusChange, db: DbSession, user: Cur
             f"You can't change this incident from {inc.status.value} to {body.status.value}.",
         )
 
+    old_status = inc.status
     inc.status = body.status
     if body.status == S.RESOLVED:
         inc.resolved_at = _now()
@@ -164,6 +180,7 @@ def change_status(incident_id: int, body: StatusChange, db: DbSession, user: Cur
 
     if body.comment and body.comment.strip():
         db.add(IncidentNote(incident_id=inc.id, author_id=user.id, body=body.comment.strip()))
+    notify.status_changed(db, inc, user, old_status.value, inc.status.value)
     _commit(db)
     return _reload(db, incident_id, user)
 
@@ -184,11 +201,14 @@ def assign_engineer(incident_id: int, body: AssignIn, db: DbSession, user: Admin
             f"{engineer.full_name} is {profile.availability.value.replace('_', ' ')} and can't take new tickets.",
         )
 
+    previous_id = inc.assigned_engineer_id
     inc.assigned_engineer_id = profile.user_id
     inc.assigned_by_id = user.id
     inc.assigned_at = _now()
     if inc.status == S.OPEN:
         inc.status = S.ASSIGNED
+    if previous_id != engineer.id:
+        notify.assigned(db, inc, user, engineer, previous_id)
     _commit(db)
     return _reload(db, incident_id, user)
 
@@ -207,6 +227,7 @@ def escalate(incident_id: int, body: EscalateIn, db: DbSession, user: CurrentUse
     inc.escalation_reason = body.reason
     if body.requested_priority:
         inc.requested_priority = body.requested_priority
+    notify.escalated(db, inc, user, body.requested_priority.value if body.requested_priority else None)
     _commit(db)
     return _reload(db, incident_id, user)
 
@@ -220,5 +241,6 @@ def add_note(incident_id: int, body: NoteCreate, db: DbSession, user: CurrentUse
     if body.is_internal and not perms.can_add_internal_note(user, inc):
         raise HTTPException(status.HTTP_403_FORBIDDEN, "Only engineers and admins can add internal notes.")
     db.add(IncidentNote(incident_id=inc.id, author_id=user.id, body=body.body, is_internal=body.is_internal))
+    notify.note_added(db, inc, user, body.body, body.is_internal)
     _commit(db)
     return _reload(db, incident_id, user)

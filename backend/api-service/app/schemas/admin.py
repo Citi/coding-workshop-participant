@@ -27,7 +27,8 @@ def _req(max_length: int):
 
 
 def _opt(max_length: int):
-    return Annotated[str | None, AfterValidator(_strip_optional), Field(max_length=max_length)]
+    # None skips validation entirely; blank strings become None after trimming.
+    return Annotated[str, Field(max_length=max_length), AfterValidator(_strip_optional)] | None
 
 
 Code = Annotated[str, AfterValidator(lambda v: _strip_required(v).upper()), Field(max_length=20)]

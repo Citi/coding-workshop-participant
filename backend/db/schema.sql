@@ -15,6 +15,7 @@ SET LOCAL client_min_messages = warning;
 -- Clean slate (reverse dependency order)
 -- ---------------------------------------------------------------------
 DROP VIEW  IF EXISTS engineer_workload;
+DROP TABLE IF EXISTS notifications     CASCADE;
 DROP TABLE IF EXISTS incident_history  CASCADE;
 DROP TABLE IF EXISTS incident_notes    CASCADE;
 DROP TABLE IF EXISTS incidents         CASCADE;
@@ -320,6 +321,24 @@ $$ LANGUAGE plpgsql;
 
 CREATE TRIGGER incidents_history AFTER INSERT OR UPDATE ON incidents
     FOR EACH ROW EXECUTE FUNCTION log_incident_changes();
+
+-- ---------------------------------------------------------------------
+-- Notifications - in-app messages telling people about changes made by
+-- someone else (written by the API in the same transaction as the change)
+-- ---------------------------------------------------------------------
+CREATE TABLE notifications (
+    id            BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    user_id       BIGINT       NOT NULL REFERENCES users (id) ON DELETE CASCADE,    -- recipient
+    incident_id   BIGINT       REFERENCES incidents (id) ON DELETE SET NULL,        -- kept if incident deleted
+    incident_ref  VARCHAR(20),                                                      -- e.g. INC-000042
+    actor_id      BIGINT       REFERENCES users (id) ON DELETE SET NULL,            -- who made the change
+    kind          VARCHAR(40)  NOT NULL,                                            -- e.g. status_changed
+    message       VARCHAR(500) NOT NULL,
+    is_read       BOOLEAN      NOT NULL DEFAULT FALSE,
+    created_at    TIMESTAMPTZ  NOT NULL DEFAULT now()
+);
+CREATE INDEX notifications_user_idx     ON notifications (user_id, is_read, created_at DESC);
+CREATE INDEX notifications_incident_idx ON notifications (incident_id);
 
 -- ---------------------------------------------------------------------
 -- View: live engineer workload (for assignment decisions)

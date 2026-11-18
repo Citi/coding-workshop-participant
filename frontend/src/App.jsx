@@ -5,6 +5,8 @@ import IncidentDetail from './pages/IncidentDetail.jsx'
 import IncidentList from './pages/IncidentList.jsx'
 import Login from './pages/Login.jsx'
 import NewIncident from './pages/NewIncident.jsx'
+import Engineers from './pages/admin/Engineers.jsx'
+import Facilities from './pages/admin/Facilities.jsx'
 import { matchPath, navigate, useHashPath } from './router'
 import { setUnauthorizedHandler } from './services/apiClient'
 import { getCurrentUser, logout } from './services/authService'
@@ -15,6 +17,18 @@ function routeFor(path, user) {
   if (path === '/') return <Dashboard user={user} />
   if (path === '/incidents') return <IncidentList user={user} />
   if (path === '/incidents/new') return <NewIncident user={user} />
+  if (path.startsWith('/admin/')) {
+    if (user.role !== 'facility_admin') {
+      return (
+        <div className="panel">
+          <h2>Admins only</h2>
+          <p>This page is for Facility Admins. <a href="#/">Back to dashboard</a></p>
+        </div>
+      )
+    }
+    if (path === '/admin/facilities') return <Facilities />
+    if (path === '/admin/engineers') return <Engineers />
+  }
   const m = matchPath('/incidents/:id', path)
   if (m) return <IncidentDetail key={m.id} id={m.id} user={user} />
   return (
