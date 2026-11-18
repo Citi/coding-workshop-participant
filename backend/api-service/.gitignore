@@ -1,0 +1,9 @@
+# Ignore pip packages installed here for Lambda hot-reload; keep only source
+/*
+!/.gitignore
+!/function.py
+!/requirements.txt
+!/app/
+!/README.md
+__pycache__/
+.venv/

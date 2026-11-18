@@ -1,0 +1,6 @@
+fastapi==0.115.6
+mangum==0.19.0
+SQLAlchemy==2.0.36
+psycopg[binary]==3.2.13
+bcrypt==4.2.1
+PyJWT==2.10.1
