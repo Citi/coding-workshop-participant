@@ -1,34 +1,51 @@
-import { useState } from 'react'
-import reactLogo from '/react.svg'
-import viteLogo from '/vite.svg'
+import { useCallback, useEffect, useState } from 'react'
+import AppLayout from './components/AppLayout.jsx'
+import Dashboard from './pages/Dashboard.jsx'
+import IncidentDetail from './pages/IncidentDetail.jsx'
+import IncidentList from './pages/IncidentList.jsx'
+import Login from './pages/Login.jsx'
+import NewIncident from './pages/NewIncident.jsx'
+import { matchPath, navigate, useHashPath } from './router'
+import { setUnauthorizedHandler } from './services/apiClient'
+import { getCurrentUser, logout } from './services/authService'
 import './App.css'
+import './styles/app.css'
+
+function routeFor(path, user) {
+  if (path === '/') return <Dashboard user={user} />
+  if (path === '/incidents') return <IncidentList user={user} />
+  if (path === '/incidents/new') return <NewIncident user={user} />
+  const m = matchPath('/incidents/:id', path)
+  if (m) return <IncidentDetail key={m.id} id={m.id} user={user} />
+  return (
+    <div className="panel">
+      <h2>Page not found</h2>
+      <p><a href="#/">Back to dashboard</a></p>
+    </div>
+  )
+}
 
 function App() {
-  const [count, setCount] = useState(0)
+  const [user, setUser] = useState(getCurrentUser)
+  const path = useHashPath()
+
+  const handleLogout = useCallback(() => {
+    logout()
+    setUser(null)
+    navigate('/')
+  }, [])
+
+  // Any 401 from the API (expired / revoked session) signs the user out
+  useEffect(() => setUnauthorizedHandler(handleLogout), [handleLogout])
+
+  if (!user) {
+    return <Login onLogin={setUser} />
+  }
 
   return (
-    <>
-      <div>
-        <a href="https://vite.dev" target="_blank">
-          <img src={viteLogo} className="logo" alt="Vite logo" />
-        </a>
-        <a href="https://react.dev" target="_blank">
-          <img src={reactLogo} className="logo react" alt="React logo" />
-        </a>
-      </div>
-      <h1>Vite + React</h1>
-      <div className="card">
-        <button onClick={() => setCount((count) => count + 1)}>
-          count is {count}
-        </button>
-        <p>
-          Edit <code>src/App.jsx</code> and save to test HMR
-        </p>
-      </div>
-      <p className="read-the-docs">
-        Click on the Vite and React logos to learn more
-      </p>
-    </>
+    <AppLayout user={user} path={path} onLogout={handleLogout}>
+      {routeFor(path, user)}
+    </AppLayout>
   )
 }
 
