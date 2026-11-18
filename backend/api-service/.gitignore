@@ -5,5 +5,11 @@
 !/requirements.txt
 !/app/
 !/README.md
+!/tests/
+!/pytest.ini
+!/requirements-dev.txt
 __pycache__/
 .venv/
+.coverage
+htmlcov/
+.pytest_cache/

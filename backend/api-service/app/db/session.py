@@ -18,11 +18,14 @@ DATABASE_URL = URL.create(
 )
 
 # Module-level engine: its pool survives across warm Lambda invocations.
+# Pool size depends on how the app runs (see config.DB_POOL_SIZE): a Lambda
+# instance serves one request at a time, a long-running server up to 40.
 engine = create_engine(
     DATABASE_URL,
     pool_pre_ping=True,
-    pool_size=2,
-    max_overflow=2,
+    pool_size=config.DB_POOL_SIZE,
+    max_overflow=config.DB_MAX_OVERFLOW,
+    pool_timeout=config.DB_POOL_TIMEOUT,
     connect_args={"connect_timeout": 15},
 )
 

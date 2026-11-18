@@ -1,0 +1,4 @@
+# Test output
+test-results/
+playwright-report/
+coverage/

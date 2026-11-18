@@ -52,6 +52,11 @@ function App() {
   // Any 401 from the API (expired / revoked session) signs the user out
   useEffect(() => setUnauthorizedHandler(handleLogout), [handleLogout])
 
+  // Browser tab shows who is signed in
+  useEffect(() => {
+    document.title = user ? `${user.name} · ACME Facility Desk` : 'Sign in · ACME Facility Desk'
+  }, [user])
+
   if (!user) {
     return <Login onLogin={setUser} />
   }

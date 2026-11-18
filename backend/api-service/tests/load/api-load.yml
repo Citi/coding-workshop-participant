@@ -1,0 +1,63 @@
+# API load test (Artillery). Read-only: signs in and polls like real users,
+# so it never changes data. ~75 s, ramping to 10 new users/second (~14 req/s).
+#
+# Default target: the API running directly under uvicorn on :8000
+#   cd backend/api-service && .venv/bin/uvicorn app.main:app --port 8000
+#   npx --yes artillery@2.0.32 run backend/api-service/tests/load/api-load.yml
+#
+# In the cloud:   --target https://<cloudfront-domain>/api/api-service
+#
+# Don't aim it at LocalStack (:3001) on a small machine: LocalStack starts a
+# Docker container per concurrent Lambda invocation, so the test measures
+# container start-up (and can start 100+ containers), not the app.
+config:
+  target: "http://localhost:8000"
+  phases:
+    - name: warm-up
+      duration: 15
+      arrivalRate: 2
+    - name: ramp
+      duration: 30
+      arrivalRate: 2
+      rampTo: 10
+    - name: sustained
+      duration: 30
+      arrivalRate: 10
+  defaults:
+    headers:
+      Content-Type: application/json
+  payload:
+    path: users.csv
+    fields: [email, password]
+    order: random
+  plugins:
+    ensure: {}
+  ensure:
+    thresholds:
+      - http.response_time.p95: 1500
+    conditions:
+      - expression: "http.codes.200 > 0 and (vusers.failed == 0 or vusers.failed / vusers.created < 0.01)"
+
+scenarios:
+  - name: signed-in user checks their work
+    flow:
+      - post:
+          url: /auth/login
+          json: { email: "{{ email }}", password: "{{ password }}" }
+          capture:
+            - json: $.token
+              as: token
+          expect:
+            - statusCode: 200
+      - get:
+          url: /dashboard
+          headers: { Authorization: "Bearer {{ token }}" }
+      - get:
+          url: /incidents?limit=25
+          headers: { Authorization: "Bearer {{ token }}" }
+      - loop:
+          - get:
+              url: /notifications/unread-count
+              headers: { Authorization: "Bearer {{ token }}" }
+          - think: 1
+        count: 3

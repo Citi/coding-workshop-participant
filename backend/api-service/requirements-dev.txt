@@ -1,0 +1,7 @@
+# Test tooling (not deployed to Lambda). Install into a virtualenv:
+#   python3.13 -m venv .venv && .venv/bin/pip install -r requirements-dev.txt
+-r requirements.txt
+pytest==8.3.4
+pytest-cov==6.0.0
+httpx==0.28.1
+uvicorn==0.34.0  # run the API without Lambda: uvicorn app.main:app --reload

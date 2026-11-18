@@ -6,6 +6,8 @@ from fastapi import FastAPI, Request
 from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
+from sqlalchemy.exc import OperationalError
+from sqlalchemy.exc import TimeoutError as PoolTimeout
 from starlette.exceptions import HTTPException
 
 from app.api.routes import auth, dashboard, engineers, facilities, incidents, notifications
@@ -77,6 +79,26 @@ async def validation_error(_request: Request, exc: RequestValidationError):
 
 def jsonable_errors(errors):
     return [{"loc": list(e.get("loc", ())), "msg": str(e.get("msg"))} for e in errors]
+
+
+@app.exception_handler(PoolTimeout)
+async def pool_exhausted(_request: Request, exc: PoolTimeout):
+    logger.warning("Database pool exhausted: %s", exc)
+    return JSONResponse(
+        {"message": "The service is busy right now. Please try again in a moment."},
+        status_code=503,
+        headers={"Retry-After": "5"},
+    )
+
+
+@app.exception_handler(OperationalError)
+async def database_unavailable(_request: Request, exc: OperationalError):
+    logger.error("Database unavailable: %s", exc)
+    return JSONResponse(
+        {"message": "The database is unavailable right now. Please try again shortly."},
+        status_code=503,
+        headers={"Retry-After": "10"},
+    )
 
 
 @app.exception_handler(Exception)
