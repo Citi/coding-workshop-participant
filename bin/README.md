@@ -165,6 +165,7 @@ node ./bin/proxy-server.js
 * Creates AWS CLI profile: `coding-workshop-{PARTICIPANT_ID}`
 * Generates Terraform backend config: `BACKEND.config`
 * Creates environment file: `ENVIRONMENT.config` (auto-loaded by `deploy-backend.sh`)
+* On the WorkSpace, makes sure the SSH server is installed, running and accepting passwords, which the workshop backup needs. It changes nothing that is already right and asks for `sudo` only when it must; it is skipped inside builds, off Linux, or with `WORKSHOP_SKIP_SSH=1`
 
 **When to use**:
 
