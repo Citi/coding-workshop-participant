@@ -171,3 +171,218 @@ EOF
 echo "INFO: Created environment file - ENVIRONMENT.config"
 echo "  ✓ Environment configured"
 echo ""
+
+# The workshop's backup signs in to this WorkSpace over SSH with the participant's own password, so the SSH server has to
+# be installed, running, and accepting passwords. Safe to run again: it changes nothing that is already right, and only
+# asks for sudo when something needs changing. It is skipped where there is no WorkSpace to sign in to: not Ubuntu/Debian,
+# or inside a build (CODEBUILD_BUILD_ID), or WORKSHOP_SKIP_SSH=1.
+ssh_problem() {
+    echo "WARN: $1"
+    SSH_PROBLEM=true
+}
+
+ssh_already_configured() {
+    # Readable without sudo: the drop-in, the main file's settings, and whether the service is running and enabled.
+    grep -qx "PasswordAuthentication yes" /etc/ssh/sshd_config.d/00-coding-workshop.conf 2> /dev/null \
+        && grep -q "^PasswordAuthentication yes$" /etc/ssh/sshd_config 2> /dev/null \
+        && grep -q "^UsePAM yes$" /etc/ssh/sshd_config 2> /dev/null \
+        && grep -q "^PubkeyAuthentication yes$" /etc/ssh/sshd_config 2> /dev/null \
+        && systemctl is-active --quiet ssh 2> /dev/null && systemctl is-enabled --quiet ssh 2> /dev/null
+}
+
+configure_sshd() {
+    echo "INFO: Configuring the SSH server for the workshop backup..."
+
+    local sshd_config="/etc/ssh/sshd_config"
+    # Ubuntu 22.04's sshd_config starts with "Include /etc/ssh/sshd_config.d/*.conf", and sshd keeps the first value it
+    # reads, so a drop-in there that says "PasswordAuthentication no" (cloud images ship one) beats this file's "yes".
+    # This drop-in sorts first, so its "yes" is the one that counts.
+    local sshd_dropin="/etc/ssh/sshd_config.d/00-coding-workshop.conf"
+    local config_changed=false
+
+    # Ensure openssh-server is installed
+    if ! command -v sshd > /dev/null 2>&1 && [ ! -x /usr/sbin/sshd ]; then
+        echo "INFO: Installing openssh-server..."
+        if sudo apt-get install -y -qq openssh-server > /dev/null; then
+            echo "  ✓ openssh-server installed"
+            config_changed=true
+        else
+            ssh_problem "Failed to install openssh-server"
+            return
+        fi
+    else
+        echo "INFO: openssh-server already installed"
+    fi
+
+    # Backup original configuration only once
+    if [ -f "$sshd_config" ] && [ ! -f "${sshd_config}.backup-original" ]; then
+        sudo cp "$sshd_config" "${sshd_config}.backup-original"
+        echo "  ✓ Backed up original SSH configuration"
+    fi
+
+    if [ -d "$(dirname "$sshd_dropin")" ] && ! sudo grep -qx "PasswordAuthentication yes" "$sshd_dropin" 2>/dev/null; then
+        printf '%s\n' "# Written by setup-participant.sh: the workshop's backup signs in with this WorkSpace's password." \
+            "PasswordAuthentication yes" | sudo tee "$sshd_dropin" > /dev/null
+        echo "  ✓ Password sign-in set ahead of the other sshd_config.d settings"
+        config_changed=true
+    fi
+
+    # Check if configuration already has the required settings
+    local pw_auth_correct=$(sudo grep -q "^PasswordAuthentication yes$" "$sshd_config" && echo "true" || echo "false")
+    local pam_correct=$(sudo grep -q "^UsePAM yes$" "$sshd_config" && echo "true" || echo "false")
+    local pubkey_correct=$(sudo grep -q "^PubkeyAuthentication yes$" "$sshd_config" && echo "true" || echo "false")
+
+    # If all settings are already correct, no changes needed
+    if [ "$config_changed" = "false" ] && [ "$pw_auth_correct" = "true" ] && [ "$pam_correct" = "true" ] && [ "$pubkey_correct" = "true" ]; then
+        echo "INFO: SSH configuration already properly configured"
+
+        # Verify service is running and enabled
+        if ! sudo systemctl is-active --quiet sshd 2>/dev/null && ! sudo systemctl is-active --quiet ssh 2>/dev/null; then
+            echo "INFO: Starting SSH service..."
+            if sudo systemctl start sshd 2>/dev/null || sudo systemctl start ssh 2>/dev/null; then
+                echo "  ✓ SSH service started"
+            else
+                ssh_problem "Failed to start SSH service"
+                return
+            fi
+        fi
+
+        # Verify service is enabled
+        if ! sudo systemctl is-enabled sshd 2>/dev/null && ! sudo systemctl is-enabled ssh 2>/dev/null; then
+            if sudo systemctl enable sshd 2>/dev/null || sudo systemctl enable ssh 2>/dev/null; then
+                echo "  ✓ SSH service enabled to start on boot"
+            fi
+        fi
+
+        echo "  ✓ SSH server is properly configured for password-based connections"
+        return
+    fi
+
+    echo "INFO: Configuring SSH for password authentication..."
+
+    # Create temporary backup for this change
+    local temp_backup=$(mktemp)
+    sudo cp "$sshd_config" "$temp_backup"
+
+    # Enable password authentication
+    if ! sudo grep -q "^PasswordAuthentication yes$" "$sshd_config"; then
+        if sudo grep -q "^PasswordAuthentication" "$sshd_config"; then
+            # Replace existing line
+            sudo sed -i 's/^PasswordAuthentication.*/PasswordAuthentication yes/' "$sshd_config"
+        elif sudo grep -q "^#PasswordAuthentication" "$sshd_config"; then
+            # Uncomment existing commented line
+            sudo sed -i 's/^#PasswordAuthentication.*/PasswordAuthentication yes/' "$sshd_config"
+        else
+            # Add new line
+            echo "PasswordAuthentication yes" | sudo tee -a "$sshd_config" > /dev/null
+        fi
+        config_changed=true
+    fi
+
+    # Enable PAM authentication (required for password auth)
+    if ! sudo grep -q "^UsePAM yes$" "$sshd_config"; then
+        if sudo grep -q "^UsePAM" "$sshd_config"; then
+            sudo sed -i 's/^UsePAM.*/UsePAM yes/' "$sshd_config"
+        elif sudo grep -q "^#UsePAM" "$sshd_config"; then
+            sudo sed -i 's/^#UsePAM.*/UsePAM yes/' "$sshd_config"
+        else
+            echo "UsePAM yes" | sudo tee -a "$sshd_config" > /dev/null
+        fi
+        config_changed=true
+    fi
+
+    # Ensure PubkeyAuthentication is also enabled (best practice)
+    if ! sudo grep -q "^PubkeyAuthentication yes$" "$sshd_config"; then
+        if sudo grep -q "^PubkeyAuthentication" "$sshd_config"; then
+            sudo sed -i 's/^PubkeyAuthentication.*/PubkeyAuthentication yes/' "$sshd_config"
+        elif sudo grep -q "^#PubkeyAuthentication" "$sshd_config"; then
+            sudo sed -i 's/^#PubkeyAuthentication.*/PubkeyAuthentication yes/' "$sshd_config"
+        else
+            echo "PubkeyAuthentication yes" | sudo tee -a "$sshd_config" > /dev/null
+        fi
+        config_changed=true
+    fi
+
+    if [ "$config_changed" = "true" ]; then
+        echo "  ✓ SSH configuration updated"
+    else
+        echo "INFO: SSH configuration already correct"
+    fi
+
+    # Test SSH configuration
+    if ! sudo sshd -t 2>/dev/null; then
+        echo "ERROR: SSH configuration syntax check failed"
+        echo "INFO: Restoring from backup..."
+        sudo cp "$temp_backup" "$sshd_config"
+        sudo rm -f "$sshd_dropin"
+        rm -f "$temp_backup"
+        ssh_problem "Failed to configure SSH - configuration restored"
+        return
+    fi
+
+    rm -f "$temp_backup"
+
+    # Restart SSH service only if configuration was changed
+    if [ "$config_changed" = "true" ]; then
+        echo "INFO: Restarting SSH service..."
+        if sudo systemctl restart sshd 2>/dev/null || sudo systemctl restart ssh 2>/dev/null; then
+            echo "  ✓ SSH service restarted with new configuration"
+        else
+            ssh_problem "Failed to restart SSH service"
+            return
+        fi
+    else
+        # Ensure service is running
+        if ! sudo systemctl is-active --quiet sshd 2>/dev/null && ! sudo systemctl is-active --quiet ssh 2>/dev/null; then
+            echo "INFO: Starting SSH service..."
+            if sudo systemctl start sshd 2>/dev/null || sudo systemctl start ssh 2>/dev/null; then
+                echo "  ✓ SSH service started"
+            else
+                ssh_problem "Failed to start SSH service"
+                return
+            fi
+        fi
+    fi
+
+    # Enable SSH service on boot
+    if ! sudo systemctl is-enabled sshd 2>/dev/null && ! sudo systemctl is-enabled ssh 2>/dev/null; then
+        if sudo systemctl enable sshd 2>/dev/null || sudo systemctl enable ssh 2>/dev/null; then
+            echo "  ✓ SSH service enabled to start on boot"
+        fi
+    fi
+
+    # What sshd actually uses, not what this file says: anything else that still turns password sign-in off shows here.
+    if ! sudo sshd -T 2>/dev/null | grep -qi "^passwordauthentication yes$"; then
+        ssh_problem "SSH password sign-in is still off (see: sudo sshd -T | grep -i passwordauthentication); the workshop backup cannot sign in"
+        return
+    fi
+
+    # Display connection information
+    echo "INFO: SSH Configuration Summary:"
+    echo "INFO:   - Password authentication: ENABLED"
+    echo "INFO:   - Public key authentication: ENABLED"
+    echo "INFO:   - Service status: $(sudo systemctl is-active sshd ssh 2>/dev/null | head -n1)"
+    echo "INFO:   - SSH port: 22 (default)"
+
+    # Get IP addresses
+    local ip_addresses=$(hostname -I 2>/dev/null | tr ' ' '\n' | grep -E '^[0-9]+\.' | head -3 | tr '\n' ' ')
+    if [ -n "$ip_addresses" ]; then
+        echo "INFO:   - Connect with: ssh $(whoami)@<IP_ADDRESS>"
+        echo "INFO:   - Available IPs: $ip_addresses"
+    fi
+
+    echo "  ✓ SSH server is ready for password-based connections"
+}
+
+SSH_PROBLEM=false
+if [ -n "$CODEBUILD_BUILD_ID" ] || [ "$WORKSHOP_SKIP_SSH" = "1" ] || [ "$(uname -s)" != "Linux" ] || ! command -v apt-get > /dev/null 2>&1; then
+    :
+elif ssh_already_configured; then
+    echo "INFO: The SSH server is already configured for the workshop backup"
+else
+    configure_sshd || ssh_problem "The SSH server could not be configured"
+fi
+if [ "$SSH_PROBLEM" = true ]; then
+    echo "WARN: The workshop backup may not be able to sign in to this WorkSpace; run this script again after fixing the above."
+fi
+echo ""
