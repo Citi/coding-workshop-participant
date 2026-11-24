@@ -87,26 +87,36 @@ else
     unset AWS_SESSION_TOKEN
 fi
 
-# Find the portfolio Lambda. Terraform names it <project>-portfolio-<app code>.
+# Find the portfolio Lambda. Terraform names it <project>-portfolio-<app code>
+# (infra/lambda.tf; the app code is trimmed as in infra/locals.tf).
 PREFIX="${TF_VAR_aws_project:-coding-workshop}-portfolio-"
-CANDIDATES="$(aws lambda list-functions \
-    --query "Functions[?starts_with(FunctionName, '$PREFIX')].FunctionName" \
-    --output text | tr '\t' '\n' | sed '/^$/d; /^None$/d')"
+APP_CODE="$(printf '%s' "${TF_VAR_aws_app_code:-}" | tr -d '[:space:]')"
 FUNCTION_NAME=""
-if [ -n "${TF_VAR_aws_app_code:-}" ] && grep -qxF -- "$PREFIX$TF_VAR_aws_app_code" <<< "$CANDIDATES"; then
-    # This participant's own function
-    FUNCTION_NAME="$PREFIX$TF_VAR_aws_app_code"
-elif [ "$(grep -c . <<< "$CANDIDATES" || true)" = "1" ] && { [ "$MODE" = "local" ] || [ -z "${TF_VAR_aws_app_code:-}" ]; }; then
-    # The only portfolio function (never another participant's when our app code is known)
-    FUNCTION_NAME="$CANDIDATES"
-fi
-if [ -z "$FUNCTION_NAME" ] && [ -z "$CANDIDATES" ]; then
-    echo "ERROR: Portfolio Lambda not found. Deploy the backend first." >&2
-    exit 1
-elif [ -z "$FUNCTION_NAME" ]; then
-    echo "ERROR: Cannot tell which portfolio Lambda is yours (found: $(paste -sd ' ' <<< "$CANDIDATES"))." >&2
-    echo "ERROR: Deploy the backend first, or set TF_VAR_aws_app_code to your app code." >&2
-    exit 1
+if [ "$MODE" = "aws" ] && [ -n "$APP_CODE" ]; then
+    # Build the name directly: the workshop role may not call lambda:ListFunctions
+    FUNCTION_NAME="$PREFIX$APP_CODE"
+else
+    CANDIDATES="$(aws lambda list-functions \
+        --query "Functions[?starts_with(FunctionName, '$PREFIX')].FunctionName" \
+        --output text | tr '\t' '\n' | sed '/^$/d; /^None$/d')" || {
+        echo "ERROR: Cannot list Lambda functions (see above). Set TF_VAR_aws_app_code to your app code." >&2
+        exit 1
+    }
+    if [ -n "$APP_CODE" ] && grep -qxF -- "$PREFIX$APP_CODE" <<< "$CANDIDATES"; then
+        # This participant's own function
+        FUNCTION_NAME="$PREFIX$APP_CODE"
+    elif [ "$(grep -c . <<< "$CANDIDATES" || true)" = "1" ] && { [ "$MODE" = "local" ] || [ -z "$APP_CODE" ]; }; then
+        # The only portfolio function (never another participant's when our app code is known)
+        FUNCTION_NAME="$CANDIDATES"
+    fi
+    if [ -z "$FUNCTION_NAME" ] && [ -z "$CANDIDATES" ]; then
+        echo "ERROR: Portfolio Lambda not found. Deploy the backend first." >&2
+        exit 1
+    elif [ -z "$FUNCTION_NAME" ]; then
+        echo "ERROR: Cannot tell which portfolio Lambda is yours (found: $(paste -sd ' ' <<< "$CANDIDATES"))." >&2
+        echo "ERROR: Deploy the backend first, or set TF_VAR_aws_app_code to your app code." >&2
+        exit 1
+    fi
 fi
 
 PAYLOAD_FILE="$(mktemp)"
@@ -129,6 +139,7 @@ echo "INFO: Running '$TASK' in $FUNCTION_NAME ($MODE)..." >&2
 aws lambda invoke --function-name "$FUNCTION_NAME" \
     --payload "fileb://$PAYLOAD_FILE" --cli-read-timeout 300 "$OUT_FILE" > "$META_FILE" || {
     echo "ERROR: The invoke was refused (see above). If it is an IAM AccessDenied error, direct invoke is not allowed for this role." >&2
+    echo "ERROR: If it is ResourceNotFoundException, deploy the backend first: ./bin/deploy-backend.sh" >&2
     exit 1
 }
 
