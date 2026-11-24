@@ -69,6 +69,39 @@ Local:  browser ─┬─► Vite :3000: the React app
     Dependencies, Budget and Risk tabs), Deliverables, Capacity, Budget, Risk,
     Audit Log and Users.
 
+### Repository layout
+
+Only the folders this platform added or changed are shown.
+
+```text
+backend/portfolio/              the portfolio Lambda (Python 3.13)
+├── function.py                 entry point: HTTP → FastAPI (Mangum); {"task": ...} → app/tasks.py
+├── requirements.txt
+└── app/
+    ├── main.py                 creates the FastAPI app: routers and error handlers
+    ├── config.py               settings read from environment variables
+    ├── security.py             passwords, JWTs, role checks
+    ├── errors.py               the single error shape and status mapping
+    ├── tasks.py                migrate, seed and reset (direct invoke only)
+    ├── api/                    one router per resource, plus analytics
+    ├── schemas/                request and response models (Pydantic)
+    ├── services/               transactions, audit rows, the portfolio snapshot loader
+    ├── engines/                pure analytics: dependency, capacity, budget, risk
+    └── db/                     models.py, schema.sql, migrations.py, seed.py, session.py
+frontend/src/
+├── App.jsx, AppRoutes.jsx      providers and routes
+├── services/                   apiClient.js and one module per resource
+├── auth/                       AuthContext, ProtectedRoute, permissions.js
+├── components/                 shared UI; projects/ and portfolio/ hold page parts
+├── pages/                      one page per route
+└── hooks/, notifications/, utils/, theme.js
+tests/
+├── backend/                    pytest: engines/, every API, the role matrix, the golden seed
+└── e2e/smoke_test.py           the demo path over HTTP, locally or against CloudFront
+bin/db-task.sh                  runs migrate, seed or reset in the Lambda
+infra/                          Terraform: JWT secret, 512 MB Lambda, bucket policy
+```
+
 ### Roles
 
 The server enforces these; the UI only hides what a role cannot do.

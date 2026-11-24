@@ -263,3 +263,6 @@ backend/portfolio/*
 !backend/portfolio/function.py
 !backend/portfolio/requirements.txt
 !backend/portfolio/app/
+
+# Local working notes and specs (kept out of the repository)
+repo-context/
