@@ -256,3 +256,13 @@ tfplan
 
 # Snyk Security Extension - AI Rules (auto-generated)
 .github/instructions/snyk_rules.instructions.md
+
+# Portfolio Lambda: start-dev.sh pip-installs dependencies into the service folder
+# for LocalStack hot reload. Track only the service's own files.
+backend/portfolio/*
+!backend/portfolio/function.py
+!backend/portfolio/requirements.txt
+!backend/portfolio/app/
+
+# Local working notes and specs (kept out of the repository)
+repo-context/

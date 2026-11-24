@@ -14,3 +14,9 @@ resource "random_pet" "this" {
     seed_input = try(var.aws_app_code, terraform.workspace)
   }
 }
+
+# Signing secret for application JWTs (HS256). Held in state, like the DB password.
+resource "random_password" "jwt_secret" {
+  length  = 64
+  special = false
+}

@@ -1,0 +1,7 @@
+fastapi==0.165.0
+mangum==0.22.0
+pydantic==2.13.5
+SQLAlchemy==2.1.9
+psycopg[binary]==3.3.9
+PyJWT==2.15.0
+bcrypt==5.0.0
