@@ -147,6 +147,9 @@ async def _handle_integrity(_: Request, exc: IntegrityError) -> JSONResponse:
         return error_response(409, "CONFLICT", "A record with the same unique value already exists.")
     if sqlstate == "23503":
         return error_response(400, "INVALID_REFERENCE", "A referenced record does not exist or is still in use.")
+    if sqlstate == "23001":
+        # PostgreSQL 18 reports a blocked ON DELETE RESTRICT as restrict_violation, not 23503.
+        return error_response(409, "CONFLICT", "The record is still in use and cannot be deleted.")
     if sqlstate in {"23502", "23514"}:
         return error_response(400, "VALIDATION_ERROR", "The data breaks a database constraint.")
     logger.error("Unmapped integrity error: %s", exc.orig)

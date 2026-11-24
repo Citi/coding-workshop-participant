@@ -43,6 +43,17 @@ class _ExclusionViolation(Exception):
     sqlstate = "23P01"
 
 
+class _RestrictViolation(Exception):
+    """Stands in for PostgreSQL 18's restrict_violation, raised by a blocked ON DELETE RESTRICT."""
+
+    sqlstate = "23001"
+
+
+def _raise_restrict_violation() -> None:
+    """Endpoint raising the IntegrityError that deleting a still-referenced row gives on PostgreSQL 18."""
+    raise IntegrityError("DELETE FROM departments ...", {}, _RestrictViolation("still referenced"))
+
+
 def _run_sql(statement: str) -> Callable[..., None]:
     """Build an endpoint that runs one SQL statement expected to break a constraint."""
 
@@ -77,6 +88,8 @@ _FAILING_SQL = {
         "INSERT INTO users (name, email, password_hash, role) "
         "VALUES ('X', 'x@test.example', 'h', 'BOSS')"
     ),
+    # Not a constraint: PostgreSQL raises numeric_value_out_of_range (22003), a DataError.
+    "/_test/out-of-range": "SELECT CAST('99999999999999999999' AS BIGINT)",
 }
 
 
@@ -87,6 +100,7 @@ def failing_client(clean_db: Engine) -> Iterator[TestClient]:
     for path, statement in _FAILING_SQL.items():
         app.add_api_route(path, _run_sql(statement), methods=["POST"])
     app.add_api_route("/_test/unmapped", _raise_unmapped_integrity_error, methods=["POST"])
+    app.add_api_route("/_test/restrict", _raise_restrict_violation, methods=["POST"])
     app.add_api_route("/_test/boom", _raise_unexpected, methods=["GET"])
     with TestClient(app, raise_server_exceptions=False) as test_client:
         yield test_client
@@ -100,6 +114,7 @@ def failing_client(clean_db: Engine) -> Iterator[TestClient]:
         ("/_test/not-null", 400, "VALIDATION_ERROR"),
         ("/_test/check", 400, "VALIDATION_ERROR"),
         ("/_test/unmapped", 409, "CONFLICT"),
+        ("/_test/restrict", 409, "CONFLICT"),
     ],
 )
 def test_integrity_errors_are_mapped(
@@ -115,6 +130,27 @@ def test_integrity_error_rolls_back(failing_client: TestClient, db_session: Sess
     assert failing_client.post("/_test/unique").status_code == 409
     assert db_session.execute(text("SELECT count(*) FROM departments")).scalar_one() == 0
     assert failing_client.get("/health").status_code == 200
+
+
+def test_database_data_error_is_400_without_internals(
+    failing_client: TestClient, caplog: pytest.LogCaptureFixture
+) -> None:
+    """A value PostgreSQL rejects (here out of BIGINT range) is 400 VALIDATION_ERROR, logged as a warning."""
+    with caplog.at_level(logging.WARNING, logger="app.errors"):
+        response = failing_client.post("/_test/out-of-range")
+    body = assert_error(response, 400, "VALIDATION_ERROR")
+    assert "BIGINT" not in body["message"] and "99999" not in response.text
+    assert [record for record in caplog.records if record.levelno == logging.WARNING and "Rejected" in record.getMessage()]
+
+
+def test_restrict_violation_is_a_known_conflict(
+    failing_client: TestClient, caplog: pytest.LogCaptureFixture
+) -> None:
+    """PostgreSQL 18's 23001 gets its own 409 message and is not logged as an unmapped error."""
+    with caplog.at_level(logging.ERROR, logger="app.errors"):
+        body = assert_error(failing_client.post("/_test/restrict"), 409, "CONFLICT")
+    assert body["message"] == "The record is still in use and cannot be deleted."
+    assert not [record for record in caplog.records if "Unmapped" in record.getMessage()]
 
 
 def test_unexpected_exception_is_a_generic_500_without_internals(
