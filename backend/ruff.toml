@@ -1,0 +1,15 @@
+# Python lint/format rules for the backend (run from backend/):
+#   .venv/bin/ruff check .        .venv/bin/ruff format --check .
+# Only our code is checked: pm-service/ also contains vendored libraries (installed for hot reload).
+line-length = 120
+target-version = "py313"
+include = ["pm-service/function.py", "pm-service/app/**/*.py", "tests/**/*.py", "scripts/**/*.py"]
+
+[lint]
+# pycodestyle, pyflakes, import order, bugbear, naming, pyupgrade, simplifications
+select = ["E", "W", "F", "I", "B", "N", "UP", "SIM"]
+# Line length is handled by the formatter; long string literals (SQL, messages) are left intact.
+ignore = ["E501"]
+
+[lint.isort]
+known-first-party = ["app", "function", "helpers"]
