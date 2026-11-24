@@ -1,0 +1,15 @@
+{
+  "name": "acme-project-tracker-e2e",
+  "version": "1.0.0",
+  "private": true,
+  "description": "End-to-end (Cypress) and load (Artillery) tests for ACME Project Tracker",
+  "scripts": {
+    "e2e": "cypress run --browser electron",
+    "e2e:open": "cypress open"
+  },
+  "devDependencies": {
+    "artillery": "^2.0.34",
+    "axe-core": "^4.14.1",
+    "cypress": "^16.3.0"
+  }
+}
