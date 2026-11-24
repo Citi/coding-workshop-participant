@@ -14,7 +14,7 @@ from typing import Any
 from fastapi import FastAPI, Request
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
-from sqlalchemy.exc import IntegrityError
+from sqlalchemy.exc import DataError, IntegrityError
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
 logger = logging.getLogger(__name__)
@@ -107,15 +107,21 @@ def error_response(
     return JSONResponse(status_code=status_code, content=error_body(error, message, details))
 
 
-def _field_name(location: tuple[Any, ...] | list[Any]) -> str:
-    """Turn a Pydantic error location into a dotted field name."""
-    parts = [str(part) for part in location if str(part) not in _LOCATION_PREFIXES]
+def _field_name(error: dict[str, Any]) -> str:
+    """Turn a Pydantic error location into a dotted field name.
+
+    A malformed JSON body is reported against ``body``, not the character position
+    that FastAPI puts in its location.
+    """
+    if error.get("type") == "json_invalid":
+        return "body"
+    parts = [str(part) for part in error.get("loc", ()) if str(part) not in _LOCATION_PREFIXES]
     return ".".join(parts) or "request"
 
 
 async def _handle_validation(_: Request, exc: RequestValidationError) -> JSONResponse:
     """Render request validation failures as 400 instead of FastAPI's 422."""
-    details = [{"field": _field_name(err.get("loc", ())), "issue": err.get("msg", "Invalid value")} for err in exc.errors()]
+    details = [{"field": _field_name(err), "issue": err.get("msg", "Invalid value")} for err in exc.errors()]
     return error_response(400, "VALIDATION_ERROR", "The request is not valid.", details)
 
 
@@ -147,6 +153,16 @@ async def _handle_integrity(_: Request, exc: IntegrityError) -> JSONResponse:
     return error_response(409, "CONFLICT", "The change conflicts with existing data.")
 
 
+async def _handle_data_error(_: Request, exc: DataError) -> JSONResponse:
+    """Reject values the database cannot store or compare (NUL bytes, numbers out of range) as 400."""
+    logger.warning("Rejected a value the database cannot handle: %s", type(exc.orig).__name__)
+    return error_response(
+        400,
+        "VALIDATION_ERROR",
+        "A value cannot be stored or searched: it is out of range or contains a disallowed character.",
+    )
+
+
 async def _handle_unexpected(_: Request, exc: Exception) -> JSONResponse:
     """Log anything unexpected and return a generic 500 without leaking internals."""
     logger.exception("Unhandled error: %s", exc)
@@ -159,4 +175,5 @@ def register_error_handlers(app: FastAPI) -> None:
     app.add_exception_handler(StarletteHTTPException, _handle_http)
     app.add_exception_handler(AppError, _handle_app_error)
     app.add_exception_handler(IntegrityError, _handle_integrity)
+    app.add_exception_handler(DataError, _handle_data_error)
     app.add_exception_handler(Exception, _handle_unexpected)

@@ -175,13 +175,6 @@ def test_malformed_bodies_are_400(client: TestClient, content: bytes, content_ty
     assert_error(response, 400, "VALIDATION_ERROR")
 
 
-@pytest.mark.xfail(
-    reason=(
-        "app/errors.py (foundation, not AUTH-owned) names the character position as the "
-        "field, e.g. '37'; requested change: field 'body' when the error type is json_invalid"
-    ),
-    strict=False,
-)
 def test_malformed_json_names_the_body_not_a_character_position(client: TestClient) -> None:
     """A JSON syntax error is reported on the request body, not on a character offset."""
     response = client.post(

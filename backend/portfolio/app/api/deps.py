@@ -18,7 +18,9 @@ class PageParams:
 
 def page_params(
     limit: int = Query(50, ge=1, le=200, description="Page size (1-200)."),
-    offset: int = Query(0, ge=0, description="Number of matches to skip."),
+    offset: int = Query(
+        0, ge=0, le=9_223_372_036_854_775_807, description="Number of matches to skip (PostgreSQL BIGINT range)."
+    ),
 ) -> PageParams:
     """Read ``limit`` (default 50, max 200) and ``offset`` (default 0)."""
     return PageParams(limit=limit, offset=offset)
