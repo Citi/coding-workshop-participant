@@ -143,6 +143,27 @@ resource "aws_s3_bucket_policy" "this" {
             )
           }
         }
+      },
+      {
+        # Lets S3 answer 404 instead of 403 for paths that are not files, so the
+        # 404 -> /index.html rule also serves the app on a deep-link refresh.
+        Sid    = "AllowCloudFrontListBucket"
+        Effect = "Allow"
+        Principal = {
+          Service = data.aws_service_principal.cloudfront.name
+        }
+        Action   = "s3:ListBucket"
+        Resource = aws_s3_bucket.this.arn
+        Condition = {
+          StringEquals = {
+            "AWS:SourceArn" = format(
+              "arn:%s:cloudfront::%s:distribution/%s",
+              data.aws_partition.this.partition,
+              data.aws_caller_identity.this.account_id,
+              element(aws_cloudfront_distribution.this.*.id, count.index)
+            )
+          }
+        }
       }
     ]
   })
