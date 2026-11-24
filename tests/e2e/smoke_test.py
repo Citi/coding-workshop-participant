@@ -11,9 +11,12 @@ printed, and neither are tokens. The eight steps run in order and each prints
 PASS or FAIL with its evidence. The exit code is 0 when every step passes, 1
 when any step fails and 2 for a usage error.
 
-The test leaves nothing behind: logging in and reading change nothing, the
-cycle is refused and so is the viewer's project. If either write were wrongly
-accepted, the step fails and deletes the new record again.
+On the expected path the test changes nothing: logging in and reading write
+nothing, and both writes it tries (the cycle and the viewer's project) are
+refused. If either write were wrongly accepted, the step fails and deletes the
+new record again as the PM; step 7 can do that only when step 2 signed the PM
+in, and otherwise names the record to delete by hand. The CREATE and DELETE
+audit rows of such a record remain, because audit_logs is append-only.
 
 The golden values hold on the day the database was seeded and on the day after
 (the server's ``as_of`` is today's UTC date); step 3 prints the seed day.
@@ -29,7 +32,7 @@ import time
 import urllib.error
 import urllib.parse
 import urllib.request
-from collections.abc import Callable
+from collections.abc import Callable, Iterator
 from dataclasses import dataclass, field
 from datetime import date, datetime, timedelta, timezone
 from typing import Any
@@ -50,6 +53,12 @@ EXPECTED_IMPACTED = {"Payments Service Integration", "Mobile Client Integration"
 CYCLE_TEXT = "API Schema → Payments Service Integration → End-to-End Testing → API Schema"
 MISSING_PROJECT_ID = 999999
 SNIPPET_LENGTH = 160
+# Printed under a failed login. The API answers a wrong password and an unknown email with the same 401.
+LOGIN_HINT = (
+    "hint: SEED_PASSWORD must be the password given to the seed or reset task that created the demo users\n"
+    "(an unknown email gets the same 401, so the users may also be missing). ./bin/db-task.sh <local|aws> reset\n"
+    "replaces ALL data and seeds it again with the current SEED_PASSWORD."
+)
 
 
 class StepFailed(Exception):
@@ -204,12 +213,31 @@ def json_object(result: HttpResult, expected_status: int = 200) -> dict[str, Any
 
 
 def login(api: Api, email: str, password: str, role: str) -> tuple[str, str]:
-    """Sign in and return ``(access token, evidence)``; fail unless the user has ``role``."""
-    data = json_object(api.call("POST", "/auth/login", body={"email": email, "password": password}))
+    """Sign in and return ``(access token, evidence)``; fail unless the user has ``role``.
+
+    A 401 adds ``LOGIN_HINT``: a ``SEED_PASSWORD`` that does not match the seeded users is the usual cause.
+    """
+    result = api.call("POST", "/auth/login", body={"email": email, "password": password})
+    if result.status == 401:
+        raise StepFailed(f"{result.describe()}\n{LOGIN_HINT}")
+    data = json_object(result)
     user = data.get("user") or {}
     if not data.get("access_token") or user.get("role") != role:
         raise StepFailed(f"login as {email}: expected an access token for a {role}, got role {user.get('role')!r}")
     return data["access_token"], f"HTTP 200, signed in as {user.get('name')} <{email}> ({role})"
+
+
+def delete_again(api: Api, created: Any, collection: str, pm_token: str | None) -> str:
+    """Delete, as the PM, a record that should have been refused; return what happened, for the evidence."""
+    if created is None:
+        return "the response carried no id, so nothing was deleted"
+    path = f"{collection}/{created}"
+    if not pm_token:
+        return f"NOT deleted: there is no PM token (step 2 failed); delete {path} by hand"
+    result = api.call("DELETE", path, token=pm_token)
+    if result.status == 204:
+        return f"deleted it again as PM (DELETE {path} -> HTTP 204); its CREATE and DELETE audit rows remain"
+    return f"could NOT delete it again: {result.describe()}; delete {path} by hand"
 
 
 # --- Steps -------------------------------------------------------------------------------------------
@@ -337,10 +365,7 @@ def step_cycle_rejected(api: Api, ctx: Context) -> str:
     data = result.json()
     if 200 <= result.status < 300:
         created = data.get("id") if isinstance(data, dict) else None
-        cleanup = "no id returned, nothing deleted"
-        if created is not None:
-            deleted = api.call("DELETE", f"/dependencies/{created}", token=token)
-            cleanup = f"deleted it again: HTTP {deleted.status}"
+        cleanup = delete_again(api, created, "/dependencies", token)
         raise StepFailed(f"the cycle was ACCEPTED (HTTP {result.status}, edge id {created}); {cleanup}")
     if result.status == 400 and isinstance(data, dict) and data.get("error") == "DEPENDENCY_CYCLE":
         message = str(data.get("message"))
@@ -401,10 +426,7 @@ def step_viewer_denied(api: Api, ctx: Context) -> str:
     data = result.json()
     if 200 <= result.status < 300:
         created = data.get("id") if isinstance(data, dict) else None
-        cleanup = "no id returned, nothing deleted"
-        if created is not None and ctx.pm_token:
-            deleted = api.call("DELETE", f"/projects/{created}", token=ctx.pm_token)
-            cleanup = f"deleted it again as PM: HTTP {deleted.status}"
+        cleanup = delete_again(api, created, "/projects", ctx.pm_token)
         raise StepFailed(f"the VIEWER created a project (HTTP {result.status}, id {created}); {cleanup}")
     if result.status == 403 and isinstance(data, dict) and data.get("error") == "ACCESS_DENIED":
         return f"{evidence}\nPOST /projects -> HTTP 403 ACCESS_DENIED: {data.get('message')}"
@@ -447,6 +469,32 @@ STEPS: tuple[tuple[str, Callable[[Api, Context], str]], ...] = (
 )
 
 
+@dataclass(frozen=True)
+class StepResult:
+    """The outcome of one step: its number and title, whether it passed, and the evidence."""
+
+    number: int
+    title: str
+    passed: bool
+    evidence: str
+
+
+def run_steps(api: Api, ctx: Context) -> Iterator[StepResult]:
+    """Run the eight steps in order and yield each result as soon as it is known.
+
+    A failed or crashed step does not stop the others; a step that needs what
+    an earlier step could not provide fails with "not run: ...".
+    """
+    for number, (title, run) in enumerate(STEPS, start=1):
+        try:
+            passed, evidence = True, run(api, ctx)
+        except StepFailed as failure:
+            passed, evidence = False, str(failure)
+        except Exception as error:  # a crash in one step is reported as its failure; the rest still run
+            passed, evidence = False, f"unexpected {type(error).__name__}: {error}"
+        yield StepResult(number, title, passed, evidence)
+
+
 def main() -> int:
     """Run the eight steps in order and return the process exit code."""
     base_url = (os.environ.get("BASE_URL") or DEFAULT_BASE_URL).strip().rstrip("/")
@@ -460,22 +508,15 @@ def main() -> int:
               file=sys.stderr)
         return 2
 
-    api = Api(base_url)
-    ctx = Context(password=password)
     print(f"Smoke test against {base_url}")
     failures = 0
-    for number, (title, run) in enumerate(STEPS, start=1):
-        try:
-            outcome, evidence = "PASS", run(api, ctx)
-        except StepFailed as failure:
-            outcome, evidence = "FAIL", str(failure)
-        except Exception as error:  # a crash in one step is reported as its failure; the rest still run
-            outcome, evidence = "FAIL", f"unexpected {type(error).__name__}: {error}"
-        if outcome == "FAIL":
+    for result in run_steps(Api(base_url), Context(password=password)):
+        if not result.passed:
             failures += 1
-        print(f"{outcome}  {number}. {title}")
-        for line in evidence.splitlines():
-            print(f"        {line}")
+        # Flushed per step, so a slow run (Aurora resuming) shows progress even when piped.
+        lines = [f"{'PASS' if result.passed else 'FAIL'}  {result.number}. {result.title}"]
+        lines += [f"        {line}" for line in result.evidence.splitlines()]
+        print("\n".join(lines), flush=True)
     print(f"{len(STEPS) - failures}/{len(STEPS)} steps passed" + (f", {failures} failed" if failures else ""))
     return 1 if failures else 0
 

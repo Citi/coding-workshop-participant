@@ -9,7 +9,6 @@ analytics and dependencies routers.
 
 from __future__ import annotations
 
-from datetime import date
 from typing import Annotated
 
 from fastapi import APIRouter, Depends, Path, Query, Response
@@ -18,6 +17,7 @@ from sqlalchemy.orm import Session
 from app.api.deps import PageParams, page_params, today_utc
 from app.db.models import User
 from app.db.session import get_db
+from app.schemas.analytics import IsoDate
 from app.schemas.common import Page
 from app.schemas.departments import MAX_ID, SearchText
 from app.schemas.projects import (
@@ -36,7 +36,7 @@ router = APIRouter(prefix="/projects", tags=["projects"])
 
 ProjectId = Annotated[int, Path(ge=1, le=MAX_ID, description="Project id.")]
 AsOf = Annotated[
-    date | None, Query(description="Date the metrics and risk are computed for (YYYY-MM-DD); default today (UTC).")
+    IsoDate | None, Query(description="Date the metrics and risk are computed for (YYYY-MM-DD); default today (UTC).")
 ]
 # Control characters (NUL above all, which PostgreSQL cannot compare) are a 400 naming q, as on /users and
 # /departments. Project names never contain them, so such a term could not match anything anyway.

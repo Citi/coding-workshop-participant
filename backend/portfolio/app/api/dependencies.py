@@ -6,7 +6,6 @@ remove them. Edges are never edited: delete and re-add instead.
 
 from __future__ import annotations
 
-from datetime import date
 from typing import Annotated
 
 from fastapi import APIRouter, Depends, Path, Query, Response
@@ -15,6 +14,7 @@ from sqlalchemy.orm import Session
 from app.api.deps import PageParams, page_params, today_utc
 from app.db.models import User
 from app.db.session import get_db
+from app.schemas.analytics import IsoDate
 from app.schemas.common import Page
 from app.schemas.dependencies import DependencyCreate, DependencyGraphOut, DependencyOut
 from app.schemas.departments import MAX_ID
@@ -71,7 +71,7 @@ def delete_dependency(
 def get_dependency_graph(
     project_id: ProjectId,
     as_of: Annotated[
-        date | None, Query(description="Analysis date (YYYY-MM-DD); defaults to today (UTC).")
+        IsoDate | None, Query(description="Analysis date (YYYY-MM-DD); defaults to today (UTC).")
     ] = None,
     db: Session = Depends(get_db),
     _: User = Depends(get_current_user),

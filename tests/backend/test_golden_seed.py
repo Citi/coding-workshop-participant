@@ -4,20 +4,31 @@ The demo data is inserted by ``app.db.seed.seed_portfolio`` exactly as the
 ``seed`` task does, a demo user signs in through ``POST /auth/login``, and every
 request passes ``as_of``. The spec places no seed offset within a day of a rule
 boundary, so every golden value is checked at ``T`` and again at ``T + 1``.
+
+The last section runs the end-to-end smoke test (``tests/e2e/smoke_test.py``)
+in-process: its HTTP calls are answered by the TestClient, on data seeded
+today, because the smoke test relies on the server's default ``as_of``.
 """
 
 from __future__ import annotations
 
+import importlib.util
+import secrets
+import sys
+from collections.abc import Callable
 from dataclasses import dataclass
 from datetime import date, timedelta
+from pathlib import Path
+from types import ModuleType
 from typing import Any
 
 import pytest
 from fastapi.testclient import TestClient
-from sqlalchemy import func, select
+from sqlalchemy import func, select, text
 from sqlalchemy.orm import Session
 
-from app.db.models import AuditLog, Deliverable, DeliverableDependency, Project
+from app.api.deps import today_utc
+from app.db.models import ALL_TABLES, AuditLog, Deliverable, DeliverableDependency, Project
 from app.db.seed import seed_portfolio
 from app.engines.dependency import find_cycle_path
 from app.services.portfolio import load_snapshot
@@ -64,7 +75,12 @@ class Seeded:
 @pytest.fixture
 def seeded(db_session: Session) -> Seeded:
     """Seed the spec section 10 portfolio at ``T`` and commit it, like ``./bin/db-task.sh local seed``."""
-    counts = seed_portfolio(db_session, TEST_PASSWORD, today=T)
+    return seed_and_index(db_session, T)
+
+
+def seed_and_index(db_session: Session, anchor: date) -> Seeded:
+    """Seed the spec section 10 portfolio at ``anchor``, commit it and return the ids by name."""
+    counts = seed_portfolio(db_session, TEST_PASSWORD, today=anchor)
     db_session.commit()
     assert counts["projects"] == 5 and counts["deliverable_dependencies"] == 14
     projects = {
@@ -212,3 +228,209 @@ def test_adding_end_to_end_testing_before_api_schema_is_rejected_with_the_path(
     assert body["error"] == "DEPENDENCY_CYCLE"
     assert CYCLE_TEXT in body["message"]
     assert counts() == before  # no edge and no audit row was written
+
+
+# --- The end-to-end smoke test, run in-process ----------------------------------------------------------
+
+SMOKE_TEST_PATH = Path(__file__).resolve().parents[1] / "e2e" / "smoke_test.py"
+LOGIN_401 = "POST /auth/login -> HTTP 401 UNAUTHENTICATED: Invalid email or password."
+
+# Changes a request's token or body before it is sent: (method, path, token, body) -> (token, body).
+Tamper = Callable[[str, str, str | None, dict[str, Any] | None], tuple[str | None, dict[str, Any] | None]]
+
+
+@pytest.fixture(scope="module")
+def smoke() -> ModuleType:
+    """Import the smoke test script (``tests/e2e`` is not a package)."""
+    spec = importlib.util.spec_from_file_location("e2e_smoke_test", SMOKE_TEST_PATH)
+    assert spec is not None and spec.loader is not None
+    module = importlib.util.module_from_spec(spec)
+    sys.modules[spec.name] = module  # dataclasses look their module up while the file runs
+    spec.loader.exec_module(module)
+    return module
+
+
+@pytest.fixture
+def seeded_today(db_session: Session) -> Seeded:
+    """Seed the demo data at today's UTC date, as ``./bin/db-task.sh local seed`` does."""
+    return seed_and_index(db_session, today_utc())
+
+
+class InProcessApi:
+    """Stands in for the smoke test's ``Api``: the same calls, answered by the TestClient.
+
+    ``tamper`` may change a request before it is sent, to make the app accept
+    a write that it should refuse.
+    """
+
+    def __init__(self, client: TestClient, smoke: ModuleType, tamper: Tamper | None = None) -> None:
+        """Answer calls with ``client`` and wrap them in the smoke test's ``HttpResult``."""
+        self.client, self.smoke, self.tamper = client, smoke, tamper
+
+    def call(
+        self,
+        method: str,
+        path: str,
+        *,
+        token: str | None = None,
+        body: dict[str, Any] | None = None,
+        query: dict[str, Any] | None = None,
+    ) -> Any:
+        """Send one request through the TestClient, like ``smoke_test.Api.call``."""
+        if self.tamper is not None:
+            token, body = self.tamper(method, path, token, body)
+        headers = {"Accept": "application/json"}
+        if token:
+            headers["Authorization"] = f"Bearer {token}"
+        response = self.client.request(method, path, headers=headers, json=body, params=query)
+        content_type = response.headers.get("content-type", "")
+        return self.smoke.HttpResult(method, path, response.status_code, content_type, response.content)
+
+
+def run_smoke_main(
+    smoke: ModuleType, api: InProcessApi, password: str, monkeypatch: pytest.MonkeyPatch,
+    capsys: pytest.CaptureFixture[str],
+) -> tuple[int, str]:
+    """Run ``smoke_test.main()`` with its HTTP calls sent to ``api``; return the exit code and the output."""
+    monkeypatch.setenv("BASE_URL", "http://testserver/api/portfolio")
+    monkeypatch.setenv("SEED_PASSWORD", password)
+    monkeypatch.setattr(smoke, "Api", lambda base_url: api)
+    code = smoke.main()
+    return code, capsys.readouterr().out
+
+
+def database_state(session: Session) -> dict[str, Any]:
+    """Row count and a hash of every row of every table, plus each identity sequence's last value."""
+    state: dict[str, Any] = {
+        table: tuple(
+            session.execute(
+                text(f"SELECT count(*), md5(coalesce(string_agg(t::text, '|' ORDER BY t.id), '')) FROM {table} t")
+            ).one()
+        )
+        for table in ALL_TABLES
+    }
+    sequences = text("SELECT sequencename, last_value FROM pg_sequences WHERE schemaname = current_schema()")
+    state["sequences"] = {name: last_value for name, last_value in session.execute(sequences)}
+    return state
+
+
+def audit_trail(session: Session) -> list[tuple[str, int | None, str]]:
+    """Every audit row as ``(entity_type, entity_id, action)``, oldest first."""
+    rows = session.execute(select(AuditLog.entity_type, AuditLog.entity_id, AuditLog.action).order_by(AuditLog.id))
+    return [tuple(row) for row in rows]
+
+
+def count_rows(session: Session, model: type) -> int:
+    """Return the number of rows of ``model``'s table."""
+    return session.scalar(select(func.count()).select_from(model))
+
+
+def test_smoke_test_passes_in_process_and_changes_nothing(
+    client: TestClient, seeded_today: Seeded, db_session: Session, smoke: ModuleType,
+    monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str],
+) -> None:
+    before = database_state(db_session)
+    code, out = run_smoke_main(smoke, InProcessApi(client, smoke), TEST_PASSWORD, monkeypatch, capsys)
+    assert code == 0, out
+    assert [line[:7] for line in out.splitlines() if line.startswith(("PASS", "FAIL"))] == [
+        f"PASS  {number}" for number in range(1, 9)
+    ]
+    assert out.rstrip().endswith("8/8 steps passed")
+    assert "score 78 CRITICAL, utilization 75.0%, completion 35.0%" in out
+    assert f"HTTP 400 DEPENDENCY_CYCLE: This dependency would create a cycle: {CYCLE_TEXT}" in out
+    assert "Priya Nair: peak 120%, status OVER_ALLOCATED" in out
+    assert "outcome: 404 JSON NOT_FOUND (Project 999999 was not found.)" in out
+    assert TEST_PASSWORD not in out
+    # Nothing was written: every row, every count and every identity sequence is as it was.
+    assert database_state(db_session) == before
+
+
+def test_smoke_test_with_a_wrong_password_explains_the_login_failure(
+    client: TestClient, seeded_today: Seeded, smoke: ModuleType, monkeypatch: pytest.MonkeyPatch,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    wrong_password = secrets.token_urlsafe(12)
+    code, out = run_smoke_main(smoke, InProcessApi(client, smoke), wrong_password, monkeypatch, capsys)
+    assert code == 1
+    assert out.rstrip().endswith("1/8 steps passed, 7 failed")
+    assert "PASS  1. /health is healthy" in out
+    # Steps 2 and 7 sign in; each failure carries the 401 and the SEED_PASSWORD hint.
+    assert out.count(LOGIN_401) == 2
+    assert out.count("hint: SEED_PASSWORD must be the password given to the seed or reset task") == 2
+    for line in smoke.LOGIN_HINT.splitlines():
+        assert out.count(line) == 2
+    assert out.count("not run: no PM token (step 2 failed)") == 4  # steps 3 to 6
+    assert "not run: no access token (steps 2 and 7 failed)" in out
+    assert wrong_password not in out
+
+
+@pytest.mark.parametrize("pm_signed_in", [True, False], ids=["pm-token", "no-pm-token"])
+def test_smoke_step_7_deletes_a_wrongly_accepted_project_and_says_so(
+    client: TestClient, seeded_today: Seeded, db_session: Session, smoke: ModuleType, pm_signed_in: bool
+) -> None:
+    api = InProcessApi(client, smoke)
+    pm_token, _ = smoke.login(api, "pm@acme.example", TEST_PASSWORD, "PM")
+
+    def as_pm(method: str, path: str, token: str | None, body: Any) -> tuple[str | None, Any]:
+        """Simulate broken RBAC: the viewer's POST /projects goes out with the PM's token and is accepted."""
+        return (pm_token if (method, path) == ("POST", "/projects") else token), body
+
+    api.tamper = as_pm
+    ctx = smoke.Context(password=TEST_PASSWORD, pm_token=pm_token if pm_signed_in else None)
+    new_id = max(seeded_today.projects.values()) + 1
+
+    with pytest.raises(smoke.StepFailed) as failure:
+        smoke.step_viewer_denied(api, ctx)
+
+    message = str(failure.value)
+    assert f"the VIEWER created a project (HTTP 201, id {new_id}); " in message
+    if pm_signed_in:
+        assert message.endswith(
+            f"deleted it again as PM (DELETE /projects/{new_id} -> HTTP 204); its CREATE and DELETE audit rows remain"
+        )
+        assert count_rows(db_session, Project) == 5
+        assert audit_trail(db_session) == [("project", new_id, "CREATE"), ("project", new_id, "DELETE")]
+    else:
+        assert message.endswith(f"NOT deleted: there is no PM token (step 2 failed); delete /projects/{new_id} by hand")
+        assert count_rows(db_session, Project) == 6
+        assert audit_trail(db_session) == [("project", new_id, "CREATE")]
+
+
+def test_smoke_step_5_deletes_a_wrongly_accepted_edge_and_says_so(
+    client: TestClient, seeded_today: Seeded, db_session: Session, smoke: ModuleType
+) -> None:
+    api = InProcessApi(client, smoke)
+    ctx = smoke.Context(password=TEST_PASSWORD, alpha_id=seeded_today.projects["Alpha"])
+    ctx.pm_token, _ = smoke.login(api, "pm@acme.example", TEST_PASSWORD, "PM")
+    harmless = {
+        "predecessor_deliverable_id": seeded_today.deliverables["Data Migration Plan"],
+        "successor_deliverable_id": seeded_today.deliverables["End-to-End Testing"],
+    }
+
+    def swap_edge(method: str, path: str, token: str | None, body: Any) -> tuple[str | None, Any]:
+        """Simulate a broken cycle check: the cycle is swapped for an edge the app accepts."""
+        return token, (harmless if (method, path) == ("POST", "/dependencies") else body)
+
+    api.tamper = swap_edge
+
+    with pytest.raises(smoke.StepFailed) as failure:
+        smoke.step_cycle_rejected(api, ctx)
+
+    assert str(failure.value) == (
+        "the cycle was ACCEPTED (HTTP 201, edge id 15); deleted it again as PM (DELETE /dependencies/15 -> HTTP 204); "
+        "its CREATE and DELETE audit rows remain"
+    )
+    assert count_rows(db_session, DeliverableDependency) == 14
+    assert audit_trail(db_session) == [("dependency", 15, "CREATE"), ("dependency", 15, "DELETE")]
+
+
+def test_smoke_cleanup_reports_a_missing_id_and_a_failed_delete(
+    client: TestClient, seeded_today: Seeded, smoke: ModuleType
+) -> None:
+    api = InProcessApi(client, smoke)
+    pm_token, _ = smoke.login(api, "pm@acme.example", TEST_PASSWORD, "PM")
+    assert smoke.delete_again(api, None, "/projects", pm_token) == "the response carried no id, so nothing was deleted"
+    assert smoke.delete_again(api, 999999, "/projects", pm_token) == (
+        "could NOT delete it again: DELETE /projects/999999 -> HTTP 404 NOT_FOUND: Project 999999 was not found.; "
+        "delete /projects/999999 by hand"
+    )
