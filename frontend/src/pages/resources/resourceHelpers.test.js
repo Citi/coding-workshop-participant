@@ -13,7 +13,14 @@ import {
 } from './allocationFields'
 import { APOLLO, APOLLO_TEAM, HERMES, MARIA, PRIYA, PRIYA_ALLOCATIONS, PRIYA_APOLLO, PROJECTS, RESOURCES, TOM, ZEUS } from './resourceFixtures'
 import { deleteResourceMessage, RESOURCE_FIELDS, resourceFilters, toResourcePayload } from './resourceFields'
-import { allocationColor, allocationSummary, overAllocatedNotice, overAllocationWarning, resourceFiltersFromParams } from './resourceUtils'
+import {
+  allocationColor,
+  allocationSummary,
+  overAllocatedNotice,
+  overAllocationWarning,
+  RESOURCE_URL_FILTERS,
+  resourceFiltersFromParams,
+} from './resourceUtils'
 import { hasActiveFilters } from '../../utils/filters'
 import { parseId } from '../../utils/ids'
 import { includeOption } from '../../utils/options'
@@ -47,6 +54,11 @@ describe('resourceUtils', () => {
       search: 'priya',
     })
     expect(resourceFiltersFromParams(new URLSearchParams('over_allocated=yes&search=%20&page=2'))).toEqual({})
+    expect(resourceFiltersFromParams(new URLSearchParams('department=%20Sales%20&view=heatmap'))).toEqual({ department: 'Sales' })
+    // Longer than the API accepts (it would answer 400).
+    expect(resourceFiltersFromParams(new URLSearchParams(`department=${'d'.repeat(101)}&search=${'s'.repeat(201)}`))).toEqual({})
+    const all = resourceFiltersFromParams(new URLSearchParams('search=a&department=IT&over_allocated=true'))
+    expect(Object.keys(all).sort()).toEqual([...RESOURCE_URL_FILTERS].sort())
   })
 
   it('describes utilization and over-allocation', () => {

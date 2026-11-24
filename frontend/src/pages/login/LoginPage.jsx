@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import LockOutlinedIcon from '@mui/icons-material/LockOutlined'
 import VisibilityIcon from '@mui/icons-material/Visibility'
 import VisibilityOffIcon from '@mui/icons-material/VisibilityOff'
@@ -14,8 +14,11 @@ import Stack from '@mui/material/Stack'
 import TextField from '@mui/material/TextField'
 import Typography from '@mui/material/Typography'
 import { Navigate, useLocation, useNavigate } from 'react-router-dom'
+import { WAKE_UP_HINT } from '../../components/StateViews'
 import { APP_NAME } from '../../config'
 import { useAuth } from '../../context/authContext'
+import { useDelayedFlag } from '../../hooks/useDelayedFlag'
+import { warmUp } from '../../services/healthApi'
 import { validEmail } from '../../utils/validators'
 
 function validate({ email, password }) {
@@ -35,6 +38,13 @@ export default function LoginPage() {
   const [error, setError] = useState('')
   const [submitting, setSubmitting] = useState(false)
   const [showPassword, setShowPassword] = useState(false)
+  const slowSignIn = useDelayedFlag(submitting)
+
+  // Start waking the database while the user types. Fire-and-forget: warmUp never throws and its
+  // result is ignored, so a failed ping cannot reach the form.
+  useEffect(() => {
+    if (!isAuthenticated) warmUp()
+  }, [isAuthenticated])
 
   const redirectTo = location.state?.from?.pathname || '/'
   if (isAuthenticated) return <Navigate to={redirectTo} replace />
@@ -139,6 +149,16 @@ export default function LoginPage() {
               {submitting ? 'Signing in…' : 'Sign in'}
             </Button>
           </Stack>
+          {/* Always rendered (empty until needed) so screen readers announce the hint when it appears. */}
+          <Typography
+            role="status"
+            aria-live="polite"
+            variant="body2"
+            color="textSecondary"
+            sx={{ mt: slowSignIn ? 2 : 0, textAlign: 'center' }}
+          >
+            {slowSignIn ? WAKE_UP_HINT : ''}
+          </Typography>
         </Box>
       </Paper>
     </Box>

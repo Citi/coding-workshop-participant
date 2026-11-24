@@ -14,6 +14,7 @@ import { useAuth } from '../../context/authContext'
 import { useApiQuery } from '../../hooks/useApiQuery'
 import { expensesApi } from '../../services/expensesApi'
 import { formatCurrency, formatDate } from '../../utils/format'
+import { sortLabel } from '../../utils/labels'
 import { sumMoney } from './budgetMetrics'
 import DateRangeFilter from './DateRangeFilter'
 import ExpenseDialogs from './ExpenseDialogs'
@@ -25,21 +26,35 @@ import { countLabel } from '../../utils/text'
 
 function buildColumns(showProject) {
   return [
-    { field: 'expense_date', header: 'Date', render: (row) => formatDate(row.expense_date) },
+    { field: 'expense_date', header: 'Date', sortable: true, render: (row) => formatDate(row.expense_date) },
     ...(showProject
-      ? [{ field: 'project_name', header: 'Project', render: (row) => <ProjectLink id={row.project_id} name={row.project_name} /> }]
+      ? [
+          {
+            field: 'project_name',
+            header: 'Project',
+            sortable: true,
+            render: (row) => <ProjectLink id={row.project_id} name={row.project_name} />,
+          },
+        ]
       : []),
-    { field: 'category', header: 'Category', render: (row) => <StatusChip kind="category" value={row.category} /> },
+    {
+      field: 'category',
+      header: 'Category',
+      sortable: true,
+      sortValue: (row) => sortLabel('category', row.category),
+      render: (row) => <StatusChip kind="category" value={row.category} />,
+    },
     {
       field: 'description',
       header: 'Description',
+      sortable: true,
       render: (row) => (
         <Box component="span" sx={{ wordBreak: 'break-word' }}>
           {row.description}
         </Box>
       ),
     },
-    { field: 'amount', header: 'Amount', align: 'right', render: (row) => formatCurrency(row.amount) },
+    { field: 'amount', header: 'Amount', align: 'right', sortable: true, render: (row) => formatCurrency(row.amount) },
   ]
 }
 
@@ -135,6 +150,8 @@ export default function ExpensesPanel({ projectId, onChange }) {
         loading={loading}
         error={error}
         onRetry={reload}
+        errorTitle="Could not load the expenses"
+        refreshErrorTitle="Could not refresh the expenses"
         renderActions={canUpdate || canDelete ? renderActions : undefined}
         ariaLabel="Expenses"
         emptyTitle={empty.title}

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { budgetUsedLabel, completionPercent, daysBetween, elapsedPercent, isClosed, scheduleLabel } from './projectMetrics'
+import { budgetUsedLabel, completionPercent, daysBetween, elapsedPercent, isClosed, startsInLabel } from './projectMetrics'
 import { countLabel } from '../../utils/text'
 
 describe('projectMetrics', () => {
@@ -24,11 +24,22 @@ describe('projectMetrics', () => {
     expect(elapsedPercent('2026-01-01', '2026-12-31', '2026-12-31')).toBe(100)
   })
 
-  it('describes the time left in the schedule', () => {
-    expect(scheduleLabel('2026-02-01', '2026-03-01', '2026-01-31')).toBe('Starts in 1 day')
-    expect(scheduleLabel('2026-02-01', '2026-03-01', '2026-02-15')).toBe('14 days left')
-    expect(scheduleLabel('2026-02-01', '2026-03-01', '2026-03-01')).toBe('Ends today')
-    expect(scheduleLabel('2026-02-01', '2026-03-01', '2026-03-04')).toBe('3 days past the end date')
+  it('counts down to the start date in the words of every other date label', () => {
+    expect(startsInLabel('2026-02-01', '2026-01-31')).toBe('Starts tomorrow')
+    expect(startsInLabel('2026-02-01', '2026-01-27')).toBe('Starts in 5 days')
+    expect(startsInLabel('2026-02-01', '2026-01-19')).toBe('Starts in 13 days')
+    expect(startsInLabel('2026-02-01', '2026-01-18')).toBe('Starts in 2 weeks')
+    expect(startsInLabel('2026-02-01', '2025-12-31')).toBe('Starts in 4 weeks')
+    expect(startsInLabel('2026-04-01', '2026-01-31')).toBe('Starts in 2 months')
+    expect(startsInLabel('2026-05-01', '2026-01-21')).toBe('Starts in 3 months')
+  })
+
+  it('leaves the time left to the end date from the start date on', () => {
+    // The end date's urgency label ("Ends in 2 weeks") says how long is left.
+    expect(startsInLabel('2026-02-01', '2026-02-01')).toBeNull()
+    expect(startsInLabel('2026-02-01', '2026-03-04')).toBeNull()
+    expect(startsInLabel(null, '2026-03-04')).toBeNull()
+    expect(startsInLabel('2026-02-30', '2026-01-04')).toBeNull()
   })
 
   it('knows which statuses are closed', () => {

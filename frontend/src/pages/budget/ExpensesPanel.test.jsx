@@ -109,6 +109,24 @@ describe('ExpensesPanel', SLOW_MACHINE, () => {
     expect(dateInput('To')).toHaveValue('')
   })
 
+  it('sorts expenses by date, category label and amount from the column headers', async () => {
+    const { user } = renderPanel()
+    await findTable()
+    const order = () => screen.getAllByRole('row').slice(1).map((row) => row.cells[3].textContent)
+    const sortBy = (header) => user.click(screen.getByRole('button', { name: header }))
+    expect(order()).toEqual(['CRM licences', 'Flights to the Berlin office', 'Developer laptops'])
+
+    await sortBy('Date')
+    expect(order()).toEqual(['Developer laptops', 'CRM licences', 'Flights to the Berlin office'])
+    await sortBy('Category')
+    await sortBy('Category')
+    expect(order()).toEqual(['Flights to the Berlin office', 'CRM licences', 'Developer laptops'])
+    await sortBy('Amount')
+    expect(order()).toEqual(['Flights to the Berlin office', 'Developer laptops', 'CRM licences'])
+    await sortBy('Project')
+    expect(order()).toEqual(['CRM licences', 'Developer laptops', 'Flights to the Berlin office'])
+  })
+
   it('does not query an inverted date range and explains the problem', async () => {
     const { user } = renderPanel()
     await findTable()
@@ -268,6 +286,7 @@ describe('ExpensesPanel', SLOW_MACHINE, () => {
     expensesApi.list.mockRejectedValueOnce(new ApiError({ status: 503, code: 'DATABASE_UNAVAILABLE', message: 'The database is unavailable' }))
     const { user } = renderPanel()
     expect(await screen.findByText(/The database is unavailable/)).toBeInTheDocument()
+    expect(screen.getByRole('alert')).toHaveTextContent('Could not load the expenses. The database is unavailable')
     await user.click(screen.getByRole('button', { name: 'Retry' }))
     expect(await findTable()).toBeInTheDocument()
     expect(expensesApi.list).toHaveBeenCalledTimes(2)

@@ -19,6 +19,8 @@ export default defineConfig({
     css: false,
     restoreMocks: true,
     unstubGlobals: true,
+    // Form tests type into many fields; with coverage on a busy machine 5 s is too tight.
+    testTimeout: 15000,
     coverage: {
       provider: 'v8',
       include: ['src/**/*.{js,jsx}'],

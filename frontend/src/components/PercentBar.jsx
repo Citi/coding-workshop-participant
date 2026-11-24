@@ -3,8 +3,13 @@ import LinearProgress from '@mui/material/LinearProgress'
 import Typography from '@mui/material/Typography'
 import { formatPercent } from '../utils/format'
 
-/** Labelled progress bar (value is a percentage; the bar is capped at 100 but the label is not). */
-export default function PercentBar({ value, color = 'primary', label, minWidth = 120 }) {
+/**
+ * Labelled progress bar (value is a percentage; the bar is capped at 100 but the label is not).
+ * compact: a narrower minimum for crowded tables (bar 40px beside the 48px label), e.g. the
+ * Projects list with two bars beside the side menu at 1200-1279px; the bar still grows into
+ * whatever room the cell has.
+ */
+export default function PercentBar({ value, color = 'primary', label, compact = false, minWidth = compact ? 96 : 120 }) {
   const numeric = value === null || value === undefined ? null : Number(value)
   const text = label ?? formatPercent(numeric)
   return (

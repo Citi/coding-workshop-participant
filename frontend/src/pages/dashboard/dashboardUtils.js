@@ -1,8 +1,7 @@
 // Pure helpers for the dashboard (docs/API.md › Dashboard): headline figures, list wording and the
-// snapshot time. Dates are 'YYYY-MM-DD' calendar dates compared in UTC, like the API's "today".
+// snapshot time. Its date is a 'YYYY-MM-DD' calendar date in UTC, like the API's "today".
 import { budgetColor, formatCurrency, todayIso } from '../../utils/format'
 import { HEALTH_STATES, PROJECT_STATUSES } from '../../utils/labels'
-import { daysBetween } from '../projects/projectMetrics'
 import { countLabel } from '../../utils/text'
 
 /** Rows a dashboard list shows before its "Show N more" button. */
@@ -26,20 +25,13 @@ export function formatUpdatedAt(value, now = new Date()) {
   return (date.toDateString() === now.toDateString() ? timeFormatter : dateTimeFormatter).format(date)
 }
 
-/** The API's "today" for a snapshot (the UTC date of generated_at), so due-date wording matches its lists. */
+/**
+ * The API's "today" for a snapshot (the UTC date of generated_at). The dashboard words due and end
+ * dates against it (<DueDate today={...}>), so "3 days overdue" matches the lists the API sent.
+ */
 export function snapshotDate(generatedAt) {
   const date = parseTimestamp(generatedAt)
   return date ? date.toISOString().slice(0, 10) : todayIso()
-}
-
-/** A due date relative to today: 'today' | 'tomorrow' | 'in 5 days' | '1 day overdue' | '3 days overdue'. */
-export function relativeDue(dueDate, today) {
-  if (!dueDate) return ''
-  const days = daysBetween(today, dueDate)
-  if (days < 0) return `${countLabel(-days, 'day')} overdue`
-  if (days === 0) return 'today'
-  if (days === 1) return 'tomorrow'
-  return `in ${countLabel(days, 'day')}`
 }
 
 /** Open projects that need attention: at risk, overdue and both together. */

@@ -126,10 +126,10 @@ describe('BudgetPage', SLOW_MACHINE, () => {
     await findTable()
     projectsApi.list.mockRejectedValueOnce(new ApiError({ status: 500, code: 'INTERNAL_ERROR', message: 'Unexpected error' }))
     await user.click(screen.getByRole('button', { name: 'Simulate an expense change' }))
-    expect(await screen.findByText(/Could not refresh data/)).toBeInTheDocument()
+    expect(await screen.findByText(/Could not refresh the budget figures/)).toBeInTheDocument()
     expect(cardValue('Planned budget')).toHaveTextContent('$220,000')
     await user.click(screen.getByRole('button', { name: 'Retry' }))
-    await waitFor(() => expect(screen.queryByText(/Could not refresh data/)).not.toBeInTheDocument())
+    await waitFor(() => expect(screen.queryByText(/Could not refresh the budget figures/)).not.toBeInTheDocument())
   })
 
   it('flags an overspent portfolio', async () => {

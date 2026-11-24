@@ -22,6 +22,7 @@ import { allocationLabel, allocationQuery, deleteAllocationMessage, toAllocation
 import { AllocationTotal } from './ResourceBits'
 import { overAllocationWarning } from './resourceUtils'
 import { parseId } from '../../utils/ids'
+import { sortLabel } from '../../utils/labels'
 
 const CLOSED = { open: false, allocation: null }
 
@@ -34,6 +35,7 @@ function buildColumns({ showResource, showProject }) {
     {
       field: 'resource_name',
       header: 'Team member',
+      sortable: true,
       render: (row) => (
         <Link component={RouterLink} to={`/resources/${row.resource_id}`}>
           {row.resource_name}
@@ -45,25 +47,33 @@ function buildColumns({ showResource, showProject }) {
     {
       field: 'project_name',
       header: 'Project',
+      sortable: true,
       render: (row) => (
         <Link component={RouterLink} to={`/projects/${row.project_id}`}>
           {row.project_name}
         </Link>
       ),
     },
-    { field: 'project_status', header: 'Project status', render: (row) => <StatusChip kind="project" value={row.project_status} /> },
+    {
+      field: 'project_status',
+      header: 'Project status',
+      sortable: true,
+      sortValue: (row) => sortLabel('project', row.project_status),
+      render: (row) => <StatusChip kind="project" value={row.project_status} />,
+    },
   ]
   const totalColumns = [
     {
       field: 'resource_total_allocation_percent',
       header: 'Total allocation',
+      sortable: true,
       render: (row) => <AllocationTotal percent={row.resource_total_allocation_percent} overAllocated={row.resource_over_allocated} />,
     },
   ]
   return [
     ...(showResource ? resourceColumns : []),
     ...(showProject ? projectColumns : []),
-    { field: 'allocation_percent', header: 'Allocation', render: (row) => <PercentBar value={row.allocation_percent} /> },
+    { field: 'allocation_percent', header: 'Allocation', sortable: true, render: (row) => <PercentBar value={row.allocation_percent} /> },
     ...(showResource ? totalColumns : []),
   ]
 }
@@ -196,6 +206,8 @@ export default function AllocationsPanel({ projectId, resourceId, onChange, titl
         loading={loading}
         error={error}
         onRetry={reload}
+        errorTitle="Could not load the allocations"
+        refreshErrorTitle="Could not refresh the allocations"
         renderActions={renderActions}
         ariaLabel={copy.tableLabel}
         emptyTitle={copy.title}

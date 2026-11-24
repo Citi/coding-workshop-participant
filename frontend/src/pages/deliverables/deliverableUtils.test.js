@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { deliverableFields, deliverableFilters, dependencyOptions, initialDeliverableValues } from './deliverableFields'
 import { BUILD, DELIVERABLES, PROJECTS, RESOURCES, SIGN_OFF } from './deliverableFixtures'
-import { filtersFromSearchParams, isBlocker, isOverdue, selfAndDependentIds, sortChain } from './deliverableUtils'
+import { DELIVERABLE_URL_FILTERS, filtersFromSearchParams, isBlocker, selfAndDependentIds, sortChain } from './deliverableUtils'
 import { hasActiveFilters } from '../../utils/filters'
 import { includeOption } from '../../utils/options'
 import { countLabel } from '../../utils/text'
@@ -21,6 +21,13 @@ describe('filtersFromSearchParams', () => {
     // Ids are database integers: a larger one can never exist and the API rejects it with 400.
     expect(filtersFromSearchParams(new URLSearchParams('project_id=2147483648'))).toEqual({})
     expect(filtersFromSearchParams(new URLSearchParams('project_id=2147483647'))).toEqual({ project_id: 2147483647 })
+    // The API rejects a search longer than 200 characters with 400.
+    expect(filtersFromSearchParams(new URLSearchParams(`search=${'a'.repeat(201)}&is_key=true`))).toEqual({ is_key: true })
+  })
+
+  it('names every parameter it reads, so the page can rewrite exactly those', () => {
+    const params = new URLSearchParams('search=a&status=blocked&project_id=3&is_key=true&overdue=true')
+    expect(Object.keys(filtersFromSearchParams(params)).sort()).toEqual([...DELIVERABLE_URL_FILTERS].sort())
   })
 })
 
@@ -51,14 +58,9 @@ describe('deliverable helpers', () => {
     expect([...selfAndDependentIds(graph, 1)].sort((a, b) => a - b)).toEqual([1, 2, 3, 4])
   })
 
-  it('applies the blocker and overdue rules', () => {
+  it('applies the blocker rule', () => {
     expect(isBlocker({ status: 'completed' })).toBe(false)
     expect(isBlocker({ status: 'not_started' })).toBe(true)
-    expect(isOverdue({ status: 'in_progress', due_date: '2026-01-01' }, '2026-01-02')).toBe(true)
-    expect(isOverdue({ status: 'in_progress', due_date: '2026-01-02' }, '2026-01-02')).toBe(false)
-    expect(isOverdue({ status: 'completed', due_date: '2026-01-01' }, '2026-01-02')).toBe(false)
-    expect(isOverdue({ status: 'blocked', due_date: null }, '2026-01-02')).toBe(false)
-    expect(isOverdue({ status: 'blocked', due_date: '2000-01-01' })).toBe(true)
   })
 
   it('orders the dependency chain by depth, then due date', () => {

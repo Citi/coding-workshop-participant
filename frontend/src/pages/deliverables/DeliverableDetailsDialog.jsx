@@ -14,12 +14,13 @@ import Link from '@mui/material/Link'
 import Stack from '@mui/material/Stack'
 import Typography from '@mui/material/Typography'
 import { Link as RouterLink } from 'react-router-dom'
+import DueDate from '../../components/DueDate'
 import { EmptyState, ErrorState, LoadingState } from '../../components/StateViews'
 import StatusChip from '../../components/StatusChip'
 import { useApiQuery } from '../../hooks/useApiQuery'
 import { useIsMobile } from '../../hooks/useIsMobile'
 import { deliverablesApi } from '../../services/deliverablesApi'
-import { DueDate, KeyBadge } from './DeliverableBits'
+import { KeyBadge } from './DeliverableBits'
 import DependencyList from './DependencyList'
 import { isBlocker, sortChain } from './deliverableUtils'
 import { countLabel } from '../../utils/text'
@@ -131,7 +132,7 @@ function Facts({ details, onLeave }) {
       </Link>,
     ],
     ['Status', <StatusChip kind="deliverable" value={details.status} />],
-    ['Due date', <DueDate date={details.due_date} overdue={details.is_overdue} />],
+    ['Due date', <DueDate date={details.due_date} done={details.status === 'completed'} />],
     ['Owner', details.owner_name || 'Unassigned'],
   ]
   return (

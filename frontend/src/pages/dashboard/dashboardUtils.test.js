@@ -6,7 +6,6 @@ import {
   healthBreakdown,
   joinReasons,
   projectSubtitle,
-  relativeDue,
   remainingLabel,
   riskSummary,
   riskTone,
@@ -45,25 +44,6 @@ describe('snapshotDate', () => {
   it('falls back to today when generated_at is missing or invalid', () => {
     expect(snapshotDate(undefined)).toBe(todayIso())
     expect(snapshotDate('garbage')).toBe(todayIso())
-  })
-})
-
-describe('relativeDue', () => {
-  const today = '2026-11-24'
-
-  it('describes upcoming due dates', () => {
-    expect(relativeDue('2026-11-24', today)).toBe('today')
-    expect(relativeDue('2026-11-25', today)).toBe('tomorrow')
-    expect(relativeDue('2026-12-01', today)).toBe('in 7 days')
-  })
-
-  it('counts the days a deliverable is overdue, across month ends', () => {
-    expect(relativeDue('2026-11-23', today)).toBe('1 day overdue')
-    expect(relativeDue('2026-10-31', today)).toBe('24 days overdue')
-  })
-
-  it('returns an empty string without a due date', () => {
-    expect(relativeDue(null, today)).toBe('')
   })
 })
 

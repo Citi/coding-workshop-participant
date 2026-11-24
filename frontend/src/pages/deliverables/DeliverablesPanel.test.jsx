@@ -1,6 +1,7 @@
 import { screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { useLocation } from 'react-router-dom'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { ApiError } from '../../services/apiClient'
 import { deliverablesApi } from '../../services/deliverablesApi'
 import { projectsApi } from '../../services/projectsApi'
@@ -15,8 +16,20 @@ vi.mock('../../services/deliverablesApi', () => ({
 vi.mock('../../services/projectsApi', () => ({ projectsApi: { list: vi.fn() } }))
 vi.mock('../../services/resourcesApi', () => ({ resourcesApi: { list: vi.fn() } }))
 
+const mobile = vi.hoisted(() => ({ value: false }))
+vi.mock('../../hooks/useIsMobile', () => ({ useIsMobile: () => mobile.value }))
+
+// Due dates are worded relative to today (UTC), so the tests run on a fixed day: Mar 4, 2026.
+const TODAY = new Date('2026-03-04T12:00:00Z')
+
 /** Queries sent by the list itself (the form loads its options with a bare list() call). */
 const listQueries = () => deliverablesApi.list.mock.calls.filter(([query]) => query !== undefined).map(([query]) => query)
+
+/** The cell of a table row in the column with this header. */
+function cellOf(row, header) {
+  const headers = within(row.closest('table')).getAllByRole('columnheader').map((cell) => cell.textContent)
+  return row.cells[headers.indexOf(header)]
+}
 
 function renderPanel(props = {}, options = {}) {
   const onChange = vi.fn()
@@ -38,9 +51,16 @@ async function choose(user, container, fieldName, optionName) {
 describe('DeliverablesPanel', () => {
   beforeEach(() => {
     vi.clearAllMocks()
+    // Only Date is faked: timers stay real for Testing Library and user-event.
+    vi.setSystemTime(TODAY)
+    mobile.value = false
     deliverablesApi.list.mockResolvedValue(list(DELIVERABLES))
     projectsApi.list.mockResolvedValue(list(PROJECTS))
     resourcesApi.list.mockResolvedValue(list(RESOURCES))
+  })
+
+  afterEach(() => {
+    vi.useRealTimers()
   })
 
   it('shows a loading state, then the deliverables with key, overdue and dependency details', async () => {
@@ -50,7 +70,8 @@ describe('DeliverablesPanel', () => {
     expect(within(table).getAllByRole('row')).toHaveLength(DELIVERABLES.length + 1)
     const row = within(table).getByText('Requirements sign-off').closest('tr')
     expect(within(row).getByTitle('Key deliverable')).toHaveTextContent('Key')
-    expect(within(row).getByText('Mar 1, 2026 (Overdue)')).toBeInTheDocument()
+    expect(within(row).getByText('Mar 1, 2026')).toBeInTheDocument()
+    expect(within(row).getByText('3 days overdue')).toBeInTheDocument()
     expect(within(row).getByText('In progress')).toBeInTheDocument()
     expect(within(row).getByText('Apollo CRM')).toBeInTheDocument()
     expect(within(row).getByText('Priya Shah')).toBeInTheDocument()
@@ -60,6 +81,32 @@ describe('DeliverablesPanel', () => {
     expect(within(interviews).queryByText('Key')).not.toBeInTheDocument()
     expect(within(interviews).getByText('Feb 1, 2026')).toBeInTheDocument()
     expect(listQueries()).toEqual([{}])
+  })
+
+  it('says how close each due date is, with no urgency for completed deliverables', async () => {
+    renderPanel()
+    const table = await screen.findByRole('table', { name: 'Deliverables' })
+    const dueDateOf = (name) => cellOf(within(table).getByText(name).closest('tr'), 'Due date')
+    expect(dueDateOf('Vendor contract')).toHaveTextContent('Jan 10, 2026 53 days overdue')
+    expect(dueDateOf('Requirements sign-off')).toHaveTextContent('Mar 1, 2026 3 days overdue')
+    expect(dueDateOf('Data audit')).toHaveTextContent('Dec 20, 2026 Due in 9 months')
+    expect(dueDateOf('Build MVP')).toHaveTextContent('Jan 15, 2027 Due in 10 months')
+    // Completed, so past its due date but not overdue.
+    expect(dueDateOf('Stakeholder interviews')).toHaveTextContent(/^Feb 1, 2026$/)
+  })
+
+  it('keeps the due date and its urgency together on the mobile cards', async () => {
+    mobile.value = true
+    renderPanel()
+    const cards = within(await screen.findByRole('list', { name: 'Deliverables' })).getAllByRole('listitem')
+    expect(cards).toHaveLength(DELIVERABLES.length)
+    const dueDateOn = (name) => {
+      const card = cards.find((item) => within(item).queryByText(name))
+      return within(card).getByText('Due date').nextElementSibling
+    }
+    expect(dueDateOn('Requirements sign-off')).toHaveTextContent('Mar 1, 2026 3 days overdue')
+    expect(dueDateOn('Data audit')).toHaveTextContent('Dec 20, 2026 Due in 9 months')
+    expect(dueDateOn('Stakeholder interviews')).toHaveTextContent(/^Feb 1, 2026$/)
   })
 
   it('sends search, project, status, key and overdue filters as query parameters', async () => {
@@ -248,6 +295,7 @@ describe('DeliverablesPanel', () => {
     deliverablesApi.list.mockRejectedValueOnce(new ApiError({ status: 503, code: 'DATABASE_UNAVAILABLE', message: 'Database is unavailable' }))
     const { user } = renderPanel()
     expect(await screen.findByText(/Database is unavailable/)).toBeInTheDocument()
+    expect(screen.getByRole('alert')).toHaveTextContent('Could not load the deliverables. Database is unavailable')
     await user.click(screen.getByRole('button', { name: 'Retry' }))
     expect(await screen.findByRole('table', { name: 'Deliverables' })).toBeInTheDocument()
   })
@@ -340,6 +388,43 @@ describe('DeliverablesPanel', () => {
     await user.click(within(dialog).getByRole('button', { name: 'Cancel' }))
     await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument())
     expect(deliverablesApi.create).not.toHaveBeenCalled()
+  })
+
+  it('leaves the URL alone when it is part of another page (a project tab)', async () => {
+    function UrlProbe() {
+      const location = useLocation()
+      return <p data-testid="url">{`${location.pathname}${location.search}`}</p>
+    }
+    renderWithProviders(
+      <>
+        <DeliverablesPanel projectId="1" />
+        <UrlProbe />
+      </>,
+      { route: '/projects/1?tab=deliverables', path: '/projects/:projectId' },
+    )
+    const user = userEvent.setup()
+    await screen.findByRole('table')
+    await user.click(screen.getByLabelText('Key deliverables only'))
+    await choose(user, document.body, /Status/, 'Blocked')
+    await user.type(screen.getByLabelText('Search'), 'audit')
+    await waitFor(() =>
+      expect(deliverablesApi.list).toHaveBeenLastCalledWith({ is_key: true, status: 'blocked', search: 'audit', project_id: 1 }),
+    )
+    expect(screen.getByTestId('url')).toHaveTextContent('/projects/1?tab=deliverables')
+  })
+
+  it('sorts by status label, due date and owner, with unassigned deliverables last', async () => {
+    const { user } = renderPanel()
+    const table = await screen.findByRole('table', { name: 'Deliverables' })
+    const order = () => within(table).getAllByRole('row').slice(1).map((row) => row.cells[0].firstChild.firstChild.textContent)
+    await user.click(screen.getByRole('button', { name: 'Status' }))
+    // Blocked, Completed, In progress, In progress (API order kept), Not started
+    expect(order()).toEqual(['Data audit', 'Stakeholder interviews', 'Vendor contract', 'Requirements sign-off', 'Build MVP'])
+    await user.click(screen.getByRole('button', { name: 'Due date' }))
+    expect(order()).toEqual(['Vendor contract', 'Stakeholder interviews', 'Requirements sign-off', 'Data audit', 'Build MVP'])
+    await user.click(screen.getByRole('button', { name: 'Owner' }))
+    await user.click(screen.getByRole('button', { name: 'Owner' }))
+    expect(order()).toEqual(['Data audit', 'Requirements sign-off', 'Build MVP', 'Vendor contract', 'Stakeholder interviews'])
   })
 
   it('opens the dependency details when a row is clicked', async () => {

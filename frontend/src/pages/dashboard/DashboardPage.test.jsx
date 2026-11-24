@@ -1,9 +1,10 @@
 import { configure, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { ApiError } from '../../services/apiClient'
 import { dashboardApi } from '../../services/dashboardApi'
 import { makeAuth, renderWithProviders } from '../../test/renderWithProviders'
+import { theme } from '../../theme'
 import DashboardPage from './DashboardPage'
 import { EMPTY_DASHBOARD, GENERATED_AT, makeDashboard, makeProjectSummary } from './dashboardFixtures'
 import { formatUpdatedAt } from './dashboardUtils'
@@ -40,6 +41,8 @@ const kpi = (label) => within(section('Key figures')).getByText(label).closest('
 const kpiValue = (label) => kpi(label).querySelector('.MuiTypography-h4')
 /** The items of a section's list (direct children only, not nested chip lists). */
 const rowsOf = (name) => [...screen.getByRole('list', { name }).children]
+/** A row's date with its urgency label underneath, e.g. 'Nov 21, 2026 3 days overdue'. */
+const dateIn = (row) => within(row).getByText(/^[A-Z][a-z]{2} \d{1,2}, \d{4}$/).parentElement
 const colorOf = (element) => getComputedStyle(element).color
 // Intl puts a narrow no-break space before AM/PM; the queries compare with plain spaces.
 const plain = (text) => text.replace(/\s+/g, ' ')
@@ -50,6 +53,10 @@ const findUpdatedTime = (generatedAt) => screen.findByText(plain(formatUpdatedAt
 beforeEach(() => {
   vi.resetAllMocks()
   dashboardApi.get.mockResolvedValue(makeDashboard())
+})
+
+afterEach(() => {
+  vi.useRealTimers()
 })
 
 describe('DashboardPage', SLOW_MACHINE, () => {
@@ -113,13 +120,14 @@ describe('DashboardPage', SLOW_MACHINE, () => {
     expect(within(hermes).getByText('Overdue')).toHaveClass('MuiChip-label')
     expect(hermes).toHaveTextContent('Finance · 1 person')
     expect(hermes).toHaveTextContent('End date 2026-10-31 has passed')
-    expect(within(hermes).getByText('Oct 31, 2026')).toBeInTheDocument()
+    expect(dateIn(hermes)).toHaveTextContent('Oct 31, 2026 24 days overdue')
+    expect(colorOf(within(hermes).getByText('24 days overdue'))).toBe(ERROR_RED)
     expect(within(hermes).getByRole('progressbar', { name: '70%' })).toBeInTheDocument()
 
     expect(within(apollo).getByRole('link', { name: 'Apollo CRM' })).toHaveAttribute('href', '/projects/1')
     expect(within(apollo).getByText('At risk')).toBeInTheDocument()
     expect(apollo).toHaveTextContent('1 deliverable(s) overdue; 1 deliverable(s) blocked')
-    expect(within(apollo).getByText('Dec 31, 2026')).toBeInTheDocument()
+    expect(dateIn(apollo)).toHaveTextContent('Dec 31, 2026 Ends in 5 weeks')
     expect(within(apollo).getByRole('progressbar', { name: '40%' })).toBeInTheDocument()
   })
 
@@ -151,27 +159,31 @@ describe('DashboardPage', SLOW_MACHINE, () => {
     expect(within(signOff).getByText('In progress')).toBeInTheDocument()
     expect(within(signOff).getByRole('link', { name: 'Apollo CRM' })).toHaveAttribute('href', '/projects/1')
     expect(signOff).toHaveTextContent('Owner: Priya Shah')
-    const overdueDue = within(signOff).getByText('Due Nov 21, 2026 (3 days overdue)')
-    expect(colorOf(overdueDue)).toBe(ERROR_RED)
+    // The snapshot is from Nov 24, 2026 (generated_at), so Nov 21 is 3 days overdue.
+    expect(dateIn(signOff)).toHaveTextContent('Nov 21, 2026 3 days overdue')
+    expect(colorOf(within(signOff).getByText('3 days overdue'))).toBe(ERROR_RED)
     // Every item here is key, so the badge would only repeat the heading.
     expect(within(keySection).queryByText('Key')).not.toBeInTheDocument()
 
     expect(within(goLive).getByText('Blocked')).toBeInTheDocument()
     expect(goLive).toHaveTextContent('No owner')
-    expect(colorOf(within(goLive).getByText('Due Nov 25, 2026 (tomorrow)'))).not.toBe(ERROR_RED)
+    // Due within a week: amber (dark enough for 4.5:1 on white), not the overdue red.
+    expect(dateIn(goLive)).toHaveTextContent('Nov 25, 2026 Due tomorrow')
+    expect(within(goLive).getByText('Due tomorrow')).toHaveStyle({ color: theme.palette.warning.dark })
     expect(within(uat).getByText('Not started')).toBeInTheDocument()
-    expect(uat).toHaveTextContent('Due Dec 15, 2026 (in 21 days)')
+    expect(dateIn(uat)).toHaveTextContent('Dec 15, 2026 Due in 3 weeks')
   })
 
   it('lists overdue and upcoming deliverables with links to the filtered deliverables list', async () => {
     renderPage()
     await findDashboard()
     const overdue = rowsOf('Overdue deliverables')
-    expect(overdue.map((row) => within(row).getByText(/^Due /).textContent)).toEqual([
-      'Due Nov 10, 2026 (14 days overdue)',
-      'Due Nov 21, 2026 (3 days overdue)',
-      'Due Nov 23, 2026 (1 day overdue)',
+    expect(overdue.map((row) => dateIn(row).textContent)).toEqual([
+      'Nov 10, 2026 14 days overdue',
+      'Nov 21, 2026 3 days overdue',
+      'Nov 23, 2026 1 day overdue',
     ])
+    expect(colorOf(within(overdue[2]).getByText('1 day overdue'))).toBe(ERROR_RED)
     expect(within(overdue[0]).queryByText('Key')).not.toBeInTheDocument()
     expect(within(overdue[1]).getByText('Key')).toBeInTheDocument()
     expect(within(section('Overdue deliverables')).getByRole('link', { name: 'View all overdue deliverables' })).toHaveAttribute(
@@ -180,16 +192,32 @@ describe('DashboardPage', SLOW_MACHINE, () => {
     )
 
     const upcoming = rowsOf('Upcoming deliverables')
-    expect(upcoming.map((row) => within(row).getByText(/^Due /).textContent)).toEqual([
-      'Due Nov 24, 2026 (today)',
-      'Due Nov 25, 2026 (tomorrow)',
-      'Due Dec 1, 2026 (in 7 days)',
+    expect(upcoming.map((row) => dateIn(row).textContent)).toEqual([
+      'Nov 24, 2026 Due today',
+      'Nov 25, 2026 Due tomorrow',
+      'Dec 1, 2026 Due in 7 days',
     ])
     expect(within(upcoming[1]).getByText('Key')).toBeInTheDocument()
     expect(within(section('Upcoming (next 14 days)')).getByRole('link', { name: 'View all deliverables' })).toHaveAttribute(
       'href',
       '/deliverables',
     )
+  })
+
+  it("words due and end dates against the snapshot's date, not the viewer's clock", async () => {
+    // A week after the snapshot (and in another month): the lists the API sent are still worded for its day.
+    vi.setSystemTime(new Date('2026-12-01T12:00:00Z'))
+    renderPage()
+    await findDashboard()
+    expect(dateIn(rowsOf('Upcoming deliverables')[0])).toHaveTextContent('Nov 24, 2026 Due today')
+    expect(dateIn(rowsOf('Overdue deliverables')[2])).toHaveTextContent('Nov 23, 2026 1 day overdue')
+    expect(dateIn(rowsOf('Active projects')[1])).toHaveTextContent('Dec 31, 2026 Ends in 5 weeks')
+
+    // A snapshot taken late on Nov 24 in New York is already Nov 25 in UTC, the API's business date.
+    dashboardApi.get.mockResolvedValue(makeDashboard({ generated_at: '2026-11-24T21:30:00-05:00' }))
+    await userEvent.setup().click(screen.getByRole('button', { name: 'Refresh' }))
+    await waitFor(() => expect(dateIn(rowsOf('Upcoming deliverables')[0])).toHaveTextContent('Nov 24, 2026 1 day overdue'))
+    expect(dateIn(rowsOf('Upcoming deliverables')[1])).toHaveTextContent('Nov 25, 2026 Due today')
   })
 
   it('shows over-allocated people with the allocations behind their total', async () => {
@@ -218,7 +246,9 @@ describe('DashboardPage', SLOW_MACHINE, () => {
     expect(within(hermes).getByRole('progressbar', { name: '107.5%' })).toHaveClass('MuiLinearProgress-colorError')
     expect(within(apollo).getByRole('progressbar', { name: '40%' })).toHaveClass('MuiLinearProgress-colorPrimary')
     expect(within(apollo).getByRole('progressbar', { name: '40.7%' })).toHaveClass('MuiLinearProgress-colorPrimary')
-    expect(within(apollo).getByText('Dec 31, 2026')).toBeInTheDocument()
+    expect(dateIn(hermes)).toHaveTextContent('Oct 31, 2026 24 days overdue')
+    expect(dateIn(apollo)).toHaveTextContent('Dec 31, 2026 Ends in 5 weeks')
+    expect(dateIn(zeus)).toHaveTextContent('Mar 31, 2027 Ends in 4 months')
     expect(within(zeus).getByText('On track')).toBeInTheDocument()
     expect(within(zeus).getByRole('progressbar', { name: 'No budget' })).toHaveClass('MuiLinearProgress-colorError')
 
@@ -284,6 +314,40 @@ describe('DashboardPage', SLOW_MACHINE, () => {
     expect(updatedTime(LATER)).toHaveAttribute('datetime', LATER)
     expect(screen.queryByRole('progressbar', { name: 'Refreshing the dashboard' })).not.toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'Refresh' })).toBeEnabled()
+  })
+
+  it('tells screen readers when a refresh has brought new figures, but not about the first load', async () => {
+    const SAME_MINUTE = '2026-11-24T12:05:30+00:00'
+    let finishRefresh
+    dashboardApi.get
+      .mockResolvedValueOnce(makeDashboard())
+      .mockImplementationOnce(() => new Promise((resolve) => (finishRefresh = resolve)))
+      .mockResolvedValueOnce(makeDashboard({ generated_at: SAME_MINUTE }))
+    const { user } = renderPage()
+    // The polite message beside the Refresh button: there from the start, empty during the first load.
+    const announcer = screen.getByRole('button', { name: 'Refresh' }).parentElement.querySelector('[aria-live="polite"]')
+    expect(announcer).toHaveAttribute('aria-atomic', 'true')
+    expect(announcer).not.toHaveAttribute('role')
+    expect(announcer).toBeEmptyDOMElement()
+
+    await findDashboard()
+    expect(announcer).toBeEmptyDOMElement()
+    // The visible time is not a live region of its own (it would be read out twice).
+    expect(updatedTime(GENERATED_AT).closest('[aria-live]')).toBeNull()
+
+    await user.click(screen.getByRole('button', { name: 'Refresh' }))
+    expect(await screen.findByRole('progressbar', { name: 'Refreshing the dashboard' })).toBeInTheDocument()
+    expect(announcer).toBeEmptyDOMElement()
+    finishRefresh(makeDashboard({ generated_at: LATER }))
+    const announced = plain(`Dashboard updated at ${formatUpdatedAt(LATER)}`)
+    await waitFor(() => expect(announcer).toHaveTextContent(announced))
+    const first = announcer.firstElementChild
+
+    // Another snapshot in the same minute reads the same: a new element, so it is announced again.
+    await user.click(screen.getByRole('button', { name: 'Refresh' }))
+    await waitFor(() => expect(announcer.firstElementChild).not.toBe(first))
+    expect(announcer).toHaveTextContent(announced)
+    expect(dashboardApi.get).toHaveBeenCalledTimes(3)
   })
 
   it('keeps the last figures when a refresh fails and retries on request', async () => {

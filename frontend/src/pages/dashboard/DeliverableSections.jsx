@@ -1,13 +1,16 @@
 import Box from '@mui/material/Box'
+import Stack from '@mui/material/Stack'
 import Typography from '@mui/material/Typography'
+import DueDate from '../../components/DueDate'
 import PercentBar from '../../components/PercentBar'
 import StatusChip from '../../components/StatusChip'
-import { formatDate } from '../../utils/format'
 import { KeyBadge } from '../deliverables/DeliverableBits'
 import { completionPercent } from '../projects/projectMetrics'
 import { ItemHeader, RecordLink } from './DashboardBits'
 import DashboardSection, { SectionList } from './DashboardSection'
-import { relativeDue } from './dashboardUtils'
+
+// Each section takes `today`: the snapshot's date ('YYYY-MM-DD', see snapshotDate) that due dates
+// are worded against.
 
 /**
  * Key deliverables and their completion status: how many are done, then the open ones by due date.
@@ -75,34 +78,36 @@ export function UpcomingDeliverablesSection({ deliverables, today }) {
   )
 }
 
-/** Name (with the key badge), status, project, owner and due date of one DeliverableSummary. */
+/**
+ * One DeliverableSummary: name (with the key badge), project and owner on the left; its status and
+ * due date ("Nov 21, 2026" over "3 days overdue") on the right, lined up from item to item.
+ */
 function DeliverableItem({ deliverable, today, showKeyBadge = false }) {
   return (
-    <>
-      <ItemHeader
-        title={
-          <Box component="span" sx={{ display: 'inline-flex', alignItems: 'center', flexWrap: 'wrap', gap: 1 }}>
-            <span>{deliverable.name}</span>
-            {showKeyBadge && deliverable.is_key && <KeyBadge />}
-          </Box>
-        }
-        subtitle={
-          <>
-            <RecordLink to={`/projects/${deliverable.project_id}`} permission="projects:read" strong={false}>
-              {deliverable.project_name}
-            </RecordLink>
-            {' · '}
-            {deliverable.owner_name ? `Owner: ${deliverable.owner_name}` : 'No owner'}
-          </>
-        }
-        aside={<StatusChip kind="deliverable" value={deliverable.status} />}
-      />
-      <Typography
-        variant="body2"
-        sx={{ mt: 0.5, ...(deliverable.is_overdue && { color: 'error.main', fontWeight: 600 }) }}
-      >
-        Due {formatDate(deliverable.due_date)} ({relativeDue(deliverable.due_date, today)})
-      </Typography>
-    </>
+    <ItemHeader
+      title={
+        <Box component="span" sx={{ display: 'inline-flex', alignItems: 'center', flexWrap: 'wrap', gap: 1 }}>
+          <span>{deliverable.name}</span>
+          {showKeyBadge && deliverable.is_key && <KeyBadge />}
+        </Box>
+      }
+      subtitle={
+        <>
+          <RecordLink to={`/projects/${deliverable.project_id}`} permission="projects:read" strong={false}>
+            {deliverable.project_name}
+          </RecordLink>
+          {' · '}
+          {deliverable.owner_name ? `Owner: ${deliverable.owner_name}` : 'No owner'}
+        </>
+      }
+      aside={
+        <Stack spacing={0.5} sx={{ alignItems: 'flex-end', textAlign: 'right' }}>
+          <StatusChip kind="deliverable" value={deliverable.status} />
+          <Typography component="div" variant="body2">
+            <DueDate date={deliverable.due_date} today={today} done={deliverable.status === 'completed'} />
+          </Typography>
+        </Stack>
+      }
+    />
   )
 }

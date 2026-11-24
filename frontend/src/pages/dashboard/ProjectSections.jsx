@@ -1,12 +1,13 @@
 import Box from '@mui/material/Box'
 import Chip from '@mui/material/Chip'
 import Typography from '@mui/material/Typography'
+import DueDate from '../../components/DueDate'
 import PercentBar from '../../components/PercentBar'
 import { EmptyState } from '../../components/StateViews'
 import StatusChip from '../../components/StatusChip'
-import { budgetColor, formatDate } from '../../utils/format'
+import { budgetColor } from '../../utils/format'
 import ProjectHealthChip from '../projects/ProjectHealthChip'
-import { budgetUsedLabel } from '../projects/projectMetrics'
+import { budgetUsedLabel, isClosed } from '../projects/projectMetrics'
 import { Fact, Facts, ItemHeader, RecordLink } from './DashboardBits'
 import DashboardSection, { SectionList } from './DashboardSection'
 import { healthBreakdown, joinReasons, projectSubtitle, statusBreakdown } from './dashboardUtils'
@@ -20,8 +21,16 @@ function ProjectName({ project }) {
   )
 }
 
-/** "Which projects are at risk, and why?" - overdue projects first, then by end date (API order). */
-export function AtRiskProjectsSection({ projects }) {
+/** The end date and how close it is ("Ends in 5 weeks", "24 days overdue"), against the snapshot's today. */
+function EndDate({ project, today }) {
+  return <DueDate date={project.end_date} kind="end" today={today} done={isClosed(project.status)} />
+}
+
+/**
+ * "Which projects are at risk, and why?" - overdue projects first, then by end date (API order).
+ * today: the snapshot's date ('YYYY-MM-DD', see snapshotDate) that end dates are worded against.
+ */
+export function AtRiskProjectsSection({ projects, today }) {
   return (
     <DashboardSection title="Projects at risk" description="Open projects that are overdue or at risk, and why.">
       <SectionList
@@ -29,13 +38,13 @@ export function AtRiskProjectsSection({ projects }) {
         label="Projects at risk"
         emptyTitle="No projects at risk"
         emptyMessage="Every open project is on track."
-        renderItem={(project) => <AtRiskProject project={project} />}
+        renderItem={(project) => <AtRiskProject project={project} today={today} />}
       />
     </DashboardSection>
   )
 }
 
-function AtRiskProject({ project }) {
+function AtRiskProject({ project, today }) {
   return (
     <>
       <ItemHeader
@@ -49,7 +58,9 @@ function AtRiskProject({ project }) {
         </Typography>
       )}
       <Facts>
-        <Fact label="End date">{formatDate(project.end_date)}</Fact>
+        <Fact label="End date">
+          <EndDate project={project} today={today} />
+        </Fact>
         <Fact label="Progress">
           <PercentBar value={project.progress_percent} />
         </Fact>
@@ -58,8 +69,11 @@ function AtRiskProject({ project }) {
   )
 }
 
-/** Every active project with its health, progress, end date and budget use (earliest end date first). */
-export function ActiveProjectsSection({ projects }) {
+/**
+ * Every active project with its health, progress, end date and budget use (earliest end date first).
+ * today: the snapshot's date that end dates are worded against.
+ */
+export function ActiveProjectsSection({ projects, today }) {
   return (
     <DashboardSection
       title="Active projects"
@@ -71,13 +85,13 @@ export function ActiveProjectsSection({ projects }) {
         label="Active projects"
         emptyTitle="No active projects"
         emptyMessage="Projects show here once their status is Active."
-        renderItem={(project) => <ActiveProject project={project} />}
+        renderItem={(project) => <ActiveProject project={project} today={today} />}
       />
     </DashboardSection>
   )
 }
 
-function ActiveProject({ project }) {
+function ActiveProject({ project, today }) {
   const used = project.budget_used_percent
   return (
     <>
@@ -87,7 +101,9 @@ function ActiveProject({ project }) {
         aside={<ProjectHealthChip health={project.health} reasons={project.health_reasons} />}
       />
       <Facts>
-        <Fact label="End date">{formatDate(project.end_date)}</Fact>
+        <Fact label="End date">
+          <EndDate project={project} today={today} />
+        </Fact>
         <Fact label="Progress">
           <PercentBar value={project.progress_percent} />
         </Fact>

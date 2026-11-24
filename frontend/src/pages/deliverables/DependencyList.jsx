@@ -1,3 +1,4 @@
+import { Fragment } from 'react'
 import BlockIcon from '@mui/icons-material/Block'
 import SubdirectoryArrowRightIcon from '@mui/icons-material/SubdirectoryArrowRight'
 import Chip from '@mui/material/Chip'
@@ -8,16 +9,39 @@ import ListItemText from '@mui/material/ListItemText'
 import Stack from '@mui/material/Stack'
 import Typography from '@mui/material/Typography'
 import { alpha } from '@mui/material/styles'
+import { UrgencyLabel } from '../../components/DueDate'
 import StatusChip from '../../components/StatusChip'
-import { formatDate } from '../../utils/format'
-import { isBlocker, isOverdue } from './deliverableUtils'
+import { formatDate, relativeDue } from '../../utils/format'
+import { isBlocker } from './deliverableUtils'
 
 const MAX_INDENT_LEVELS = 4
 
-function describe(item, showDepth) {
-  const parts = [item.project_name, `Due ${formatDate(item.due_date)}${isOverdue(item) ? ' (overdue)' : ''}`]
-  if (showDepth) parts.push(item.depth === 1 ? 'Level 1 (direct)' : `Level ${item.depth}`)
-  return parts.filter(Boolean).join(' · ')
+/**
+ * The name and its line start at 160px beside the indent arrow and grow from there; in a narrow
+ * dialog the chips wrap under them, instead of the text dropping below the arrow and leaving the
+ * arrow alone on a line.
+ */
+const textStyle = { flexGrow: 1, flexShrink: 1, flexBasis: 160, minWidth: 160 }
+
+/**
+ * 'Zeus ERP · Due Jan 10, 2026 · 3 days overdue · Level 2': one line that wraps in a narrow dialog,
+ * with the app-wide urgency label in its tone's colour (none once the deliverable is completed).
+ * The line already says "Due", so the label goes without it: 'Due Dec 9, 2026 · in 2 weeks'.
+ */
+function Summary({ item, showDepth }) {
+  const urgency = relativeDue(item.due_date, { done: item.status === 'completed', verb: false })
+  const parts = [
+    item.project_name,
+    `Due ${formatDate(item.due_date)}`,
+    urgency && <UrgencyLabel urgency={urgency} variant="inherit" />,
+    showDepth && (item.depth === 1 ? 'Level 1 (direct)' : `Level ${item.depth}`),
+  ]
+  return parts.filter(Boolean).map((part, index) => (
+    <Fragment key={index}>
+      {index > 0 && ' · '}
+      {part}
+    </Fragment>
+  ))
 }
 
 function rowStyle(blocker) {
@@ -48,7 +72,7 @@ export default function DependencyList({ items, label, emptyText, onOpen, showDe
               {showDepth && item.depth > 1 && (
                 <SubdirectoryArrowRightIcon fontSize="small" color="action" sx={{ mr: 0.5 }} />
               )}
-              <ListItemText primary={item.name} secondary={describe(item, showDepth)} sx={{ minWidth: 160 }} />
+              <ListItemText primary={item.name} secondary={<Summary item={item} showDepth={showDepth} />} sx={textStyle} />
               <Stack direction="row" spacing={1} sx={{ alignItems: 'center', flexShrink: 0 }}>
                 {blocker && (
                   // Opaque background: amber text on the tinted row would fall below 4.5:1 contrast.

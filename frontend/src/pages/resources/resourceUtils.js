@@ -1,18 +1,27 @@
 // Pure helpers for the resources screens: route/URL parsing, utilization wording and select options.
+import { textParam } from '../../hooks/useUrlFilters'
 import { formatPercent } from '../../utils/format'
 import { countLabel } from '../../utils/text'
 
 /** A person is over-allocated above 100% (full time) across active projects (docs/API.md › Resources). */
 export const FULL_TIME_PERCENT = 100
 
+/** The API's limit for the department filter (a longer one is rejected with 400). */
+const DEPARTMENT_MAX_LENGTH = 100
+
+/** URL parameters of the Resources page filters (useUrlFilters keeps any other, e.g. view=heatmap). */
+export const RESOURCE_URL_FILTERS = ['search', 'department', 'over_allocated']
+
 /**
- * Filters that a link can preselect, e.g. #/resources?over_allocated=true (the dashboard's
+ * The Resources page filters in its URL, e.g. #/resources?over_allocated=true (the dashboard's
  * over-allocation card links here). Unknown or invalid values are ignored.
  */
 export function resourceFiltersFromParams(params) {
   const filters = {}
-  const search = params.get('search')?.trim()
+  const search = textParam(params, 'search')
   if (search) filters.search = search
+  const department = textParam(params, 'department', DEPARTMENT_MAX_LENGTH)
+  if (department) filters.department = department
   if (params.get('over_allocated') === 'true') filters.over_allocated = true
   return filters
 }

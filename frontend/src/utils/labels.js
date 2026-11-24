@@ -57,3 +57,23 @@ export function labelFor(kind, value) {
 export function optionsFor(kind) {
   return (KINDS[kind] || []).map(({ value, label }) => ({ value, label }))
 }
+
+/** Sort key of an enum value for a DataTable sortValue: its visible label, null (sorted last) when empty. */
+export function sortLabel(kind, value) {
+  return value === null || value === undefined || value === '' ? null : labelFor(kind, value)
+}
+
+/** Health states from the most to the least severe. */
+export const HEALTH_SEVERITY = ['overdue', 'at_risk', 'on_track']
+
+/** Sort key of a health state: 0 = overdue (most severe first); null (sorted last) for no health. */
+export function healthRank(value) {
+  const rank = HEALTH_SEVERITY.indexOf(value)
+  return rank === -1 ? null : rank
+}
+
+/** Health filter matching either state: GET /projects?health=at_risk,overdue (the dashboard links to it). */
+export const AT_RISK_OR_OVERDUE = 'at_risk,overdue'
+
+/** Health filter choices: each state, then "At risk or overdue". */
+export const HEALTH_FILTER_OPTIONS = [...optionsFor('health'), { value: AT_RISK_OR_OVERDUE, label: 'At risk or overdue' }]

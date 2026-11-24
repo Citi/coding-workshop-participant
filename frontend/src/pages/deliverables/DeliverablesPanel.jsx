@@ -8,6 +8,7 @@ import IconButton from '@mui/material/IconButton'
 import Typography from '@mui/material/Typography'
 import ConfirmDialog from '../../components/ConfirmDialog'
 import DataTable from '../../components/DataTable'
+import DueDate from '../../components/DueDate'
 import FilterBar from '../../components/FilterBar'
 import StatusChip from '../../components/StatusChip'
 import { useAuth } from '../../context/authContext'
@@ -17,9 +18,10 @@ import { deliverablesApi } from '../../services/deliverablesApi'
 import { projectsApi } from '../../services/projectsApi'
 import DeliverableDetailsDialog from './DeliverableDetailsDialog'
 import DeliverableFormDialog from './DeliverableFormDialog'
-import { DeliverableName, DueDate } from './DeliverableBits'
+import { DeliverableName } from './DeliverableBits'
 import { deliverableFilters } from './deliverableFields'
 import { hasActiveFilters } from '../../utils/filters'
+import { sortLabel } from '../../utils/labels'
 import { includeOption } from '../../utils/options'
 
 const CLOSED = { open: false, deliverable: null }
@@ -30,16 +32,38 @@ function defaultHeader(actions) {
 
 function buildColumns(showProject) {
   return [
-    { field: 'name', header: 'Deliverable', render: (row) => <DeliverableName deliverable={row} /> },
-    ...(showProject ? [{ field: 'project_name', header: 'Project' }] : []),
-    { field: 'status', header: 'Status', render: (row) => <StatusChip kind="deliverable" value={row.status} /> },
-    { field: 'due_date', header: 'Due date', render: (row) => <DueDate date={row.due_date} overdue={row.is_overdue} /> },
+    { field: 'name', header: 'Deliverable', sortable: true, render: (row) => <DeliverableName deliverable={row} /> },
+    ...(showProject ? [{ field: 'project_name', header: 'Project', sortable: true }] : []),
+    {
+      field: 'status',
+      header: 'Status',
+      sortable: true,
+      sortValue: (row) => sortLabel('deliverable', row.status),
+      render: (row) => <StatusChip kind="deliverable" value={row.status} />,
+    },
+    {
+      field: 'due_date',
+      header: 'Due date',
+      // Sorted by the ISO date itself; the cell adds how close it is ("Due in 3 days", "2 days overdue").
+      sortable: true,
+      render: (row) => <DueDate date={row.due_date} done={row.status === 'completed'} />,
+    },
     {
       field: 'owner_name',
       header: 'Owner',
+      // Unassigned deliverables have no owner name, so they sort last.
+      sortable: true,
       render: (row) => row.owner_name || <Typography component="span" variant="body2" color="textSecondary">Unassigned</Typography>,
     },
-    { field: 'depends_on_ids', header: 'Depends on', align: 'right', hideOnMobile: true, render: (row) => row.depends_on_ids?.length ?? 0 },
+    {
+      field: 'depends_on_ids',
+      header: 'Depends on',
+      align: 'right',
+      hideOnMobile: true,
+      sortable: true,
+      sortValue: (row) => row.depends_on_ids?.length ?? 0,
+      render: (row) => row.depends_on_ids?.length ?? 0,
+    },
   ]
 }
 
@@ -61,19 +85,31 @@ function useProjectOptions(enabled) {
 
 /**
  * Deliverables list + filters + create/edit/delete + dependency chain view.
- * Props: { projectId?: number, onChange?: () => void, initialFilters?, renderHeader?(actions) }
+ * Props: { projectId?: number, onChange?: () => void, initialFilters?, filters?, onFiltersChange?, renderHeader?(actions) }
  *  - projectId: only that project's deliverables; the form's project is fixed to it (a numeric
  *    string from the route works too)
  *  - onChange: called after any successful create/update/delete (parent refreshes metrics)
- *  - initialFilters: starting FilterBar values, e.g. { is_key: true } from a dashboard link
+ *  - initialFilters: starting FilterBar values, e.g. { project_id: 2 }, when the panel keeps its own
+ *  - filters + onFiltersChange(next): the parent owns the filters instead (the Deliverables page keeps
+ *    them in the URL). Without them, e.g. in a project tab, the filters are the panel's own state and
+ *    never touch the URL.
  *  - renderHeader: renders the header around the "New deliverable" button (null without permission)
  */
-export default function DeliverablesPanel({ projectId, onChange, initialFilters, renderHeader = defaultHeader }) {
+export default function DeliverablesPanel({
+  projectId,
+  onChange,
+  initialFilters,
+  filters: parentFilters,
+  onFiltersChange,
+  renderHeader = defaultHeader,
+}) {
   const { can } = useAuth()
   const notify = useNotify()
   // Route params arrive as strings; option values and payloads use numbers.
   const fixedProjectId = Number(projectId) > 0 ? Number(projectId) : undefined
-  const [filters, setFilters] = useState(() => initialFilters || {})
+  const [ownFilters, setOwnFilters] = useState(() => initialFilters || {})
+  const filters = parentFilters ?? ownFilters
+  const setFilters = onFiltersChange ?? setOwnFilters
   const [form, setForm] = useState(CLOSED)
   const [removal, setRemoval] = useState(CLOSED)
   const [details, setDetails] = useState(CLOSED)
@@ -155,6 +191,8 @@ export default function DeliverablesPanel({ projectId, onChange, initialFilters,
         loading={loading}
         error={error}
         onRetry={reload}
+        errorTitle="Could not load the deliverables"
+        refreshErrorTitle="Could not refresh the deliverables"
         onRowClick={(row) => setDetails({ open: true, deliverable: row })}
         renderActions={renderActions}
         emptyTitle={empty.title}

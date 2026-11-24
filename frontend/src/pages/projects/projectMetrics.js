@@ -1,4 +1,4 @@
-import { countLabel } from '../../utils/text'
+import { relativeDue } from '../../utils/format'
 // Pure helpers for the project screens: counts, schedule and completion maths.
 // Dates are 'YYYY-MM-DD' strings compared as calendar dates (UTC), like the API.
 
@@ -18,13 +18,14 @@ export function elapsedPercent(startDate, endDate, today) {
   return Math.round((daysBetween(startDate, today) * 100) / daysBetween(startDate, endDate))
 }
 
-/** 'Starts in 5 days' | '12 days left' | 'Ends today' | '3 days past the end date' */
-export function scheduleLabel(startDate, endDate, today) {
-  if (today < startDate) return `Starts in ${countLabel(daysBetween(today, startDate), 'day')}`
-  const daysLeft = daysBetween(today, endDate)
-  if (daysLeft > 0) return `${countLabel(daysLeft, 'day')} left`
-  if (daysLeft === 0) return 'Ends today'
-  return `${countLabel(-daysLeft, 'day')} past the end date`
+/**
+ * Before the start date, worded like every other date label: 'Starts tomorrow', 'Starts in 5 days',
+ * 'Starts in 2 weeks', 'Starts in 3 months'. null from the start date on, when the end date's own
+ * urgency label ('Ends in 3 weeks', '2 days overdue') says how much time is left instead.
+ */
+export function startsInLabel(startDate, today) {
+  const urgency = relativeDue(startDate, { kind: 'start', today })
+  return urgency && urgency.days > 0 ? urgency.label : null
 }
 
 /** Completed and cancelled projects have no health and no remaining schedule. */

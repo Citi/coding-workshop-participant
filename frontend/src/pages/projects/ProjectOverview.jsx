@@ -6,10 +6,11 @@ import Grid from '@mui/material/Grid'
 import Paper from '@mui/material/Paper'
 import Stack from '@mui/material/Stack'
 import Typography from '@mui/material/Typography'
+import DueDate from '../../components/DueDate'
 import PercentBar from '../../components/PercentBar'
 import { budgetColor, formatCurrency, formatDate, todayIso } from '../../utils/format'
 import { labelFor } from '../../utils/labels'
-import { budgetUsedLabel, completionPercent, elapsedPercent, isClosed, scheduleLabel } from './projectMetrics'
+import { budgetUsedLabel, completionPercent, elapsedPercent, isClosed, startsInLabel } from './projectMetrics'
 import { countLabel } from '../../utils/text'
 
 const HEALTH_SEVERITY = { on_track: 'success', at_risk: 'warning', overdue: 'error' }
@@ -106,23 +107,28 @@ function KeyDeliverablesCard({ project }) {
 
 function ScheduleCard({ project }) {
   const today = todayIso()
+  const closed = isClosed(project.status)
+  const startsIn = startsInLabel(project.start_date, today)
   return (
     <OverviewCard title="Schedule">
       <Facts
         items={[
           { label: 'Start date', value: formatDate(project.start_date) },
-          { label: 'End date', value: formatDate(project.end_date) },
+          { label: 'End date', value: <DueDate date={project.end_date} kind="end" today={today} done={closed} /> },
         ]}
       />
-      {!isClosed(project.status) && (
+      {!closed && (
         <Box sx={{ mt: 1.5 }}>
           <Typography variant="body2" color="textSecondary">
             Time elapsed
           </Typography>
           <PercentBar value={elapsedPercent(project.start_date, project.end_date, today)} color="secondary" />
-          <Typography variant="body2" color={project.health === 'overdue' ? 'error' : 'textPrimary'} sx={{ mt: 0.5 }}>
-            {scheduleLabel(project.start_date, project.end_date, today)}
-          </Typography>
+          {/* Once it has started, the end date above says how much time is left ("Ends in 3 weeks"). */}
+          {startsIn && (
+            <Typography variant="body2" sx={{ mt: 0.5 }}>
+              {startsIn}
+            </Typography>
+          )}
         </Box>
       )}
     </OverviewCard>

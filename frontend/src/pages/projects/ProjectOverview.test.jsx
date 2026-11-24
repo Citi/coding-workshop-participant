@@ -1,6 +1,7 @@
 import { screen, within } from '@testing-library/react'
 import { describe, expect, it, vi } from 'vitest'
 import { renderWithProviders } from '../../test/renderWithProviders'
+import { theme } from '../../theme'
 import { APOLLO, makeProject, ZEUS } from './projectFixtures'
 import ProjectOverview from './ProjectOverview'
 
@@ -9,6 +10,8 @@ vi.mock('../../utils/format', async (importOriginal) => ({ ...(await importOrigi
 
 const card = (title) => screen.getByRole('heading', { level: 2, name: title }).parentElement
 const healthAlert = (title) => screen.getByText(title).closest('[role="alert"]')
+/** The value of the Schedule card's "End date": the date, with how close it is underneath. */
+const endDate = () => within(card('Schedule')).getByText('End date').nextElementSibling
 
 describe('ProjectOverview', () => {
   it('explains an at-risk project and summarises progress, key deliverables, schedule and budget', () => {
@@ -31,9 +34,12 @@ describe('ProjectOverview', () => {
     const schedule = card('Schedule')
     expect(within(schedule).getByText('Jan 1, 2026')).toBeInTheDocument()
     expect(within(schedule).getByText('Dec 31, 2026')).toBeInTheDocument()
+    expect(endDate()).toHaveTextContent('Dec 31, 2026 Ends in 6 months')
     expect(within(schedule).getByText('Time elapsed')).toBeInTheDocument()
     expect(within(schedule).getByRole('progressbar', { name: '50%' })).toBeInTheDocument()
-    expect(within(schedule).getByText('182 days left')).toBeInTheDocument()
+    // The end date already says how long is left; the bar does not repeat it in other words.
+    expect(schedule).not.toHaveTextContent('days left')
+    expect(schedule).not.toHaveTextContent('Starts')
 
     const budget = card('Budget')
     expect(within(budget).getByRole('progressbar', { name: '40.7%' })).toBeInTheDocument()
@@ -66,7 +72,48 @@ describe('ProjectOverview', () => {
       '2 deliverable(s) blocked',
     ])
     expect(within(card('Progress')).getByText('1 overdue · 2 blocked')).toBeInTheDocument()
-    expect(within(card('Schedule')).getByText('2 days past the end date')).toBeInTheDocument()
+    expect(endDate()).toHaveTextContent('Jun 30, 2026 2 days overdue')
+    expect(within(card('Schedule')).getByText('2 days overdue')).toHaveStyle({ color: theme.palette.error.main })
+    expect(card('Schedule')).not.toHaveTextContent('past the end date')
+  })
+
+  it('counts down to the start of a project that has not started yet', () => {
+    renderWithProviders(
+      <ProjectOverview project={makeProject({ status: 'planned', start_date: '2026-07-10', health: 'on_track', health_reasons: [] })} />,
+    )
+    const schedule = card('Schedule')
+    expect(within(schedule).getByRole('progressbar', { name: '0%' })).toBeInTheDocument()
+    expect(within(schedule).getByText('Starts in 8 days')).toBeInTheDocument()
+    expect(endDate()).toHaveTextContent('Dec 31, 2026 Ends in 6 months')
+  })
+
+  it('words a start that is a day or weeks away like every other date label', () => {
+    const { unmount } = renderWithProviders(
+      <ProjectOverview project={makeProject({ status: 'planned', start_date: '2026-07-03', health: 'on_track', health_reasons: [] })} />,
+    )
+    expect(within(card('Schedule')).getByText('Starts tomorrow')).toBeInTheDocument()
+    unmount()
+    renderWithProviders(
+      <ProjectOverview project={makeProject({ status: 'planned', start_date: '2026-07-22', health: 'on_track', health_reasons: [] })} />,
+    )
+    expect(within(card('Schedule')).getByText('Starts in 2 weeks')).toBeInTheDocument()
+  })
+
+  it('stops the countdown on the start date, when the end date takes over', () => {
+    renderWithProviders(
+      <ProjectOverview project={makeProject({ status: 'planned', start_date: '2026-07-02', health: 'on_track', health_reasons: [] })} />,
+    )
+    const schedule = card('Schedule')
+    expect(within(schedule).getByRole('progressbar', { name: '0%' })).toBeInTheDocument()
+    expect(schedule).not.toHaveTextContent('Starts')
+    expect(endDate()).toHaveTextContent('Dec 31, 2026 Ends in 6 months')
+  })
+
+  it('shows only the end date of a cancelled project, which is no longer due', () => {
+    renderWithProviders(<ProjectOverview project={makeProject({ status: 'cancelled', end_date: '2026-06-30', health: null, health_reasons: [] })} />)
+    expect(screen.getByText('Health is not tracked for cancelled projects.')).toBeInTheDocument()
+    expect(endDate()).toHaveTextContent(/^Jun 30, 2026$/)
+    expect(within(card('Schedule')).queryByText('Time elapsed')).not.toBeInTheDocument()
   })
 
   it('handles a closed, over-budget project without deliverables', () => {
@@ -75,6 +122,7 @@ describe('ProjectOverview', () => {
     expect(within(card('Progress')).getByText('No deliverables yet')).toBeInTheDocument()
     expect(within(card('Key deliverables')).getByText(/No key deliverables yet/)).toBeInTheDocument()
     expect(within(card('Schedule')).queryByText('Time elapsed')).not.toBeInTheDocument()
+    expect(endDate()).toHaveTextContent(/^Sep 30, 2025$/)
 
     const budget = card('Budget')
     expect(within(budget).getByRole('progressbar', { name: 'No budget' })).toBeInTheDocument()

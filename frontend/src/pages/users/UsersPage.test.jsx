@@ -78,6 +78,27 @@ describe('UsersPage', SLOW_MACHINE, () => {
     expect(within(self).getByText('Jan 5, 2026')).toBeInTheDocument()
   })
 
+  it('sorts accounts by name, role, status and creation date from the column headers', async () => {
+    const { user } = renderPage()
+    await findTable()
+    const NAMES = ['Jane Doe', 'Omar Haddad', 'System Administrator']
+    const order = () => screen.getAllByRole('row').slice(1).map((row) => NAMES.find((name) => row.textContent.includes(name)))
+    const sortBy = (header) => user.click(screen.getByRole('button', { name: header }))
+
+    await sortBy('Role')
+    expect(order()).toEqual(['System Administrator', 'Jane Doe', 'Omar Haddad'])
+    await sortBy('Status')
+    await sortBy('Status')
+    expect(order()).toEqual(['Omar Haddad', 'Jane Doe', 'System Administrator'])
+    await sortBy('Created')
+    expect(order()).toEqual(['System Administrator', 'Omar Haddad', 'Jane Doe'])
+    await sortBy('Name')
+    await sortBy('Name')
+    expect(order()).toEqual(['System Administrator', 'Omar Haddad', 'Jane Doe'])
+    expect(screen.getByRole('columnheader', { name: 'Name' })).toHaveAttribute('aria-sort', 'descending')
+    expect(within(screen.getByRole('columnheader', { name: 'Actions' })).queryByRole('button')).not.toBeInTheDocument()
+  })
+
   it('sends the search text, role and status filters to the API as query parameters', async () => {
     const { user } = renderPage()
     await findTable()
@@ -267,6 +288,7 @@ describe('UsersPage', SLOW_MACHINE, () => {
     usersApi.list.mockRejectedValueOnce(new ApiError({ status: 503, code: 'DATABASE_UNAVAILABLE', message: 'The database is unavailable' }))
     const { user } = renderPage()
     expect(await screen.findByText(/The database is unavailable/)).toBeInTheDocument()
+    expect(screen.getByRole('alert')).toHaveTextContent('Could not load the users. The database is unavailable')
     await user.click(screen.getByRole('button', { name: 'Retry' }))
     expect(await findTable()).toBeInTheDocument()
     expect(usersApi.list).toHaveBeenCalledTimes(2)

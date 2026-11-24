@@ -90,6 +90,24 @@ describe('AllocationsPanel', { timeout: 15000 }, () => {
       expect(screen.getByText(/Total allocation is each person's sum across all active projects/)).toBeInTheDocument()
     })
 
+    it("sorted by project status label or allocation from the headers, ties keeping the API order", async () => {
+      allocationsApi.list.mockResolvedValue(list(PRIYA_ALLOCATIONS))
+      const { user } = renderPanel({ resourceId: 4 })
+      await screen.findByRole('table', { name: 'Project allocations' })
+      const order = () => screen.getAllByRole('row').slice(1).map((row) => within(row).getByRole('link').textContent)
+      const sortBy = (header) => user.click(screen.getByRole('button', { name: header }))
+
+      await sortBy('Project status')
+      expect(order()).toEqual(['Apollo CRM', 'Zeus ERP', 'Hermes Portal'])
+      await sortBy('Allocation')
+      expect(order()).toEqual(['Hermes Portal', 'Apollo CRM', 'Zeus ERP'])
+      await sortBy('Allocation')
+      expect(order()).toEqual(['Apollo CRM', 'Zeus ERP', 'Hermes Portal'])
+      await sortBy('Project')
+      await sortBy('Project')
+      expect(order()).toEqual(['Zeus ERP', 'Hermes Portal', 'Apollo CRM'])
+    })
+
     it('every allocation with person and project when nothing is fixed', async () => {
       renderPanel()
       await screen.findByRole('table', { name: 'Allocations' })
@@ -286,6 +304,7 @@ describe('AllocationsPanel', { timeout: 15000 }, () => {
     allocationsApi.list.mockRejectedValueOnce(new ApiError({ status: 500, code: 'INTERNAL_ERROR', message: 'Unexpected server error' }))
     const { user } = renderPanel({ projectId: 1 })
     expect(await screen.findByText(/Unexpected server error/)).toBeInTheDocument()
+    expect(screen.getByRole('alert')).toHaveTextContent('Could not load the allocations. Unexpected server error')
     await user.click(screen.getByRole('button', { name: 'Retry' }))
     expect(await screen.findByRole('table', { name: 'Team allocations' })).toBeInTheDocument()
   })

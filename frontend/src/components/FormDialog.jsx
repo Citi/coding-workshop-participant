@@ -30,6 +30,8 @@ import { isBlank, validEmail } from '../utils/validators'
  * onSubmit(payload) -> Promise. Resolve after saving (the caller closes the dialog); throw an
  * ApiError to show its message, with `details` shown next to the matching fields.
  * Payload conversion: number -> Number|null, select/date ''-> null, checkbox -> boolean, multiselect -> array.
+ * renderAfterFields?(values) -> node: shown under the fields and re-rendered on every change
+ * (e.g. a live preview of the values entered so far).
  */
 export default function FormDialog({ open, onClose, ...props }) {
   const isMobile = useIsMobile()
@@ -86,7 +88,7 @@ function toPayload(fields, values) {
   )
 }
 
-function FormDialogBody({ title, description, fields, initialValues, submitLabel = 'Save', onClose, onSubmit }) {
+function FormDialogBody({ title, description, fields, initialValues, submitLabel = 'Save', onClose, onSubmit, renderAfterFields }) {
   const [values, setValues] = useState(() => initialFormValues(fields, initialValues))
   const [errors, setErrors] = useState({})
   const [formError, setFormError] = useState('')
@@ -222,6 +224,7 @@ function FormDialogBody({ title, description, fields, initialValues, submitLabel
             </Grid>
           ))}
         </Grid>
+        {renderAfterFields?.(values)}
       </DialogContent>
       <DialogActions sx={{ px: 3, py: 2 }}>
         <Button onClick={onClose} disabled={submitting}>

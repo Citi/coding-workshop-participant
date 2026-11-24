@@ -3,13 +3,29 @@ import Box from '@mui/material/Box'
 import Button from '@mui/material/Button'
 import CircularProgress from '@mui/material/CircularProgress'
 import Typography from '@mui/material/Typography'
+import { useDelayedFlag } from '../hooks/useDelayedFlag'
 
-/** Centered spinner with a text label (announced to screen readers). */
-export function LoadingState({ label = 'Loading…' }) {
+/** Why a request is slow: the AWS database scales to zero when idle and takes a while to resume. */
+export const WAKE_UP_HINT = 'Waking up the database – the first request after a quiet period can take up to 20 seconds.'
+
+/**
+ * Centered spinner with a text label (announced to screen readers). After 3 s it adds `slowHint`
+ * (default: the database wake-up explanation) inside the same status region, so it is announced
+ * once; slowHint={null} turns that off.
+ */
+export function LoadingState({ label = 'Loading…', slowHint = WAKE_UP_HINT }) {
+  const slow = useDelayedFlag(Boolean(slowHint))
   return (
     <Box role="status" aria-live="polite" sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 2, py: 6 }}>
-      <CircularProgress size={28} />
-      <Typography color="textSecondary">{label}</Typography>
+      <CircularProgress size={28} sx={{ flexShrink: 0 }} />
+      <Box sx={{ minWidth: 0, maxWidth: 480 }}>
+        <Typography color="textSecondary">{label}</Typography>
+        {slow && (
+          <Typography variant="body2" color="textSecondary" sx={{ mt: 0.5 }}>
+            {slowHint}
+          </Typography>
+        )}
+      </Box>
     </Box>
   )
 }

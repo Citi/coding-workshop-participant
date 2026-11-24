@@ -1,17 +1,20 @@
 // Pure helpers for the deliverables screens: URL filters, the dependency graph and small labels.
-import { todayIso } from '../../utils/format'
+import { textParam } from '../../hooks/useUrlFilters'
 import { DELIVERABLE_STATUSES } from '../../utils/labels'
 import { parseId } from '../../utils/ids'
 
 const STATUS_VALUES = new Set(DELIVERABLE_STATUSES.map((status) => status.value))
 
+/** URL parameters of the Deliverables page filters (useUrlFilters keeps any other, e.g. view). */
+export const DELIVERABLE_URL_FILTERS = ['search', 'project_id', 'status', 'is_key', 'overdue']
+
 /**
- * Filters that a link can preselect, e.g. #/deliverables?is_key=true&overdue=true&project_id=3
- * (used by the dashboard). Unknown or invalid values are ignored.
+ * The Deliverables page filters in its URL, e.g. #/deliverables?is_key=true&overdue=true&project_id=3
+ * (the dashboard links there too). Unknown or invalid values are ignored.
  */
 export function filtersFromSearchParams(params) {
   const filters = {}
-  const search = params.get('search')?.trim()
+  const search = textParam(params, 'search')
   if (search) filters.search = search
   const status = params.get('status')
   if (STATUS_VALUES.has(status)) filters.status = status
@@ -50,11 +53,6 @@ export function selfAndDependentIds(deliverables, id) {
 
 /** A prerequisite that is not completed yet holds up everything that depends on it. */
 export const isBlocker = (item) => item.status !== 'completed'
-
-/** The API's overdue rule, for related deliverables that do not carry the `is_overdue` flag. */
-export function isOverdue(item, today = todayIso()) {
-  return item.status !== 'completed' && Boolean(item.due_date) && item.due_date < today
-}
 
 /** Dependency chain ordered by depth (1 = direct prerequisite), then by due date. */
 export function sortChain(chain) {

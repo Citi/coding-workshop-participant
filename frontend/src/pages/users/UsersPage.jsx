@@ -11,6 +11,7 @@ import { useAuth } from '../../context/authContext'
 import { useApiQuery } from '../../hooks/useApiQuery'
 import { usersApi } from '../../services/usersApi'
 import { formatDate } from '../../utils/format'
+import { sortLabel } from '../../utils/labels'
 import UserDialogs from './UserDialogs'
 import { USER_FILTERS } from './userFields'
 import UserRowActions from './UserRowActions'
@@ -18,20 +19,23 @@ import { hasActiveFilters } from '../../utils/filters'
 
 function buildColumns(currentUserId) {
   return [
-    { field: 'full_name', header: 'Name', render: (user) => <UserName user={user} isSelf={user.id === currentUserId} /> },
+    { field: 'full_name', header: 'Name', sortable: true, render: (user) => <UserName user={user} isSelf={user.id === currentUserId} /> },
     {
       field: 'email',
       header: 'Email',
+      sortable: true,
       render: (user) => (
         <Box component="span" sx={{ wordBreak: 'break-all' }}>
           {user.email}
         </Box>
       ),
     },
-    { field: 'role', header: 'Role', render: (user) => <StatusChip kind="role" value={user.role} /> },
+    { field: 'role', header: 'Role', sortable: true, sortValue: (user) => sortLabel('role', user.role), render: (user) => <StatusChip kind="role" value={user.role} /> },
     {
       field: 'is_active',
       header: 'Status',
+      sortable: true,
+      sortValue: (user) => (user.is_active ? 'Active' : 'Disabled'),
       render: (user) =>
         user.is_active ? (
           <Chip size="small" color="success" variant="outlined" label="Active" />
@@ -39,7 +43,7 @@ function buildColumns(currentUserId) {
           <Chip size="small" label="Disabled" />
         ),
     },
-    { field: 'created_at', header: 'Created', hideOnMobile: true, render: (user) => formatDate(user.created_at) },
+    { field: 'created_at', header: 'Created', hideOnMobile: true, sortable: true, render: (user) => formatDate(user.created_at) },
   ]
 }
 
@@ -97,6 +101,8 @@ export default function UsersPage() {
         loading={loading}
         error={error}
         onRetry={reload}
+        errorTitle="Could not load the users"
+        refreshErrorTitle="Could not refresh the users"
         renderActions={canUpdate || canDelete ? renderActions : undefined}
         ariaLabel="Users"
         emptyTitle={filtered ? 'No matching users' : 'No users yet'}

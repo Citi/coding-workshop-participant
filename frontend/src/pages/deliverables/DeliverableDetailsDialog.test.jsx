@@ -1,6 +1,6 @@
 import { screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { ApiError } from '../../services/apiClient'
 import { deliverablesApi } from '../../services/deliverablesApi'
 import { renderWithProviders } from '../../test/renderWithProviders'
@@ -10,6 +10,8 @@ import { BUILD, BUILD_DETAILS, INTERVIEWS, SIGN_OFF, SIGN_OFF_DETAILS } from './
 vi.mock('../../services/deliverablesApi', () => ({ deliverablesApi: { get: vi.fn() } }))
 
 const DETAILS = { 10: SIGN_OFF_DETAILS, 12: BUILD_DETAILS }
+// Due dates are worded relative to today (UTC), so the tests run on a fixed day: Mar 4, 2026.
+const TODAY = new Date('2026-03-04T12:00:00Z')
 
 function renderDialog(deliverable = SIGN_OFF) {
   const onClose = vi.fn()
@@ -17,10 +19,19 @@ function renderDialog(deliverable = SIGN_OFF) {
   return { onClose, user: userEvent.setup() }
 }
 
+/** The value next to the "Due date" label of the facts. */
+const dueDateFact = () => screen.getByText('Due date', { selector: 'dt' }).nextElementSibling
+
 describe('DeliverableDetailsDialog', () => {
   beforeEach(() => {
     vi.clearAllMocks()
+    // Only Date is faked: timers stay real for Testing Library and user-event.
+    vi.setSystemTime(TODAY)
     deliverablesApi.get.mockImplementation((id) => Promise.resolve(DETAILS[id]))
+  })
+
+  afterEach(() => {
+    vi.useRealTimers()
   })
 
   it('shows the facts, direct prerequisites, full dependency chain and dependents', async () => {
@@ -32,7 +43,7 @@ describe('DeliverableDetailsDialog', () => {
 
     expect(screen.getByText('Key deliverable')).toBeInTheDocument()
     expect(screen.getByText('Priya Shah')).toBeInTheDocument()
-    expect(screen.getByText('Mar 1, 2026 (Overdue)')).toBeInTheDocument()
+    expect(dueDateFact()).toHaveTextContent('Mar 1, 2026 3 days overdue')
     expect(screen.getByRole('link', { name: 'Apollo CRM' })).toHaveAttribute('href', '/projects/1')
     expect(screen.getByRole('heading', { level: 3, name: 'Depends on (2)' })).toBeInTheDocument()
 
@@ -43,18 +54,21 @@ describe('DeliverableDetailsDialog', () => {
     const chain = within(screen.getByRole('list', { name: 'Dependency chain' })).getAllByRole('listitem')
     expect(chain.map((item) => item.getAttribute('data-depth'))).toEqual(['1', '1', '2'])
     expect(chain[0]).toHaveTextContent('Stakeholder interviews')
-    expect(chain[0]).toHaveTextContent('Level 1 (direct)')
+    // Completed: its due date has no urgency.
+    expect(chain[0]).toHaveTextContent('Apollo CRM · Due Feb 1, 2026 · Level 1 (direct)')
     expect(chain[0]).not.toHaveTextContent('Blocker')
     expect(chain[1]).toHaveTextContent('Data audit')
+    expect(chain[1]).toHaveTextContent('Zeus ERP · Due Dec 20, 2026 · in 9 months · Level 1 (direct)')
     expect(chain[1]).toHaveTextContent('Blocker')
     expect(chain[2]).toHaveTextContent('Vendor contract')
-    expect(chain[2]).toHaveTextContent('Level 2')
-    expect(chain[2]).toHaveTextContent('Due Jan 10, 2026 (overdue)')
+    expect(chain[2]).toHaveTextContent('Zeus ERP · Due Jan 10, 2026 · 53 days overdue · Level 2')
     expect(chain[2]).toHaveTextContent('Blocker')
     expect(screen.getByText('2 of 3 prerequisites are not completed yet and block this deliverable.')).toBeInTheDocument()
 
     const blocks = screen.getByRole('list', { name: 'Deliverables that depend on this one' })
     expect(blocks).toHaveTextContent('Build MVP')
+    expect(blocks).toHaveTextContent('Apollo CRM · Due Jan 15, 2027 · in 10 months')
+    expect(blocks).not.toHaveTextContent('Due in')
     expect(blocks).not.toHaveTextContent('Blocker')
   })
 
@@ -81,7 +95,8 @@ describe('DeliverableDetailsDialog', () => {
     expect(await screen.findByText('Does not depend on any other deliverable.')).toBeInTheDocument()
     expect(screen.getByText('No prerequisites: nothing has to be finished first.')).toBeInTheDocument()
     expect(screen.getByText('Unassigned')).toBeInTheDocument()
-    expect(screen.getByText('Feb 1, 2026')).toBeInTheDocument()
+    // Completed, so the date alone: finished work is not urgent.
+    expect(dueDateFact()).toHaveTextContent(/^Feb 1, 2026$/)
     expect(screen.queryByText('Key deliverable')).not.toBeInTheDocument()
   })
 

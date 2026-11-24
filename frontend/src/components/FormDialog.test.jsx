@@ -78,4 +78,29 @@ describe('FormDialog', () => {
     await user.click(screen.getByRole('button', { name: 'Cancel' }))
     expect(onClose).toHaveBeenCalled()
   })
+
+  it('renders renderAfterFields under the fields with the values entered so far', async () => {
+    const user = userEvent.setup()
+    renderWithProviders(
+      <FormDialog
+        open
+        title="New project"
+        fields={FIELDS}
+        initialValues={{ status: 'active' }}
+        onSubmit={vi.fn().mockResolvedValue()}
+        onClose={vi.fn()}
+        renderAfterFields={(values) => <p data-testid="preview">{`Name: ${values.name}`}</p>}
+      />,
+    )
+    expect(screen.getByTestId('preview').textContent).toBe('Name: ')
+    await user.type(screen.getByLabelText(/Name/), 'Apollo')
+    expect(screen.getByTestId('preview')).toHaveTextContent('Name: Apollo')
+    // inside the form, after the fields
+    expect(screen.getByTestId('preview').closest('form')).toContainElement(screen.getByLabelText(/Name/))
+  })
+
+  it('renders nothing extra without renderAfterFields', () => {
+    setup()
+    expect(screen.queryByTestId('preview')).not.toBeInTheDocument()
+  })
 })

@@ -14,25 +14,47 @@ import { useDebouncedValue } from '../hooks/useDebouncedValue'
 // The API rejects a longer `search` parameter with 400 VALIDATION_ERROR.
 const SEARCH_MAX_LENGTH = 200
 
+/** The page may trim the search it is sent, so " crm " coming back as "crm" is still the same search. */
+const sameSearch = (a, b) => a.trim() === b.trim()
+
 /**
  * Search box (debounced) + filter controls. `values` is the current filter object that the page
  * sends to the API as query parameters; `onChange(nextValues)` replaces it.
  *
  * filters: [{ name, label, options: [{ value, label }] }]   -> select ("All" clears it)
  *          [{ name, label, type: 'toggle' }]                -> switch (true when on, removed when off)
+ *
+ * The box sends its text 300 ms after the last keystroke. When `values.search` changes from outside
+ * (a link, Back/Forward, a reset by the page), the box shows the new text; the page echoing back
+ * what the box sent does not count as such a change, so typing is never interrupted.
  */
 export default function FilterBar({ values, onChange, filters = [], searchPlaceholder = 'Search', showSearch = true }) {
-  const [searchText, setSearchText] = useState(values.search || '')
+  const outsideSearch = values.search || ''
+  const [searchText, setSearchText] = useState(outsideSearch)
   const debouncedSearch = useDebouncedValue(searchText, 300)
-  const latest = useRef({ values, onChange })
+  // The page's search and the debounced text as last seen, and the search the page should now have
+  // from the box ("sent"): its debounced text, or the outside text the box took over.
+  const [seen, setSeen] = useState({ outside: outsideSearch, debounced: debouncedSearch, sent: outsideSearch })
+  const latest = useRef({ values, onChange, searchText })
+
+  if (outsideSearch !== seen.outside || debouncedSearch !== seen.debounced) {
+    // Adjusting state while rendering (React's documented alternative to an effect).
+    let sent = debouncedSearch !== seen.debounced ? debouncedSearch : seen.sent
+    if (outsideSearch !== seen.outside && !sameSearch(outsideSearch, seen.sent)) {
+      setSearchText(outsideSearch)
+      sent = outsideSearch
+    }
+    setSeen({ outside: outsideSearch, debounced: debouncedSearch, sent })
+  }
 
   useEffect(() => {
-    latest.current = { values, onChange }
+    latest.current = { values, onChange, searchText }
   })
 
   useEffect(() => {
-    const { values: current, onChange: emit } = latest.current
-    if ((current.search || '') !== debouncedSearch) emit({ ...current, search: debouncedSearch || undefined })
+    const { values: current, onChange: emit, searchText: text } = latest.current
+    // Only text still in the box is sent: a search replaced from outside in the meantime is not.
+    if (text === debouncedSearch && (current.search || '') !== debouncedSearch) emit({ ...current, search: debouncedSearch || undefined })
   }, [debouncedSearch])
 
   const update = (name, value) => {
