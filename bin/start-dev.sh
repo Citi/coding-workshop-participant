@@ -339,8 +339,18 @@ for req in "$PROJECT_ROOT"/backend/*/requirements.txt; do
         continue
     fi
     echo -e "  Installing pip requirements for $(basename "$svc_dir")..."
-    pip install --quiet --target="$svc_dir" -r "$req" 2>/dev/null || true
-    echo "$REQS_HASH" > "$HASH_FILE"
+    # Install wheels built for the Lambda runtime (python3.13 / Linux x86_64), not the
+    # host interpreter: a host pip on another Python version (e.g. 3.14) either fails to
+    # resolve pinned binaries or installs C extensions the Lambda runtime cannot import.
+    # Only record the hash on success, so a failed install is retried on the next run.
+    if python3 -m pip install --quiet --upgrade --target="$svc_dir" \
+        --python-version 3.13 --implementation cp \
+        --platform manylinux2014_x86_64 --platform manylinux_2_28_x86_64 \
+        --only-binary=:all: -r "$req"; then
+        echo "$REQS_HASH" > "$HASH_FILE"
+    else
+        echo -e "  ✗ pip install failed for $(basename "$svc_dir") - Lambda will fail to import its dependencies"
+    fi
 done
 
 # Install npm dependencies into each Node.js service directory for hot-reload
@@ -511,7 +521,9 @@ fi
 
 # Check if React dev server is already running
 REACT_RUNNING=false
-if lsof -iTCP:3000 -sTCP:LISTEN > /dev/null 2>&1 || ss -ltn 2>/dev/null | grep -q ':3000'; then
+# Match the port exactly: a plain grep ':3000' also matches 30000-30009, which
+# JetBrains IDEs (PyCharm/IntelliJ) listen on, and would wrongly skip starting React.
+if lsof -iTCP:3000 -sTCP:LISTEN > /dev/null 2>&1 || ss -ltn 2>/dev/null | awk '{print $4}' | grep -qE ':3000$'; then
     REACT_RUNNING=true
     echo -e "  ✓ React dev server is already running on port 3000"
 fi

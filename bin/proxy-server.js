@@ -38,7 +38,9 @@ const server = http.createServer((req, res) => {
   // Enable CORS
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, PATCH, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', '*');
+  // Browsers never treat '*' as covering the Authorization header, so echo the
+  // requested headers (or list them explicitly) to allow JWT-authenticated calls.
+  res.setHeader('Access-Control-Allow-Headers', req.headers['access-control-request-headers'] || 'Authorization, Content-Type, Accept');
   res.setHeader('Access-Control-Max-Age', '86400');
 
   // Handle preflight
@@ -64,9 +66,9 @@ const server = http.createServer((req, res) => {
 
   const endpointName = pathParts[1];
   const remainingPath = pathParts.length > 2 ? '/' + pathParts.slice(2).join('/') : '';
-  const targetUrl = endpoints[endpointName] + remainingPath + (parsedUrl.search || '');
+  const baseUrl = endpoints[endpointName];
 
-  if (!targetUrl) {
+  if (!baseUrl) {
     res.writeHead(404, { 'Content-Type': 'application/json' });
     res.end(JSON.stringify({
       error: `Unknown endpoint: ${endpointName}`,
@@ -74,6 +76,9 @@ const server = http.createServer((req, res) => {
     }));
     return;
   }
+
+  // Lambda URLs end with '/', so trim it to avoid '//path' in the forwarded request
+  const targetUrl = baseUrl.replace(/\/+$/, '') + remainingPath + (parsedUrl.search || '');
 
   console.log(`${req.method} /api/${endpointName} -> ${targetUrl}`);
 
@@ -101,7 +106,10 @@ const server = http.createServer((req, res) => {
       'accept': headers.accept || 'application/json',
       'content-type': headers['content-type'] || 'application/json',
       'user-agent': headers['user-agent'] || 'proxy-server',
-      'host': target.host
+      'host': target.host,
+      // Forward the JWT so the backend can authenticate the user
+      ...(headers.authorization ? { 'authorization': headers.authorization } : {}),
+      ...(headers['content-length'] ? { 'content-length': headers['content-length'] } : {})
     }
   };
 

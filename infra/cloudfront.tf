@@ -39,12 +39,9 @@ resource "aws_cloudfront_distribution" "this" {
     }
   }
 
-  custom_error_response {
-    error_code            = 404
-    error_caching_min_ttl = 300
-    response_code         = 200
-    response_page_path    = "/index.html"
-  }
+  # No custom_error_response: it applies to every origin, so it would turn the API's
+  # JSON "404 Not Found" into "200 + index.html". The React app uses hash-based routes
+  # (/#/projects), so deep links never need an S3 fallback.
 
   # logging_config {
   #   include_cookies = false
