@@ -17,7 +17,7 @@ Frontend: `` `${import.meta.env.VITE_API_URL ?? ''}/api/pm-service` ``.
 
 * JSON in, JSON out. `Content-Type: application/json`.
 * Authentication: `Authorization: Bearer <access_token>` on every endpoint except
-  `POST /auth/login`, `POST /auth/refresh`, `GET /health`.
+  `POST /auth/login`, `POST /auth/refresh`, `GET /health` (and `GET /`), `GET /health/db`.
 * IDs are positive integers. Dates are `YYYY-MM-DD`. Timestamps are ISO 8601 (UTC).
   Money values are JSON numbers with up to 2 decimals.
 * "Today" for business rules is the current UTC date.
@@ -56,6 +56,9 @@ Frontend: `` `${import.meta.env.VITE_API_URL ?? ''}/api/pm-service` ``.
 
 Frontend handling: on `401` with code `TOKEN_EXPIRED` call `/auth/refresh` once and retry;
 any other `401` → log out and show the login page with the message.
+
+`DATABASE_UNAVAILABLE`: the database could not be reached, even after the API reconnected once
+(see [Database connection and cold starts](#database-connection-and-cold-starts)); try again later.
 
 ## Roles and permissions
 
@@ -149,7 +152,7 @@ or delete themselves.
 
 | Method | Path | Notes |
 |---|---|---|
-| GET | `/projects` | filters: `search` (name, description, department), `status`, `department` (exact, case-insensitive), `health`; sorted by `end_date`, then `name` |
+| GET | `/projects` | filters: `search` (name, description, department), `status`, `department` (exact, case-insensitive), `health` (one value or a comma-separated list, see below); sorted by `end_date`, then `name` |
 | POST | `/projects` | body `{name, description?="", department, status?="planned", start_date, end_date, budget?=0}` |
 | GET | `/projects/{id}` | project object |
 | PUT | `/projects/{id}` | full body |
@@ -157,6 +160,16 @@ or delete themselves.
 
 Validation: `name` 1–150, unique (409 `details.name`); `department` 1–100; `description` ≤ 5000;
 `end_date` ≥ `start_date` (`details.end_date`); `budget` ≥ 0, ≤ 999,999,999,999.99, max 2 decimals.
+
+**`health` filter**: one value (`?health=at_risk`) or several separated by commas
+(`?health=at_risk,overdue`, also sent URL-encoded as `at_risk%2Coverdue`) returns the projects whose
+computed health is **any** of them, still sorted by `end_date`, then `name`. Repeating the parameter
+(`?health=at_risk&health=overdue`) gives the same result, because Lambda Function URLs join repeated
+parameters with commas. Spaces around values and empty items are ignored, duplicates count once, and a
+value with no items at all (`?health=` or `?health=,`) is no filter. Every value must be `on_track`,
+`at_risk` or `overdue` (lower case), otherwise `400 VALIDATION_ERROR` with `details.health`
+(`"Must be one of: on_track, at_risk, overdue"`). Completed and cancelled projects have no health, so
+any `health` filter leaves them out, even combined with `status=completed`.
 
 ### Health rules
 * **overdue**: today > `end_date` (project not completed/cancelled)
@@ -241,7 +254,9 @@ Validation: `full_name` 1–120; `email` valid & unique (409 `details.email`); `
  "created_at": "...", "updated_at": "..."}
 ```
 `resource_total_allocation_percent` / `resource_over_allocated` are the person's current totals
-(active projects) **after** this change — the UI uses them to warn about over-allocation.
+(active projects) **after** this change — the UI uses them to warn about over-allocation. Before
+saving, the allocation dialog previews the same total by the same rule from `GET /resources`
+(`total_allocation_percent`, loaded when the dialog opens).
 
 | Method | Path | Notes |
 |---|---|---|
@@ -305,6 +320,8 @@ Planned budget lives on the project (`budget`); consumed = sum of its expenses.
                          "budget_spent": 61000.0, "budget_remaining": 89000.0, "budget_used_percent": 40.7, "over_budget": false}]
 }
 ```
+* `generated_at`: when the snapshot was built. The web app words the dashboard's due and end dates
+  ("3 days overdue") against the UTC date of `generated_at`.
 * **ProjectSummary**: `{id, name, department, status, start_date, end_date, progress_percent, health, health_reasons, budget, budget_spent, budget_used_percent, over_budget, team_size}`
 * **DeliverableSummary**: `{id, name, project_id, project_name, status, due_date, is_key, owner_name, is_overdue}`
 * `active_projects`: status `active`, sorted by `end_date`.
@@ -319,4 +336,32 @@ Planned budget lives on the project (`budget`); consumed = sum of its expenses.
   (1 decimal; `0` when nothing is planned).
 
 ## Health check
-`GET /health` (public, no database) → `{"status": "ok", "service": "pm-service"}`.
+`GET /health` (public, no database) → `{"status": "ok", "service": "pm-service"}`. `GET /` answers the same.
+
+`GET /health/db` (public, no token needed; a token that is sent is ignored) → runs `SELECT 1` and returns
+`{"status": "ok", "service": "pm-service", "database": "ok"}`. It goes through the normal request
+pipeline, so on a cold start it also opens the database connection and applies the schema bootstrap.
+It is meant as a wake-up call: a client can send it early (for example when the login page opens)
+so the first real request, such as the login, does not pay for the cold start. The web app's login
+page does exactly that, without a token, at most once a minute, and ignores a failed call.
+Errors: `500 DATABASE_UNAVAILABLE` when the database cannot be reached, even after one reconnect
+(see below; retry later), `500 DATABASE_ERROR` for any other database failure;
+`405 METHOD_NOT_ALLOWED` for any other method (`POST`, `PUT`, `PATCH`, `DELETE`).
+An `OPTIONS` preflight gets `204` without touching the database, like every other path.
+
+### Database connection and cold starts
+Each Lambda container opens one database connection and reuses it for the requests it serves. While
+the container is idle, the database may close that connection (Aurora Serverless v2 scaling to 0 ACU,
+an idle timeout, a failover), and the API only notices when the next request opens its transaction,
+before any of the request's own work. It then drops the connection, opens a new one and tries once
+more. Connecting waits while Aurora resumes, so that request is slow (about 15–20 s after a pause) but
+succeeds, whichever endpoint it calls.
+
+* If the second attempt fails too (or connecting fails twice): `500 DATABASE_UNAVAILABLE`, and the
+  next request opens a new connection. Each connection attempt waits at most 25 s, so even two failed
+  attempts are answered before CloudFront stops waiting for the API (60 s, after which it would send
+  its own `504` page instead of this JSON error).
+* Nothing is retried once authentication or the handler has started, so a request never runs twice;
+  a connection lost at that point gives `500 DATABASE_UNAVAILABLE`.
+* Each reconnect is logged as one line, without the error message:
+  `{"event": "db_reconnect", "request_id": "…", "error": "OperationalError"}`.
