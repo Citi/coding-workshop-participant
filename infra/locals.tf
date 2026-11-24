@@ -1,5 +1,5 @@
 locals {
-  app_id = try(trimspace(var.aws_app_code), "") != "" ? trimspace(var.aws_app_code) : random_id.this.hex
+  app_id   = try(trimspace(var.aws_app_code), "") != "" ? trimspace(var.aws_app_code) : random_id.this.hex
   app_tags = { participant = local.app_id, event = random_id.this.hex }
   public_route_table_ids = [
     for rt in data.aws_route_table.this :

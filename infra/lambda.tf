@@ -8,7 +8,7 @@ module "lambda" {
   architectures   = [each.value.arch]
   handler         = each.value.handler
   runtime         = each.value.runtime
-  memory_size     = 128
+  memory_size     = 512 # CPU scales with memory: a bcrypt login check takes ~0.3 s here instead of ~1.2 s at 128 MB
   timeout         = 300
   tracing_mode    = "PassThrough"
   build_in_docker = false
