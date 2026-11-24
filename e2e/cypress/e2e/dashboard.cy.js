@@ -1,5 +1,5 @@
 // Critical path: the dashboard answers the business questions from live data.
-import { dateOffset, RUN } from '../support/ui'
+import { dateOffset, kpiCard, RUN } from '../support/ui'
 
 const AT_RISK = `${RUN} Atlas`
 const PERSON = `${RUN} Dana`
@@ -39,6 +39,20 @@ describe('Dashboard', () => {
     // drill down from the dashboard to the project
     cy.contains('a', AT_RISK).first().click()
     cy.contains('h1', AT_RISK)
+  })
+
+  it('opens the over-allocated team members from their KPI card', () => {
+    cy.visitAs('viewer', '/')
+    kpiCard('Over-allocated').click()
+    cy.location('hash').should('eq', '#/resources?over_allocated=true')
+    cy.contains('h1', 'Resources')
+    // the filter from the link is on, and only over-allocated people are listed
+    cy.contains('label', 'Over-allocated only').find('input[type="checkbox"]').should('be.checked')
+    cy.contains('tr', PERSON).should('contain', 'Over-allocated')
+    cy.get('table[aria-label="Resources"] tbody tr').should((rows) => {
+      expect(rows.length, 'people listed').to.be.greaterThan(0)
+      rows.each((index, row) => expect(row.innerText, `row ${index + 1}`).to.include('Over-allocated'))
+    })
   })
 
   it('matches the API numbers', () => {

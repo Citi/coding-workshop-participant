@@ -34,7 +34,20 @@ describe('Resource allocation and over-allocation', () => {
     cy.contains('[role="tab"]', 'Team').click()
     cy.contains('button', 'New allocation').click()
     choose('Team member', PERSON)
+
+    // Live what-if before saving: the person's total now (60% on Vega) and after this change
+    const whatIf = () => cy.get('[role="dialog"] [data-testid="allocation-what-if"]')
+    fill('allocation_percent', 30)
+    whatIf().should('contain', `${PERSON}: 60% now → 90% after this change`).and('contain', 'Within capacity')
     fill('allocation_percent', 70)
+    whatIf()
+      .should('contain', `${PERSON}: 60% now → 130% after this change`)
+      .and('contain', 'Will be over-allocated')
+      .and('not.contain', 'Within capacity')
+    // Screen readers get the same facts in words, once typing pauses
+    cy.get('[role="dialog"]').contains('[role="status"]', `${PERSON}: 60% now, 130% after this change. Will be over-allocated`)
+
+    // Saving is not blocked (the API allows over-allocation); the warning comes back once saved
     save()
     cy.contains(`${PERSON} is now over-allocated (130%)`)
 

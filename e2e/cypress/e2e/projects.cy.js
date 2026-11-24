@@ -1,5 +1,5 @@
 // Critical path: project CRUD from the UI through the API to the database, with validation.
-import { choose, dateOffset, fill, RUN, save } from '../support/ui'
+import { choose, chooseView, dateOffset, expectUrlParams, fill, RUN, save } from '../support/ui'
 
 const NAME = `${RUN} Apollo`
 
@@ -29,12 +29,20 @@ describe('Projects', () => {
     // Persisted: visible through the API too
     cy.api('GET', `/projects?search=${encodeURIComponent(NAME)}`).its('body.total').should('eq', 1)
 
-    // Search
+    // Search - the list narrows to the match, and the search is kept in the URL (reload, Back and links keep it)
     cy.get('input[placeholder]').first().clear().type(NAME)
-    cy.contains('td, [role="listitem"]', NAME).should('be.visible')
+    expectUrlParams({ search: NAME })
+    cy.get('table[aria-label="Projects"] tbody tr').should('have.length', 1).and('contain', NAME)
+
+    // The same filtered projects on the timeline; back on the list the search is still applied
+    chooseView('Timeline')
+    expectUrlParams({ search: NAME, view: 'timeline' })
+    cy.get('[aria-label="Project timeline"] > li').should('have.length', 1).find(`a[aria-label^="${NAME}: "]`).should('be.visible')
+    chooseView('List')
+    expectUrlParams({ search: NAME, view: null })
 
     // Detail page with tabs
-    cy.contains(NAME).click()
+    cy.contains('td, [role="listitem"]', NAME).click()
     cy.location('hash').should('match', /#\/projects\/\d+$/)
     cy.contains('h1', NAME)
     cy.get('[role="tablist"]').within(() => {

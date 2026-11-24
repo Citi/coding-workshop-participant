@@ -5,7 +5,11 @@
 config:
   target: "http://localhost:3001"
   # Up to 5 new users/second, each making 6 requests (~30 requests/second at peak).
-  # Sized for a workshop account (login is deliberately CPU-heavy: bcrypt on a 128 MB Lambda).
+  # Sized for a workshop account (login is deliberately CPU-heavy: bcrypt on a 512 MB Lambda).
+  # Wait as long as CloudFront does (origin_read_timeout = 60 s): the first requests after the
+  # database pauses wait ~15-20 s for Aurora to resume, which browsers wait for too.
+  http:
+    timeout: 60
   phases:
     - name: warm-up
       duration: 30
@@ -27,6 +31,7 @@ config:
       - expression: "vusers.failed == 0"
   plugins:
     expect: {}
+    ensure: {} # turns the thresholds/conditions above into a pass/fail exit code
 
 scenarios:
   - name: Project manager browsing

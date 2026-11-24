@@ -48,6 +48,9 @@ describe('Deliverables and dependencies', () => {
       cy.contains(/Dependency chain \(1\)/)
       cy.contains(`${RUN} Design`)
       cy.contains('Key deliverable')
+      // Urgency in words next to the due date; the completed dependency is past its date but not overdue
+      cy.contains('Due in 2 weeks')
+      cy.contains(/overdue/i).should('not.exist')
     })
     cy.get('button[aria-label="Close details"]').click()
   })
@@ -55,6 +58,7 @@ describe('Deliverables and dependencies', () => {
   it('filters key deliverables on the Deliverables page', () => {
     cy.visitAs('manager', '/deliverables?is_key=true')
     cy.contains('h1', 'Deliverables')
+    cy.contains('label', 'Key deliverables only').find('input[type="checkbox"]').should('be.checked')
     cy.contains(`${RUN} Build`)
     cy.contains(`${RUN} Design`).should('not.exist')
   })

@@ -1,4 +1,5 @@
-// UI helpers for the MUI-based forms used across the app (FormDialog field ids are "field-<name>").
+// UI helpers for the MUI-based forms used across the app (FormDialog field ids are "field-<name>"),
+// the view switches, the dashboard's KPI cards and the filters kept in the URL.
 
 /** Type into a text/number/date field of the open dialog (clears it first). */
 export function fill(name, value) {
@@ -31,6 +32,32 @@ export function filterBy(label, option) {
 
 export function save() {
   cy.get('[role="dialog"]').find('button[type="submit"]').click()
+}
+
+/**
+ * Show one of a page's views with its switch, e.g. Projects "List" | "Timeline" or Resources
+ * "List" | "Heat map". The view is kept in the URL (?view=timeline; the list has no parameter).
+ */
+export function chooseView(label) {
+  const button = () => cy.get('[role="group"][aria-label="View"]').contains('button', label)
+  button().click()
+  button().should('have.attr', 'aria-pressed', 'true')
+}
+
+/** A dashboard KPI card: one link to the list behind its figure, named "<label>: <value>, <helper>". */
+export function kpiCard(label) {
+  return cy.get(`section[aria-label="Key figures"] a[aria-label^="${label}: "]`)
+}
+
+/**
+ * Assert query parameters of the current route (filters and views live in the URL), e.g.
+ * expectUrlParams({ search: 'Apollo', view: 'timeline' }); null asserts that a parameter is absent.
+ */
+export function expectUrlParams(expected) {
+  cy.location('hash').should((hash) => {
+    const params = new URLSearchParams(hash.split('?')[1] || '')
+    Object.entries(expected).forEach(([name, value]) => expect(params.get(name), `URL parameter "${name}"`).to.eq(value))
+  })
 }
 
 export function dateOffset(days) {
