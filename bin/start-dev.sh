@@ -339,7 +339,7 @@ for req in "$PROJECT_ROOT"/backend/*/requirements.txt; do
         continue
     fi
     echo -e "  Installing pip requirements for $(basename "$svc_dir")..."
-    pip install --quiet --target="$svc_dir" -r "$req" 2>/dev/null || true
+    python3.13 -m pip install --quiet --target="$svc_dir" -r "$req" 2>/dev/null || true
     echo "$REQS_HASH" > "$HASH_FILE"
 done
 
