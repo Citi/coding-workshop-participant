@@ -1,113 +1,233 @@
-# Coding Workshop
+# ACME Project Tracker
 
-The goal of this coding workshop is to enable and assess the hands-on skills
-of participants through development of a practical technical solution that
-solves a theoretical business problem.
+A centralized project management and tracking platform for ACME Inc. It gives project managers
+and team leads real-time visibility of **project health, resource utilization, deliverables and
+budgets** — with full CRUD, search and filters, role-based access control, and a responsive UI
+for desktop and mobile.
 
-## Getting Started
+| | |
+|---|---|
+| **Live app (AWS)** | https://d1t3qq29ya5gnv.cloudfront.net |
+| **Local app** | http://localhost:3000 (after `./bin/start-dev.sh`) |
+| **API contract** | [docs/API.md](docs/API.md) |
+| **Testing guide & results** | [docs/TESTING.md](docs/TESTING.md) |
+| **Workshop guides** | [docs/README.md](docs/README.md) |
 
-Navigate to [Coding Workshop - Main Guide](./docs/README.md) to get started.
+### Demo accounts (seeded on first start)
 
-## Coding Workshop Example
+| Role | Email | Password | Can do |
+|---|---|---|---|
+| Admin | admin@acme.com | Admin@123 | everything, including managing users and roles |
+| Manager | manager@acme.com | Manager@123 | everything except users and roles |
+| Contributor | contributor@acme.com | Contributor@123 | create and update, no delete |
+| Viewer | viewer@acme.com | Viewer@123 | read-only |
 
-Coding workshop organizer(s) will provide instructions to follow by email. Here
-below is a real example of requirements and expectations for participant(s):
+> These are demo credentials for evaluation. In a real deployment the admin would change them
+> (Users page) or seeding would be disabled.
 
-### Requirements: Business Problem
+---
 
-Our company ACME Inc. is going through a massive organizational transformation
-to become a more data-driven organization. Information about teams structure
-and performance is currently scattered across multiple systems, making it
-difficult to get a comprehensive view of team dynamics and achievements.
+## 1. The business questions and where they are answered
 
-We are struggling to answer simple questions like:
+| Question | Where in the app | API |
+|---|---|---|
+| What is the current status of each active project? | Dashboard → *Active projects*; Projects list (status, health, progress, budget) | `GET /dashboard`, `GET /projects?status=active` |
+| Which projects are at risk of missing their deadlines? | Dashboard → *Projects at risk* (with reasons); Projects filter *Health* | `GET /projects?health=at_risk` |
+| How are resources allocated across projects? | Project → *Team* tab; Resource details → *Project allocations* | `GET /allocations?project_id=…`, `GET /resources/{id}` |
+| What are the key deliverables and their completion status? | Dashboard → *Key deliverables*; Deliverables → *Key deliverables only* | `GET /deliverables?is_key=true` |
+| Which team members are over-allocated across multiple projects? | Dashboard → *Over-allocated team members*; Resources → *Over-allocated only* | `GET /resources?over_allocated=true` |
+| What is the dependency chain between deliverables? | Deliverable details → *Depends on*, full *Dependency chain*, *Blocks* | `GET /deliverables/{id}` |
+| How much budget has been consumed versus planned for each project? | Budget page; Dashboard → *Budget*; Project → *Budget* tab | `GET /projects`, `GET /expenses` |
 
-* Who are the members of each team?
-* Where are the teams located?
-* What are the key achievements of each team on a monthly basis?
-* How many teams have team leader not co-located with team members?
-* How many teams have team leader as a non-direct staff?
-* How many teams have non-direct staff to employees ratio above 20%?
-* How many teams are reporting to an organization leader?
+### Business rules
 
-### Requirements: Technical Solution
+* **Progress %** = completed deliverables ÷ all deliverables of the project.
+* **Health** (planned / active / on-hold projects; closed projects have none):
+  * **Overdue** – today is past the project end date.
+  * **At risk** – any deliverable is overdue or blocked, **or** the share of the schedule that has
+    elapsed is more than **20 points** ahead of progress %.
+  * **On track** – otherwise. Every triggered rule is listed as a reason.
+* **Over-allocated** – a person's allocation % across **active** projects adds up to more than 100%
+  (allocations to planned/on-hold projects are kept but do not count yet).
+* **Budget** – planned budget is set on the project; consumed = sum of its expenses;
+  used % = consumed ÷ planned; *over budget* when consumed > planned.
+* **Dependencies** – a deliverable can depend on any other deliverable (also across projects);
+  self-dependencies and circular chains are rejected.
+* "Today" is the current **UTC** date.
 
-As part of this transformation, we are looking to build a centralized team
-management tool that will allow us to track team members, team locations,
-monthly team achievements, as well as individual-level and team-level metadata.
-Initial focus is to provide a self-service capability without any integrations
-with other tools such as Employee Directory, Project Tracking, or Performance
-Management.
+---
 
-The technical solution involves developing a stand-alone web application using
-modern technologies. The application will have the following features:
+## 2. Architecture
 
-* User authentication and authorization
-* Role-based access control
-* CRUD operations for individuals, teams, achievements and metadata
-* Search and filter functionality
-* Responsive design for mobile and desktop usage
+```
+                        ┌──────────────────────── AWS ────────────────────────┐
+ Browser                │  CloudFront ──┬── /*               → S3 (React build) │
+ (React + MUI) ─HTTPS──▶│               └── /api/pm-service/* → Lambda URL      │
+                        │                                        │ Python 3.13   │
+                        │                                        ▼               │
+                        │                              Aurora PostgreSQL (SSL)   │
+                        └─────────────────────────────────────────────────────────┘
 
-### Requirements: Technology Stack
+ Local:  Vite :3000 ──▶ dev proxy :3001 ──▶ LocalStack Lambda (hot reload) ──▶ PostgreSQL :5432
+```
 
-The following technologies are required to build the application:
+**Backend – one Lambda, organised by domain (`backend/pm-service`)**
 
-* Frontend: HTML, CSS, React.js with React Responsive and Material UI Components
-* Backend: Python
-* Database: PostgreSQL
+```
+function.py                  Lambda entry point
+app/main.py                  request pipeline: route → transaction → authenticate → authorize → handler
+app/core/                    router, HTTP/JSON, errors, validation (pydantic), db, schema.sql, clock
+app/auth/                    login/refresh/me, JWT, bcrypt, central permission matrix, seeding
+app/<domain>/                users, projects, deliverables, resources, allocations, expenses, dashboard
+    routes.py  (HTTP)  →  service.py (business rules)  →  repository.py (parameterized SQL)
+    schemas.py (request validation)
+app/projects/health.py       health / progress / budget rules (pure functions)
+app/projects/metrics.py      per-project aggregates shared by projects and dashboard
+app/resources/utilization.py over-allocation rule shared by resources, allocations and dashboard
+```
 
-The following technologies are good to know, as they are used to manage and
-deploy code:
+**Frontend – feature folders (`frontend/src`)**
 
-* Version Control: Git, GitHub
-* Infrastructure: Terraform
-* Deployment Mode: Shell Scripts
-* Deployment Target: AWS Serverless (e.g. S3, CloudFront, Lambda, RDS)
+```
+services/     apiClient (JWT, silent refresh, ApiError) + one module per API resource
+context/      AuthProvider (session, permissions), NotificationProvider (toasts)
+components/   AppLayout (responsive nav), DataTable (table ⇄ cards), FormDialog, ConfirmDialog,
+              FilterBar, StatusChip, PercentBar, StatCard, route guards, state views
+pages/        login, dashboard, projects, deliverables, resources, budget, users
+hooks/ utils/ theme.js
+```
 
-### Expectations: Value-Based Outcomes
+### Request lifecycle
+1. `parse_event` normalises the Lambda Function URL event (strips `/api/pm-service` when called
+   through CloudFront).
+2. The router resolves the route (404 / 405) and its declared permission.
+3. One database transaction per request: the token is verified, the user is re-read from the
+   database (role changes and deactivation apply immediately), the permission is checked (403),
+   then the handler runs. Any error rolls the whole request back.
+4. Every error is returned as `{"error": {"code", "message", "details"}}` with the right status
+   (400/401/403/404/405/409/500).
 
-By the end of the workshop, participants will have developed a functional
-web application that meets the requirements outlined above. The application
-will be deployed to a cloud environment and accessible via a web browser.
-Participants will also gain hands-on experience with modern web development
-technologies and best practices.
+---
 
-## Contributing
+## 3. Design decisions and trade-offs
 
-See the [CONTRIBUTING](./CONTRIBUTING.md) resource for more details.
+| Decision | Why | Trade-off |
+|---|---|---|
+| **One Lambda (`pm-service`) with domain modules** instead of one Lambda per entity | No copy-pasted DB/auth code (Terraform packages each service folder separately), one cold start, one connection per container, one deploy | All domains scale together; splitting later is straightforward because each domain is already isolated |
+| **PostgreSQL schema applied on cold start** (`CREATE … IF NOT EXISTS`, advisory lock) | Zero manual setup locally and in AWS (Aurora is only reachable from inside the VPC) | Not a migration tool; schema changes beyond additive ones would need one (e.g. Alembic) |
+| **Computed fields on read** (health, progress, spend, utilization) | Always consistent with the data; no counters to keep in sync | Aggregation queries per list request (single query per request, indexed) |
+| **JWT access (30 min) + refresh (7 days) tokens, bcrypt passwords** | Stateless auth that suits Lambda; silent refresh in the UI | Refresh tokens cannot be revoked individually (deactivating a user blocks them immediately though) |
+| **Permissions defined once** in `app/auth/permissions.py`, sent to the UI via `/auth/me` | UI hides what a role cannot do; API enforces everything | — |
+| **Tokens in `localStorage`** | Simple for a static S3/CloudFront site | Exposed to XSS; httpOnly cookies would need cookie/CSRF handling on the API |
+| **Hash-based routes (`/#/projects`)** and **no CloudFront 404→index.html rule** | That rule applies to every origin and turned API 404s into "200 + HTML" | URLs contain `#` |
+| **Validation in both layers** (pydantic on the API, same rules in forms) | Immediate feedback in the UI; the API is the source of truth | Rules are duplicated on purpose |
+| **bcrypt cost 10 on a 128 MB Lambda** | Secure default | Warm login ≈ 1.2 s (other calls ≈ 70 ms); raising Lambda memory would speed it up |
 
-## License
+### Changes made to the workshop scaffolding (found while setting up)
+1. `bin/start-dev.sh` – `pip` on the VDI runs Python 3.14 while Lambda runs 3.13, so the hot-reload
+   dependency install failed silently (`No module named 'psycopg'` → 500). It now installs wheels
+   for the Lambda runtime and reports failures.
+2. `bin/start-dev.sh` – the "is React already running?" check matched ports 30000–30003 used by
+   JetBrains IDEs, so the frontend never started. It now matches port 3000 exactly.
+3. `bin/proxy-server.js` – forwarded no `Authorization` header and answered CORS preflights with
+   `Allow-Headers: *` (which browsers do not apply to `Authorization`), so authenticated calls failed locally.
+4. `infra/cloudfront.tf` – removed the distribution-wide 404 → `/index.html` (200) rule.
+5. `infra/main.tf`, `infra/locals.tf` – a random 256-bit `JWT_SECRET` is generated by Terraform and
+   passed to the Lambda.
+6. Locally, LocalStack Lambdas live in **us-east-1** (not `$AWS_REGION`), so log commands need
+   `--region us-east-1`.
+7. `frontend/package.json` – `eslint.config.js` imported `eslint-plugin-react-hooks` and
+   `eslint-plugin-react-refresh`, which were not installed, so `npm run lint` failed; both were added.
 
-This library is licensed under the MIT-0 License.
-See the [LICENSE](./LICENSE) resource for more details.
+---
 
-## Roadmap
+## 4. Run it locally
 
-See the
-[open issues](https://github.com/citi/coding-workshop-participant/issues)
-for a list of proposed roadmap features (and known issues).
+Prerequisites: the workshop VDI set-up (`./bin/setup-participant.sh`, `./bin/setup-environment.sh -d`).
 
-## Security
+```bash
+source ~/.bashrc
+./bin/start-dev.sh          # PostgreSQL, LocalStack, Lambda (hot reload), proxy :3001, React :3000
+```
 
-See the
-[Security Issue Notifications](./CONTRIBUTING.md#security-issue-notifications)
-resource for more details.
+Open http://localhost:3000 and log in with a demo account. Backend code changes are picked up
+automatically (hot reload); `requirements.txt` changes need `./bin/start-dev.sh` again.
 
-## Authors
+Optional – load a realistic demo portfolio (6 projects in every state, dependency chains, two
+over-allocated people, one over-budget project) through the public API:
 
-The following people have contributed to this workshop:
+```bash
+python3 backend/scripts/seed_demo_data.py                                   # local
+python3 backend/scripts/seed_demo_data.py https://d1t3qq29ya5gnv.cloudfront.net   # AWS
+```
 
-* Colin Heilman - [@heilmancs](https://github.com/heilmancs)
-* Eugene Istrati - [@eistrati](https://github.com/eistrati)
-* Isaiah Cornelius Smith - [@corneliusmith](https://github.com/corneliusmith)
-* Juan Arevalo - [@jparevalo27](https://github.com/jparevalo27)
-* Michael Annucci - [@michael-annucci](https://github.com/michael-annucci)
+Useful commands:
 
-## Feedback
+```bash
+# API through the dev proxy
+curl -s -X POST http://localhost:3001/api/pm-service/auth/login \
+     -H 'Content-Type: application/json' -d '{"email":"admin@acme.com","password":"Admin@123"}'
 
-We'd love to hear your feedback! Please:
+# Lambda logs (LocalStack runs functions in us-east-1)
+AWS_ENDPOINT_URL=http://localhost.localstack.cloud:4566 aws logs tail \
+    /aws/lambda/coding-workshop-pm-service-$PARTICIPANT_ID --region us-east-1 --follow --format short
+```
 
-* ⭐ Star the repository if you find it helpful
-* 🐛 Report issues on GitHub
-* 💡 Suggest improvements
-* 📝 Share your experience
+## 5. Tests
+
+| Layer | Tool | Command |
+|---|---|---|
+| Backend unit + integration (real PostgreSQL) | pytest, pytest-cov | `cd backend && python3 -m venv .venv && .venv/bin/pip install -r requirements-dev.txt && .venv/bin/pytest --cov=app` |
+| Frontend components + API client | Vitest, React Testing Library | `cd frontend && npm test` · coverage: `npm run test:coverage` |
+| End-to-end (critical user journeys) | Cypress 16 | `cd e2e && npm install && npm run e2e` (needs `./bin/start-dev.sh` running) |
+| Load | Artillery 2 | `cd e2e && npx artillery run load/api-load.yml` (add `-t https://<cloudfront>` for AWS) |
+| Lint / format | ruff (Python), ESLint (React) | `cd backend && .venv/bin/ruff check . && .venv/bin/ruff format --check .` · `cd frontend && npm run lint` |
+
+**Latest results (24 Nov 2026):** backend 843 tests, 99 % coverage · frontend 339 tests, 97.7 %
+line coverage · end-to-end 49/49 locally **and** against the AWS deployment · load test 3,420
+requests, 100 % successful, median 38 ms · lint clean (ruff, ESLint) · axe-core: no serious or
+critical WCAG 2.1 AA violations.
+
+Results, coverage and known gaps: **[docs/TESTING.md](docs/TESTING.md)**.
+
+### Repository layout
+
+```
+backend/pm-service/     the Lambda (function.py + app/ package)       backend/tests/   pytest suites
+backend/scripts/        demo data loader                              backend/ruff.toml lint rules
+frontend/               React app (Vite, MUI)                          e2e/             Cypress + Artillery
+infra/                  Terraform (workshop scaffolding + JWT secret)  bin/             workshop scripts
+docs/API.md             API contract                                   docs/TESTING.md  test guide and results
+```
+
+## 6. Deploy to AWS
+
+```bash
+source ~/.bashrc
+./bin/deploy-backend.sh     # Terraform: Lambda, Aurora PostgreSQL, S3, CloudFront, JWT secret
+./bin/deploy-frontend.sh    # builds the React app with the CloudFront URL and uploads it to S3
+```
+
+Do not run `start-dev.sh` while a deploy is running (both use the Terraform folder in `infra/`).
+Verify:
+
+```bash
+curl -s https://<cloudfront-domain>/api/pm-service/health      # {"status": "ok", ...}
+```
+
+The first request after a long idle period takes ~15–20 s (Lambda cold start + Aurora Serverless
+resuming from 0 ACU); later requests take ~70 ms.
+
+## 7. Assumptions and known gaps
+
+* Single currency (USD) and UTC business dates.
+* Allocation % is a share of one person's full-time capacity; no calendar-based scheduling.
+* No pagination (lists are small for a department-level tool); search and filters are server-side.
+* No password-reset e-mails, audit log, real-time push or offline/PWA support (out of the stated scope).
+* Refresh tokens are stateless (see trade-offs).
+* An admin cannot demote, disable or delete themselves, but there is no "last active admin" lock:
+  two admins acting on each other at the same moment could leave none.
+* Dashboard deliverable counters and lists include deliverables of completed/cancelled projects
+  (same as `GET /deliverables`); only the budget figures exclude cancelled projects.
+* The dashboard's queries run in one READ COMMITTED transaction, so under concurrent writes its
+  sections can reflect slightly different moments.
