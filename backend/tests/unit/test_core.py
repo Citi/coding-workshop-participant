@@ -18,9 +18,12 @@ from app.core.validation import (
     query_bool,
     query_date,
     query_enum,
+    query_enum_list,
     query_int,
     query_str,
 )
+
+HEALTH = ("on_track", "at_risk", "overdue")
 
 
 class TestNormalizePath:
@@ -166,6 +169,60 @@ class TestQueryHelpers:
     def test_enum_rejects_unknown_value(self):
         with pytest.raises(ValidationError):
             query_enum(self._req(p="x"), "p", ("a", "b"))
+
+    @pytest.mark.parametrize(
+        "raw, expected",
+        [
+            ("at_risk", ("at_risk",)),
+            ("at_risk,overdue", ("at_risk", "overdue")),
+            (" overdue , at_risk ", ("overdue", "at_risk")),
+            ("at_risk,,at_risk,", ("at_risk",)),
+            ("on_track,at_risk,overdue", HEALTH),
+        ],
+    )
+    def test_enum_list_trims_skips_empty_items_and_drops_duplicates(self, raw, expected):
+        assert query_enum_list(self._req(p=raw), "p", HEALTH) == expected
+
+    @pytest.mark.parametrize("query", [{}, {"p": "  "}, {"p": " , ,"}])
+    def test_enum_list_without_values_is_none(self, query):
+        assert query_enum_list(self._req(**query), "p", HEALTH) is None
+
+    @pytest.mark.parametrize("raw", ["red", "at_risk,red", "AT_RISK", "at_risk;overdue"])
+    def test_enum_list_rejects_any_unknown_value(self, raw):
+        with pytest.raises(ValidationError) as exc:
+            query_enum_list(self._req(p=raw), "p", iter(HEALTH))  # any iterable of allowed values
+        assert exc.value.details == {"p": "Must be one of: on_track, at_risk, overdue"}
+
+    @pytest.mark.parametrize(
+        "raw, message",
+        [
+            # the whole raw value goes through query_str first: its length and NUL rules apply
+            ("at_risk," * 25 + "x", "Must be at most 200 characters"),
+            ("at_risk,\x00overdue", "Must not contain NUL characters"),
+            ("at_risk\x00", "Must not contain NUL characters"),
+        ],
+    )
+    def test_enum_list_keeps_the_query_string_limits(self, raw, message):
+        with pytest.raises(ValidationError) as exc:
+            query_enum_list(self._req(p=raw), "p", HEALTH)
+        assert exc.value.details == {"p": message}
+
+    def test_enum_list_accepts_a_long_list_of_valid_items_up_to_the_limit(self):
+        raw = ",".join(["at_risk"] * 25)  # 199 characters
+        assert query_enum_list(self._req(p=raw), "p", HEALTH) == ("at_risk",)
+
+    def test_enum_list_reports_a_bad_single_value_exactly_like_query_enum(self):
+        errors = []
+        for helper in (query_enum, query_enum_list):
+            with pytest.raises(ValidationError) as exc:
+                helper(self._req(health="red"), "health", HEALTH)
+            errors.append((exc.value.code, exc.value.message, exc.value.details))
+        assert errors[0] == errors[1]
+        assert errors[0] == (
+            "VALIDATION_ERROR",
+            "Invalid query parameter 'health'",
+            {"health": "Must be one of: on_track, at_risk, overdue"},
+        )
 
     def test_string_length_limit(self):
         with pytest.raises(ValidationError):

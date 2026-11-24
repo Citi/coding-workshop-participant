@@ -1,13 +1,15 @@
 """Integration tests: /projects CRUD, filters, computed fields and RBAC (real database)."""
 
+import json
 from datetime import UTC, date, datetime
 from decimal import Decimal
 
 import pytest
 
+import function
 from app.core import clock
 from app.projects import repository, service
-from helpers import assert_error
+from helpers import assert_error, make_event
 
 TODAY = date(2026, 6, 15)
 
@@ -264,6 +266,90 @@ class TestList:
         assert names(api.get("/projects", token=admin, query={"health": "at_risk"})) == ["Late deliverable"]
         assert names(api.get("/projects", token=admin, query={"health": "overdue"})) == ["Past end"]
 
+    @pytest.mark.parametrize(
+        "health, expected",
+        [
+            # one value as a plain string: a whole value, not a set of characters ("on_track" is not in "at_risk")
+            ("at_risk", ["Late deliverable"]),
+            ("overdue", ["Past end"]),
+            (("at_risk", "overdue"), ["Past end", "Late deliverable"]),
+            (["on_track"], ["Fine"]),
+        ],
+    )
+    def test_service_takes_one_health_value_or_several(self, api, admin, db_conn, health, expected):
+        create_project(api, admin, name="Fine")
+        late = create_project(api, admin, name="Late deliverable")
+        add_deliverable(db_conn, late["id"], "Spec", due_date=date(2026, 6, 1))
+        create_project(api, admin, name="Past end", start_date="2026-01-01", end_date="2026-06-01")
+        # a closed project has no health (None): it must be left out, not break the filter
+        create_project(api, admin, name="Closed", status="completed", start_date="2026-01-01", end_date="2026-06-01")
+        listed = service.list_projects(db_conn, health=health)
+        assert [item["name"] for item in listed["items"]] == expected
+
+    @pytest.mark.parametrize(
+        "health, expected",
+        [
+            # the union, still sorted by end date, then name (the order of the values does not matter)
+            ("at_risk,overdue", ["Past end", "Late deliverable"]),
+            ("overdue,at_risk", ["Past end", "Late deliverable"]),
+            (" at_risk , overdue,,at_risk ", ["Past end", "Late deliverable"]),
+            ("on_track,at_risk", ["Fine", "Late deliverable"]),
+            # all three values: every project that has a health; closed projects have none
+            ("on_track,at_risk,overdue", ["Past end", "Fine", "Late deliverable"]),
+            ("at_risk", ["Late deliverable"]),
+        ],
+    )
+    def test_filter_by_several_health_values(self, api, admin, db_conn, health, expected):
+        create_project(api, admin, name="Fine")
+        late = create_project(api, admin, name="Late deliverable")
+        add_deliverable(db_conn, late["id"], "Spec", due_date=date(2026, 6, 1))
+        create_project(api, admin, name="Past end", start_date="2026-01-01", end_date="2026-06-01")
+        create_project(api, admin, name="Closed", status="completed", start_date="2026-01-01", end_date="2026-06-01")
+        assert names(api.get("/projects", token=admin, query={"health": health})) == expected
+        assert names(api.get("/projects", token=admin)) == ["Closed", "Past end", "Fine", "Late deliverable"]
+
+    def test_health_filter_combines_with_the_other_filters(self, api, admin, db_conn):
+        for name, department in (("Sales late", "Sales"), ("IT late", "IT")):
+            project = create_project(api, admin, name=name, department=department)
+            add_deliverable(db_conn, project["id"], "Spec", due_date=date(2026, 6, 1))
+        create_project(
+            api, admin, name="Sales past end", department="Sales", start_date="2026-01-01", end_date="2026-06-01"
+        )
+        create_project(api, admin, name="Sales fine", department="Sales")
+        query = {"health": "at_risk,overdue", "department": "sales", "status": "active"}
+        assert names(api.get("/projects", token=admin, query=query)) == ["Sales past end", "Sales late"]
+
+    @pytest.mark.parametrize("health", ["", " ", ",", " , ,"])
+    def test_a_health_filter_without_values_is_no_filter(self, api, admin, health):
+        create_project(api, admin, name="Fine")
+        create_project(api, admin, name="Closed", status="completed", start_date="2026-01-01", end_date="2026-06-01")
+        assert names(api.get("/projects", token=admin, query={"health": health})) == ["Closed", "Fine"]
+
+    @pytest.mark.parametrize("status", ["completed", "cancelled"])
+    def test_a_health_filter_never_returns_closed_projects(self, api, admin, status):
+        create_project(api, admin, name="Closed", status=status, start_date="2026-01-01", end_date="2026-06-01")
+        query = {"health": "on_track,at_risk,overdue", "status": status}
+        assert names(api.get("/projects", token=admin, query=query)) == []
+        assert names(api.get("/projects", token=admin, query={"status": status})) == ["Closed"]
+
+    def test_a_repeated_health_parameter_counts_as_the_list(self, api, admin, db_conn):
+        """``?health=at_risk&health=overdue``: Lambda Function URLs (and LocalStack) join a repeated
+        parameter with commas in ``queryStringParameters``, which is what the API reads."""
+        create_project(api, admin, name="Fine")
+        late = create_project(api, admin, name="Late deliverable")
+        add_deliverable(db_conn, late["id"], "Spec", due_date=date(2026, 6, 1))
+        create_project(api, admin, name="Past end", start_date="2026-01-01", end_date="2026-06-01")
+        event = make_event("GET", "/projects", token=admin, query={"health": "at_risk,overdue"})
+        event["rawQueryString"] = "health=at_risk&health=overdue"
+        response = function.handler(event, None)
+        assert response["statusCode"] == 200
+        assert [item["name"] for item in json.loads(response["body"])["items"]] == ["Past end", "Late deliverable"]
+
+    @pytest.mark.parametrize("health", ["red", "at_risk,red", "at_risk;overdue", "At_Risk"])
+    def test_any_unknown_health_value_is_rejected(self, api, admin, health):
+        error = assert_error(api.get("/projects", token=admin, query={"health": health}), 400, "VALIDATION_ERROR")
+        assert error["details"] == {"health": "Must be one of: on_track, at_risk, overdue"}
+
     def test_filters_combine(self, api, admin):
         create_project(api, admin, name="Apollo", status="active", department="Sales")
         create_project(api, admin, name="Apollo Next", status="planned", department="Sales")
@@ -276,6 +362,7 @@ class TestList:
         [
             ({"status": "done"}, "status"),
             ({"health": "red"}, "health"),
+            ({"health": "at_risk,red"}, "health"),
             ({"search": "x" * 201}, "search"),
             ({"department": "x" * 101}, "department"),
         ],

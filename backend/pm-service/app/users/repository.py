@@ -16,7 +16,7 @@ WHERE (%(search)s::text IS NULL
   AND (%(role)s::text IS NULL OR role = %(role)s)
   AND (%(is_active)s::boolean IS NULL OR is_active = %(is_active)s)
 ORDER BY lower(full_name), id
-"""
+"""  # nosec B608 # only the constant column list is interpolated; values are bound parameters
 
 _EMAIL_TAKEN_SQL = """
 SELECT EXISTS (
@@ -29,7 +29,7 @@ _INSERT_SQL = f"""
 INSERT INTO users (email, full_name, role, is_active, password_hash)
 VALUES (%(email)s, %(full_name)s, %(role)s, %(is_active)s, %(password_hash)s)
 RETURNING {PUBLIC_USER_COLUMNS}
-"""
+"""  # nosec B608 # only the constant column list is interpolated; values are bound parameters
 
 # A NULL password_hash keeps the stored one (PUT only carries a password when it changes).
 _UPDATE_SQL = f"""
@@ -38,7 +38,7 @@ SET email = %(email)s, full_name = %(full_name)s, role = %(role)s, is_active = %
     password_hash = COALESCE(%(password_hash)s::text, password_hash), updated_at = now()
 WHERE id = %(id)s
 RETURNING {PUBLIC_USER_COLUMNS}
-"""
+"""  # nosec B608 # only the constant column list is interpolated; values are bound parameters
 
 
 def list_users(conn, *, search=None, role=None, is_active=None) -> list[dict]:

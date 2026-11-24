@@ -2,9 +2,11 @@
 
 from datetime import timedelta
 
+import psycopg
 import pytest
 
 from app.auth.tokens import ACCESS, create_token
+from app.core import db
 from helpers import DEFAULT_PASSWORDS, assert_error
 
 
@@ -120,3 +122,83 @@ class TestPipeline:
 
         seed_default_users(db_conn)
         assert db_conn.execute("SELECT COUNT(*) AS n FROM users").fetchone()["n"] == 4
+
+
+class RecordingConnection:
+    """Wraps the real connection and records the SQL of every ``execute`` call."""
+
+    def __init__(self, conn, statements: list):
+        self._conn = conn
+        self.statements = statements
+
+    def execute(self, query, *args, **kwargs):
+        self.statements.append(query)
+        return self._conn.execute(query, *args, **kwargs)
+
+    def __getattr__(self, name):
+        return getattr(self._conn, name)
+
+
+def failing(exc):
+    """A stand-in for a function that raises ``exc``."""
+
+    def fail(*_args, **_kwargs):
+        raise exc
+
+    return fail
+
+
+class TestDatabaseHealth:
+    BODY = {"status": "ok", "service": "pm-service", "database": "ok"}
+
+    def test_is_public(self, api):
+        result = api.get("/health/db")
+        assert (result.status, result.body) == (200, self.BODY)
+        assert api.get("/api/pm-service/health/db").body == self.BODY
+
+    def test_ignores_a_stale_token(self, api):
+        assert api.get("/health/db", token="expired-or-garbage").body == self.BODY
+
+    def test_queries_the_database_and_bootstraps_the_schema_on_a_cold_start(self, api, monkeypatch):
+        statements = []
+        real_connection = db.get_connection()
+        monkeypatch.setattr(db, "_schema_ready", False)  # a freshly started Lambda container
+        monkeypatch.setattr(db, "get_connection", lambda: RecordingConnection(real_connection, statements))
+        assert api.get("/health/db").body == self.BODY
+        assert db._schema_ready is True
+        assert db.SCHEMA_FILE.read_text(encoding="utf-8") in statements
+        assert statements[-1] == "SELECT 1"
+
+    @pytest.mark.parametrize("method", ["POST", "PUT", "DELETE", "PATCH"])
+    def test_wrong_method_is_405(self, api, method):
+        assert_error(api.request(method, "/health/db"), 405, "METHOD_NOT_ALLOWED")
+
+    def test_options_preflight_never_reaches_the_database(self, api, monkeypatch):
+        monkeypatch.setattr(db, "get_connection", lambda: pytest.fail("OPTIONS must not open a connection"))
+        result = api.request("OPTIONS", "/health/db", token="expired-or-garbage")
+        assert result.status == 204 and result.raw == ""
+
+    def test_database_outage_is_reported(self, api, monkeypatch):
+        attempts = []
+
+        def unreachable():
+            attempts.append("connect")
+            raise psycopg.OperationalError("connection refused")
+
+        monkeypatch.setattr(db, "get_connection", unreachable)
+        assert_error(api.get("/health/db"), 500, "DATABASE_UNAVAILABLE")
+        assert attempts == ["connect", "connect"]  # one reconnect, then the outage is reported
+
+    def test_a_retry_succeeds_once_the_database_is_back(self, api, monkeypatch):
+        cached = db.get_connection()
+        monkeypatch.setattr(db, "ensure_schema", failing(psycopg.OperationalError("server closed the connection")))
+        assert_error(api.get("/health/db"), 500, "DATABASE_UNAVAILABLE")
+        assert cached.closed  # the broken connection is dropped, not reused
+
+        monkeypatch.undo()
+        assert api.get("/health/db").body == self.BODY
+
+    def test_other_database_failures_are_database_errors(self, api, monkeypatch):
+        monkeypatch.setattr(db, "ensure_schema", failing(psycopg.errors.InsufficientPrivilege("permission denied")))
+        error = assert_error(api.get("/health/db"), 500, "DATABASE_ERROR")
+        assert "permission denied" not in error["message"]

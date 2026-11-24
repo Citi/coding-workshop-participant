@@ -1,5 +1,7 @@
 """Project business rules: existence, unique names and the computed read model (``metrics.py``)."""
 
+from collections.abc import Collection
+
 from app.core import clock
 from app.core.errors import ConflictError, NotFoundError
 from app.core.http import list_result
@@ -35,12 +37,19 @@ def _ensure_unique_name(conn, name: str, exclude_id: int | None = None) -> None:
         raise ConflictError(DUPLICATE_NAME, details={"name": DUPLICATE_NAME})
 
 
-def list_projects(conn, *, search=None, status=None, department=None, health=None) -> dict:
-    """Filtered projects with computed fields; ``health`` filters on the computed value."""
+def list_projects(
+    conn, *, search=None, status=None, department=None, health: str | Collection[str] | None = None
+) -> dict:
+    """Filtered projects with computed fields; ``health`` keeps projects whose computed health is any listed value.
+
+    ``health`` is one value (``"at_risk"``) or several (``("at_risk", "overdue")``); a single string is one
+    value, never a set of characters to match against.
+    """
     rows = repository.list_projects(conn, search=search, status=status, department=department)
     items = enrich_projects(conn, rows)
     if health:
-        items = [item for item in items if item["health"] == health]
+        wanted = {health} if isinstance(health, str) else set(health)
+        items = [item for item in items if item["health"] in wanted]
     return list_result(items)
 
 

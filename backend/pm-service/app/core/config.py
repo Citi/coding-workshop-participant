@@ -5,7 +5,7 @@ from dataclasses import dataclass
 from functools import lru_cache
 
 # Only ever used when IS_LOCAL=true and Terraform did not provide JWT_SECRET.
-LOCAL_DEV_JWT_SECRET = "local-development-only-jwt-secret-change-me"
+LOCAL_DEV_JWT_SECRET = "local-development-only-jwt-secret-change-me"  # nosec B105 # public placeholder, local only
 
 
 @dataclass(frozen=True)

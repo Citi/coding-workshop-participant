@@ -1,14 +1,15 @@
 """Application wiring: builds the router and turns Lambda events into HTTP responses.
 
 Request lifecycle (``handle``):
-    parse event -> resolve route (404/405) -> open DB transaction -> authenticate (401)
-    -> check role permission (403) -> run handler -> commit (or roll back on any error)
-    -> JSON response with a consistent error shape.
+    parse event -> resolve route (404/405) -> open DB transaction (a connection the server closed
+    while the container was idle is replaced, once) -> authenticate (401) -> check role permission (403)
+    -> run handler -> commit (or roll back on any error) -> JSON response with a consistent error shape.
 """
 
 import json
 import logging
 import time
+from contextlib import ExitStack
 
 import psycopg
 from psycopg import errors as pg_errors
@@ -64,10 +65,21 @@ def health(_req):
     return {"status": "ok", "service": "pm-service"}
 
 
+def health_db(req):
+    """Public wake-up / readiness check: one round trip to the database.
+
+    It runs through the normal pipeline, so on a cold start it also opens the connection and
+    applies the schema bootstrap; a client can call it early so its first real request is fast.
+    """
+    req.conn.execute("SELECT 1")
+    return {"status": "ok", "service": "pm-service", "database": "ok"}
+
+
 def build_router() -> Router:
     router = Router()
     router.add("GET", "/", health, public=True, uses_db=False)
     router.add("GET", "/health", health, public=True, uses_db=False)
+    router.add("GET", "/health/db", health_db, public=True, uses_db=True)
     for module in DOMAIN_ROUTES:
         module.register(router)
     return router
@@ -90,10 +102,8 @@ def _dispatch(req) -> Response:
     if not route.uses_db:
         return _as_response(route.handler(req))
     try:
-        conn = db.get_connection()
-        db.ensure_schema(conn)
-        req.conn = conn
-        with conn.transaction():
+        with ExitStack() as scope:  # holds the request's transaction: commit on success, roll back on error
+            req.conn = _open_transaction(scope, req)
             if not route.public:
                 req.user = authenticate(req)
                 if route.permission:
@@ -118,6 +128,32 @@ def _dispatch(req) -> Response:
     except psycopg.Error as exc:
         logger.exception("Database error")
         raise ApiError("A database error occurred", code="DATABASE_ERROR") from exc
+
+
+def _open_transaction(scope: ExitStack, req) -> psycopg.Connection:
+    """Get the container's connection, bootstrap the schema and open the request's transaction on ``scope``.
+
+    A warm container's cached connection may have been closed by the server since the last request
+    (Aurora Serverless pausing at 0 ACU, an idle timeout, a failover); psycopg only notices when it
+    first uses it, here. Nothing of the request has run yet, so a lost connection is replaced and this
+    step retried once (connecting waits while Aurora resumes). Nothing is retried after this point,
+    since the handler may already have written; any other error, or a second failure, is reported as usual.
+    """
+    try:
+        return _begin(scope)
+    except psycopg.Error as exc:
+        if not (isinstance(exc, psycopg.OperationalError) or db.connection_lost()):
+            raise
+        logger.warning(json.dumps({"event": "db_reconnect", "request_id": req.request_id, "error": type(exc).__name__}))
+        db.reset_connection()
+        return _begin(scope)
+
+
+def _begin(scope: ExitStack) -> psycopg.Connection:
+    conn = db.get_connection()
+    db.ensure_schema(conn)
+    scope.enter_context(conn.transaction())
+    return conn
 
 
 def handle(event: dict, context=None) -> dict:

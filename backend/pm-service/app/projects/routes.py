@@ -1,21 +1,21 @@
 """Project endpoints: CRUD; every project carries computed progress, health and budget fields."""
 
 from app.core.http import created, no_content, ok
-from app.core.validation import parse_body, query_enum, query_str
+from app.core.validation import parse_body, query_enum, query_enum_list, query_str
 from app.projects import service
 from app.projects.health import HEALTH_VALUES
 from app.projects.schemas import PROJECT_STATUSES, ProjectRequest
 
 
 def list_projects(req):
-    """GET /projects?search=&status=&department=&health="""
+    """GET /projects?search=&status=&department=&health= (``health`` may list several values: at_risk,overdue)"""
     return ok(
         service.list_projects(
             req.conn,
             search=query_str(req, "search"),
             status=query_enum(req, "status", PROJECT_STATUSES),
             department=query_str(req, "department", max_length=100),
-            health=query_enum(req, "health", HEALTH_VALUES),
+            health=query_enum_list(req, "health", HEALTH_VALUES),
         )
     )
 

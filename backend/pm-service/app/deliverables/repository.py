@@ -88,7 +88,7 @@ FROM (SELECT id, MIN(depth) AS depth FROM upstream GROUP BY id) c
 JOIN deliverables d ON d.id = c.id
 JOIN projects p ON p.id = d.project_id
 ORDER BY c.depth, d.due_date, d.id
-"""
+"""  # nosec B608 # only the constant column list is interpolated; values are bound parameters
 
 _BLOCKS_SQL = f"""
 SELECT {_RELATED_COLUMNS}
@@ -97,7 +97,7 @@ JOIN deliverables d ON d.id = dd.deliverable_id
 JOIN projects p ON p.id = d.project_id
 WHERE dd.depends_on_id = %s
 ORDER BY d.due_date, d.id
-"""
+"""  # nosec B608 # only the constant column list is interpolated; values are bound parameters
 
 
 def list_deliverables(conn, *, search=None, project_id=None, status=None, is_key=None, owner_id=None) -> list[dict]:

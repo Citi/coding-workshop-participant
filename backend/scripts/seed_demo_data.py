@@ -12,12 +12,43 @@ Only the standard library is used.
 import json
 import sys
 import urllib.error
+import urllib.parse
 import urllib.request
 from datetime import date, timedelta
 
-BASE = (sys.argv[1] if len(sys.argv) > 1 else "http://localhost:3001").rstrip("/") + "/api/pm-service"
-ADMIN = {"email": "admin@acme.com", "password": "Admin@123"}
+DEFAULT_BASE_URL = "http://localhost:3001"
+ALLOWED_SCHEMES = ("http", "https")
+ADMIN = {"email": "admin@acme.com", "password": "Admin@123"}  # nosec B105 # the documented demo login
 TODAY = date.today()
+
+
+def _is_server_url(url: str) -> bool:
+    """http(s) scheme, a host name, a usable port when one is given, and no ? or # part."""
+    parts = urllib.parse.urlsplit(url)
+    try:
+        port_ok = parts.port is None or parts.port > 0
+    except ValueError:  # the port is not a number from 0 to 65535
+        return False
+    return parts.scheme in ALLOWED_SCHEMES and bool(parts.hostname) and port_ok and "?" not in url and "#" not in url
+
+
+def api_base(base_url: str) -> str:
+    """The pm-service API root under ``base_url``.
+
+    Only an http:// or https:// URL that names a host is accepted: urllib would also open file:// paths
+    and other schemes. A ? or # part is refused too, because it would swallow the API path appended here
+    (the app's own address, https://<cloudfront>/#/projects, would send the login to the wrong URL).
+    """
+    url = base_url.strip().rstrip("/")
+    if not _is_server_url(url):
+        raise ValueError(
+            "The base URL must be an http:// or https:// address with a host name and no ? or # part"
+            f" (for example {DEFAULT_BASE_URL}), got: {base_url!r}"
+        )
+    return url + "/api/pm-service"
+
+
+BASE = api_base(DEFAULT_BASE_URL)  # main() replaces it with the validated URL from the command line
 
 
 def day(offset: int) -> str:
@@ -31,7 +62,7 @@ def call(method, path, body=None, token=None):
     if token:
         request.add_header("Authorization", f"Bearer {token}")
     try:
-        with urllib.request.urlopen(request, timeout=60) as response:
+        with urllib.request.urlopen(request, timeout=60) as response:  # nosec B310 # api_base() allows only http(s)
             raw = response.read().decode()
             return response.status, json.loads(raw) if raw else None
     except urllib.error.HTTPError as error:
@@ -185,7 +216,14 @@ EXPENSES = [
 ]
 
 
-def main():
+def main(argv=None):
+    global BASE
+    args = sys.argv[1:] if argv is None else argv
+    try:
+        BASE = api_base(args[0] if args else DEFAULT_BASE_URL)
+    except ValueError as error:
+        sys.exit(str(error))
+
     status, login = call("POST", "/auth/login", ADMIN)
     if status != 200:
         sys.exit(f"Login failed ({status}): {login}")

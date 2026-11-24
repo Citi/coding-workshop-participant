@@ -14,13 +14,13 @@ WHERE (%(search)s::text IS NULL
   AND (%(status)s::text IS NULL OR status = %(status)s)
   AND (%(department)s::text IS NULL OR lower(department) = lower(%(department)s))
 ORDER BY end_date, lower(name)
-"""
+"""  # nosec B608 # only the constant column list is interpolated; values are bound parameters
 
 _INSERT_SQL = f"""
 INSERT INTO projects (name, description, department, status, start_date, end_date, budget)
 VALUES (%(name)s, %(description)s, %(department)s, %(status)s, %(start_date)s, %(end_date)s, %(budget)s)
 RETURNING {PROJECT_COLUMNS}
-"""
+"""  # nosec B608 # only the constant column list is interpolated; values are bound parameters
 
 _UPDATE_SQL = f"""
 UPDATE projects
@@ -28,7 +28,7 @@ SET name = %(name)s, description = %(description)s, department = %(department)s,
     start_date = %(start_date)s, end_date = %(end_date)s, budget = %(budget)s, updated_at = now()
 WHERE id = %(id)s
 RETURNING {PROJECT_COLUMNS}
-"""
+"""  # nosec B608 # only the constant column list is interpolated; values are bound parameters
 
 _NAME_TAKEN_SQL = """
 SELECT EXISTS (
@@ -46,7 +46,10 @@ def list_projects(conn, *, search=None, status=None, department=None) -> list[di
 
 def find_project(conn, project_id: int) -> dict | None:
     """One project row, or None."""
-    return conn.execute(f"SELECT {PROJECT_COLUMNS} FROM projects WHERE id = %s", (project_id,)).fetchone()
+    return conn.execute(
+        f"SELECT {PROJECT_COLUMNS} FROM projects WHERE id = %s",  # nosec B608 # constant columns; the id is bound
+        (project_id,),
+    ).fetchone()
 
 
 def project_exists(conn, project_id: int) -> bool:

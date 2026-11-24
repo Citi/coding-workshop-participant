@@ -3,3 +3,4 @@
 -r pm-service/requirements.txt
 pytest==9.2.0
 pytest-cov==7.1.0
+bandit==1.9.4

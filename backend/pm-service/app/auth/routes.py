@@ -12,6 +12,10 @@ from app.core.validation import parse_body
 
 _dummy_hash: str | None = None
 
+# A one-line constant keeps the bandit suppression to this line: inside the response dict below, the
+# suppression comment would cover every string literal in the dict, including any secret added later.
+TOKEN_TYPE = "Bearer"  # nosec B105 # the OAuth 2 token type name, not a secret
+
 
 def session_user(user: dict) -> dict:
     """The user as seen by the frontend, including the permission list for the UI."""
@@ -29,7 +33,7 @@ def _token_response(user: dict) -> dict:
     return {
         "access_token": create_access_token(user),
         "refresh_token": create_refresh_token(user),
-        "token_type": "Bearer",
+        "token_type": TOKEN_TYPE,
         "expires_in": get_settings().access_token_minutes * 60,
         "user": session_user(user),
     }

@@ -1,7 +1,9 @@
 """PostgreSQL access: one reusable connection per Lambda container, schema bootstrap.
 
 The connection runs in autocommit mode; the dispatcher wraps every request in
-``with conn.transaction():`` so a failed request never leaves partial writes behind.
+``conn.transaction()`` so a failed request never leaves partial writes behind. A connection the
+server closed while the container was idle only shows up as lost when it is next used; the
+dispatcher then replaces it and opens the request's transaction again (app/main.py).
 """
 
 import logging
@@ -17,6 +19,12 @@ logger = logging.getLogger(__name__)
 SCHEMA_FILE = Path(__file__).with_name("schema.sql")
 SCHEMA_LOCK_KEY = 7_270_001  # advisory lock: concurrent cold starts apply the schema one at a time
 
+# A request may connect twice (the dispatcher reconnects once). Both waits together must end before
+# CloudFront stops waiting for the API (origin_read_timeout, 60 s in infra/cloudfront.tf), so even a
+# double failure reaches the client as the JSON DATABASE_UNAVAILABLE error rather than a 504 page.
+# 25 s still covers an Aurora Serverless resume (about 15-20 s).
+CONNECT_TIMEOUT_SECONDS = 25
+
 _connection: psycopg.Connection | None = None
 _schema_ready = False
 
@@ -29,7 +37,7 @@ def connect() -> psycopg.Connection:
         dbname=settings.postgres_name,
         user=settings.postgres_user,
         password=settings.postgres_password,
-        connect_timeout=30,
+        connect_timeout=CONNECT_TIMEOUT_SECONDS,
         # Local PostgreSQL runs without SSL; AWS Aurora requires it.
         sslmode="prefer" if settings.is_local else "require",
         application_name="pm-service",
@@ -43,9 +51,17 @@ def connect() -> psycopg.Connection:
 def get_connection() -> psycopg.Connection:
     """Return the container's connection, reconnecting if it was closed or broken."""
     global _connection
-    if _connection is None or _connection.closed or _connection.broken:
+    if _connection is None or connection_lost():
         _connection = connect()
     return _connection
+
+
+def connection_lost() -> bool:
+    """True when psycopg has found the cached connection closed or broken.
+
+    It only finds out by using the connection: one the server ended in the meantime looks fine until then.
+    """
+    return _connection is not None and (_connection.closed or _connection.broken)
 
 
 def reset_connection() -> None:

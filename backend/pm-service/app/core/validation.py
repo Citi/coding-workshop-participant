@@ -183,6 +183,10 @@ def query_bool(req, name: str) -> bool | None:
     raise _invalid_query(name, "Must be true or false")
 
 
+def _one_of(allowed: tuple[str, ...]) -> str:
+    return f"Must be one of: {', '.join(allowed)}"
+
+
 def query_enum(req, name: str, allowed: Iterable[str]) -> str | None:
     """Parameter restricted to a fixed set of values."""
     value = query_str(req, name)
@@ -190,8 +194,24 @@ def query_enum(req, name: str, allowed: Iterable[str]) -> str | None:
         return None
     allowed = tuple(allowed)
     if value not in allowed:
-        raise _invalid_query(name, f"Must be one of: {', '.join(allowed)}")
+        raise _invalid_query(name, _one_of(allowed))
     return value
+
+
+def query_enum_list(req, name: str, allowed: Iterable[str]) -> tuple[str, ...] | None:
+    """Comma-separated list of values from a fixed set (``?health=at_risk,overdue``).
+
+    Items are trimmed, empty items are ignored and duplicates dropped (first occurrence wins).
+    ``None`` when absent or blank; any unknown item is a 400 naming the parameter, like ``query_enum``.
+    """
+    value = query_str(req, name)
+    if value is None:
+        return None
+    allowed = tuple(allowed)
+    values = tuple(dict.fromkeys(item.strip() for item in value.split(",") if item.strip()))
+    if any(item not in allowed for item in values):
+        raise _invalid_query(name, _one_of(allowed))
+    return values or None
 
 
 def query_date(req, name: str) -> date | None:
