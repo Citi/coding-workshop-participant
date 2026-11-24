@@ -113,14 +113,14 @@ python3.13 -m venv .venv
 BASE_URL=http://localhost:3001/api/portfolio .venv/bin/python tests/e2e/smoke_test.py   # needs SEED_PASSWORD
 ```
 
-Results recorded on 2026-11-25 on the local stack:
+Results recorded on 2026-11-25:
 
 | Suite | Result |
 |---|---|
 | Backend, `pytest --cov=app` | 1184 passed. Line coverage 99% (3,112 of 3,117 statements); engines, routers, schemas and error handling at 100% |
 | Frontend, `npm test` | 36 files, 574 tests passed. Statements 95.67%, branches 87.00%, functions 95.54%, lines 95.69% |
 | End-to-end smoke, local | 8 of 8 steps pass |
-| End-to-end smoke, AWS | not run yet: needs the AWS redeploy and reseed |
+| End-to-end smoke, AWS (CloudFront URL) | 8 of 8 steps pass. Step 8 gets the app page instead of a JSON 404 (CloudFront's fallback), which the spec accepts |
 
 `npm run lint`, `npm run build`, `npm audit --audit-level=high` (0
 vulnerabilities), `bandit -r ./backend` (0 issues) and
@@ -166,8 +166,16 @@ hold allocations and run projects.
   spec.
 - `bin/proxy-server.js`: the 404 for an unknown endpoint also lists the
   available endpoints.
-- `bin/db-task.sh` finds the Lambda by its Terraform name,
-  `<project>-portfolio-<app code>`.
+- `bin/db-task.sh` builds the Lambda's name the way Terraform does,
+  `<project>-portfolio-<app code>`, and only invokes it: the workshop's AWS
+  role is not allowed to list functions.
+- `infra/cloudfront.tf`: the S3 bucket policy also lets this CloudFront
+  distribution list the bucket (`s3:ListBucket`). Without it, S3 answers 403
+  for a path that is not a file, so refreshing or opening any page other than
+  `/` showed S3's AccessDenied page; CloudFront sends only 404s to
+  `index.html`. A CloudFront rule for 403 would also have replaced the API's
+  real 403 answers. This is a fourth infrastructure change; the spec allows
+  three.
 - Input that PostgreSQL cannot handle is a 400, not a 500: control characters
   such as NUL in text and search fields, offsets beyond the BIGINT range, and
   any other database data error.
@@ -201,14 +209,6 @@ hold allocations and run projects.
 - In AWS, CloudFront may return the app's page for an API 404; the client
   treats it as a 404.
 - Single currency.
-- In AWS, refreshing the browser on a page other than `/`, such as
-  `/projects/1`, is expected to show S3's AccessDenied page. The bucket policy
-  allows only `s3:GetObject`, so S3 answers 403 for a path that is not a file,
-  and CloudFront sends only 404s to `index.html`. Open the app at `/` and
-  move around inside it. A CloudFront rule for 403 would not help: it would
-  also replace the API's real 403 answers with the app page. Letting the
-  distribution list the bucket (`s3:ListBucket`) would fix it, but the spec
-  limits infrastructure changes, so it is not applied.
 - Locally, the proxy answers CORS preflight requests with
   `Access-Control-Allow-Headers: *`. The Fetch standard says this wildcard
   does not cover `Authorization`. Firefox accepts it (tested); Chrome was not
