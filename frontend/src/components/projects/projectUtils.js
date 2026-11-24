@@ -147,6 +147,45 @@ export function factorTone(points, maxPoints) {
 }
 
 /**
+ * Rows for the risk factor chart: the points scored, the headroom left under the factor's
+ * cap (drawn as a light track, so each bar's full length is the factor's maximum), a tone for
+ * the filled part and the "points / max" label printed after the bar. `labelOn` names the
+ * stacked segment that ends at the maximum, so the label sits after the whole bar: the track,
+ * or the filled part when the factor is at its cap (a zero-length segment would put the label
+ * at the axis origin).
+ * @param {Array<{key: string, label: string, points: number, max_points: number, detail?: string}>} factors
+ *   RiskFactorOut items in the server's order.
+ * @returns {Array<{key: string, label: string, detail: string, points: number, max: number,
+ *   filled: number, headroom: number, tone: 'none'|'info'|'warning'|'error', text: string,
+ *   labelOn: 'points'|'headroom'|null}>} One row per factor.
+ */
+export function factorChartRows(factors) {
+  return (Array.isArray(factors) ? factors : []).map((factor) => {
+    const points = toNumber(factor.points) ?? 0;
+    const max = Math.max(0, toNumber(factor.max_points) ?? 0);
+    const filled = Math.min(max, Math.max(0, points));
+    let labelOn = null;
+    if (max - filled > 0) {
+      labelOn = 'headroom';
+    } else if (filled > 0) {
+      labelOn = 'points';
+    }
+    return {
+      key: factor.key,
+      label: factor.label,
+      detail: factor.detail ?? '',
+      points,
+      max,
+      filled,
+      headroom: max - filled,
+      tone: factorTone(points, max),
+      text: `${points} / ${max}`,
+      labelOn,
+    };
+  });
+}
+
+/**
  * Words for a deliverable's distance from the item holding it up.
  * @param {number} depth - Edges from the root cause (1 = direct successor).
  * @returns {string} Text such as "1 step downstream".

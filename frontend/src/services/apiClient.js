@@ -7,8 +7,9 @@
  * - On 401: calls `/auth/refresh` once and retries; if that fails, signs out and goes to /login.
  * - 204 responses resolve to `null`.
  * - A `text/html` response is treated as 404 NOT_FOUND: CloudFront's SPA rule can replace an
- *   API 404 with index.html and status 200. (An HTML 5xx page is a gateway error and stays a
- *   server error.)
+ *   API 404 with index.html and status 200. An HTML 5xx page is a gateway error (CloudFront's
+ *   own 502/504 pages are HTML) and stays a server error, so GETs still retry it. This is a
+ *   deliberate deviation from spec 12.2, recorded in frontend/README.md.
  * - Errors are thrown as `ApiError` carrying `status`, `error`, `message` and `details`.
  * - GET requests are retried once after 3 seconds on a network error or 5xx, to ride out
  *   an Aurora resume.

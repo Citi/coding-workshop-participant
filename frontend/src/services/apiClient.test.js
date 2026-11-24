@@ -293,6 +293,20 @@ describe('GET retry on network errors and 5xx', () => {
     expect(fetchMock).toHaveBeenCalledTimes(2);
   });
 
+  // Deliberate deviation from spec 12.2 (see README): an HTML 5xx is CloudFront's own gateway
+  // error page, not the SPA fallback, so it is retried instead of being reported as 404.
+  it('retries a GET once after an HTML 5xx gateway page', async () => {
+    fetchMock
+      .mockResolvedValueOnce(htmlResponse(502))
+      .mockResolvedValueOnce(jsonResponse(200, { id: 1, project_name: 'Alpha' }));
+
+    const pending = apiClient.get('/projects/1');
+    await vi.advanceTimersByTimeAsync(GET_RETRY_DELAY_MS);
+
+    await expect(pending).resolves.toEqual({ id: 1, project_name: 'Alpha' });
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+  });
+
   it('retries a GET once after a network error', async () => {
     fetchMock
       .mockRejectedValueOnce(new TypeError('Failed to fetch'))

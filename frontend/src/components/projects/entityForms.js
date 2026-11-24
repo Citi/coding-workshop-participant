@@ -138,10 +138,10 @@ export const DELIVERABLE_FIELDS = Object.freeze([
   'title',
   'status',
   'completion_percentage',
-  'assigned_user_id',
-  'start_date',
-  'due_date',
   'blocked_reason',
+  'assigned_user_id',
+  'due_date',
+  'start_date',
   'description',
 ]);
 

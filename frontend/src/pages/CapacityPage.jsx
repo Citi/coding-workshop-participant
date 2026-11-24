@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react';
+import Alert from '@mui/material/Alert';
 import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
 import Grid from '@mui/material/Grid';
@@ -14,6 +15,7 @@ import KpiTile from '../components/KpiTile.jsx';
 import PageHeader from '../components/PageHeader.jsx';
 import StatusChip from '../components/StatusChip.jsx';
 import AllocationsSection from '../components/portfolio/AllocationsSection.jsx';
+import ConflictSummary from '../components/portfolio/ConflictSummary.jsx';
 import EmployeeCapacityDetail from '../components/portfolio/EmployeeCapacityDetail.jsx';
 import ExpandableTable from '../components/portfolio/ExpandableTable.jsx';
 import { BottleneckFlag } from '../components/portfolio/Flags.jsx';
@@ -27,6 +29,10 @@ import { formatDate } from '../utils/format.js';
 
 const STATUS_ORDER = { OVER_ALLOCATED: 0, FULLY_ALLOCATED: 1, AVAILABLE: 2 };
 const NO_EMPLOYEES = Object.freeze([]);
+/** Wide enough for a full date ("12/31/2026") plus the picker icon at every desktop width. */
+const DATE_FIELD_SIZE = { xs: 12, sm: 6, md: 4, lg: 3 };
+/** Results kept on screen while the period is invalid are dimmed (and explained in words). */
+const STALE_SX = { opacity: 0.5, transition: 'opacity 150ms' };
 
 /**
  * Order people so the over-allocated come first, then the fully allocated, then by name.
@@ -78,10 +84,7 @@ function buildColumns(departmentNames) {
     {
       field: 'conflicts',
       header: 'Conflict windows',
-      render: (row) => {
-        const count = row.conflicts?.length ?? 0;
-        return count === 0 ? 'None' : `${count} window${count === 1 ? '' : 's'} above 100%`;
-      },
+      render: (row) => <ConflictSummary conflicts={row.conflicts ?? []} />,
     },
     {
       field: 'is_compound_bottleneck',
@@ -104,8 +107,10 @@ function buildColumns(departmentNames) {
 /**
  * Resource capacity (route /capacity), answering spec question 5: who is allocated above
  * 100% across overlapping timelines. Per person: peak load, load today, status, compound
- * bottleneck flag with the deliverables involved, and expandable conflict windows listing
- * the allocations behind them. Below, the allocations themselves, which ADMIN and PM can
+ * bottleneck flag with the deliverables involved, and each conflict window's load and dates;
+ * opening the row lists the allocations behind every window. Tiles never show unmeasured
+ * zeros: they wait for data, step aside for an error, and dim (with a note) while the period
+ * is invalid. Below, the allocations themselves, which ADMIN and PM can
  * create, edit and delete; a save that over-allocates someone shows the API's warning.
  * @returns {JSX.Element} The page.
  */
@@ -133,9 +138,34 @@ export default function CapacityPage() {
   const sorted = useMemo(() => sortEmployees(employees), [employees]);
   const columns = useMemo(() => buildColumns(departments.nameById), [departments.nameById]);
   const loaded = Boolean(capacity.data);
+  // Nothing loaded and the request failed: show the error, not zeros that look like answers.
+  const failed = Boolean(capacity.error) && !loaded;
+  // A reversed period is never sent, so what is on screen belongs to the last valid one.
+  const stale = loaded && !rangeValid;
+  const tilesLoading = !loaded && capacity.loading;
   const bottleneckCount = employees.filter((employee) => employee.is_compound_bottleneck).length;
   const peak = sorted.reduce((best, employee) => (!best || employee.peak_load > best.peak_load ? employee : best), null);
   const filtered = Boolean(department || from || to);
+  const overAllocated = capacity.data?.over_allocated_count ?? 0;
+  let overAllocatedTone = 'default';
+  if (loaded) {
+    overAllocatedTone = overAllocated > 0 ? 'error' : 'success';
+  }
+  let peakHint = '';
+  if (loaded) {
+    peakHint = peak ? peak.user_name : 'No allocations';
+  }
+  /** A tile's value once loaded; a dash before that (never a zero that was not measured). */
+  const tileValue = (value) => (loaded ? value : '—');
+  let empty = { title: 'No allocations yet', message: 'Create allocations below to see each person’s load.' };
+  if (!rangeValid) {
+    empty = { title: 'Fix the period first', message: 'Choose a To date on or after From.' };
+  } else if (filtered) {
+    empty = {
+      title: 'Nobody is allocated in this selection',
+      message: 'Try another department or period, or clear the filters.',
+    };
+  }
 
   const clearFilters = () => {
     setDepartment('');
@@ -166,7 +196,7 @@ export default function CapacityPage() {
         ]}
         onFilterChange={(_, value) => setDepartment(value)}
       >
-        <Grid size={{ xs: 12, sm: 6, md: 2 }}>
+        <Grid size={DATE_FIELD_SIZE}>
           <TextField
             fullWidth
             size="small"
@@ -177,7 +207,7 @@ export default function CapacityPage() {
             slotProps={{ inputLabel: { shrink: true } }}
           />
         </Grid>
-        <Grid size={{ xs: 12, sm: 6, md: 2 }}>
+        <Grid size={DATE_FIELD_SIZE}>
           <TextField
             fullWidth
             size="small"
@@ -197,69 +227,75 @@ export default function CapacityPage() {
         </Grid>
       </FilterBar>
 
-      <Grid container spacing={2} sx={{ mb: 3 }}>
-        <Grid size={{ xs: 12, sm: 6, lg: 3 }}>
-          <KpiTile
-            label="People allocated"
-            value={employees.length}
-            hint={filtered ? 'In the selected department and period' : 'Everyone with an allocation'}
-            icon={<GroupsOutlinedIcon />}
-            loading={!loaded && capacity.loading}
-          />
+      {stale ? (
+        <Alert severity="info" role="status" sx={{ mb: 2 }}>
+          The figures below are for the last valid period. Choose a To date on or after From to update them.
+        </Alert>
+      ) : null}
+
+      {failed ? null : (
+        <Grid container spacing={2} sx={{ mb: 3, ...(stale ? STALE_SX : null) }} data-testid="capacity-kpis">
+          <Grid size={{ xs: 12, sm: 6, lg: 3 }}>
+            <KpiTile
+              label="People allocated"
+              value={tileValue(employees.length)}
+              hint={filtered ? 'In the selected department and period' : 'Everyone with an allocation'}
+              icon={<GroupsOutlinedIcon />}
+              loading={tilesLoading}
+            />
+          </Grid>
+          <Grid size={{ xs: 12, sm: 6, lg: 3 }}>
+            <KpiTile
+              label="Over-allocated"
+              value={tileValue(overAllocated)}
+              hint="Above 100% now or in a coming window"
+              tone={overAllocatedTone}
+              icon={<WarningAmberIcon />}
+              loading={tilesLoading}
+            />
+          </Grid>
+          <Grid size={{ xs: 12, sm: 6, lg: 3 }}>
+            <KpiTile
+              label="Compound bottlenecks"
+              value={tileValue(bottleneckCount)}
+              hint="Over-allocated and holding blocked or late work"
+              tone={bottleneckCount > 0 ? 'warning' : 'default'}
+              icon={<PriorityHighIcon />}
+              loading={tilesLoading}
+            />
+          </Grid>
+          <Grid size={{ xs: 12, sm: 6, lg: 3 }}>
+            <KpiTile
+              label="Highest peak load"
+              value={peak ? `${peak.peak_load}%` : '—'}
+              hint={peakHint}
+              tone={peak && peak.peak_load > FULL_LOAD ? 'error' : 'default'}
+              icon={<TrendingUpIcon />}
+              loading={tilesLoading}
+            />
+          </Grid>
         </Grid>
-        <Grid size={{ xs: 12, sm: 6, lg: 3 }}>
-          <KpiTile
-            label="Over-allocated"
-            value={capacity.data?.over_allocated_count ?? 0}
-            hint="Above 100% now or in a coming window"
-            tone={(capacity.data?.over_allocated_count ?? 0) > 0 ? 'error' : 'success'}
-            icon={<WarningAmberIcon />}
-            loading={!loaded && capacity.loading}
-          />
-        </Grid>
-        <Grid size={{ xs: 12, sm: 6, lg: 3 }}>
-          <KpiTile
-            label="Compound bottlenecks"
-            value={bottleneckCount}
-            hint="Over-allocated and holding blocked or late work"
-            tone={bottleneckCount > 0 ? 'warning' : 'default'}
-            icon={<PriorityHighIcon />}
-            loading={!loaded && capacity.loading}
-          />
-        </Grid>
-        <Grid size={{ xs: 12, sm: 6, lg: 3 }}>
-          <KpiTile
-            label="Highest peak load"
-            value={peak ? `${peak.peak_load}%` : '—'}
-            hint={peak ? peak.user_name : 'No allocations'}
-            tone={peak && peak.peak_load > FULL_LOAD ? 'error' : 'default'}
-            icon={<TrendingUpIcon />}
-            loading={!loaded && capacity.loading}
-          />
-        </Grid>
-      </Grid>
+      )}
 
       <Box component="section" aria-labelledby="capacity-people-heading">
         <Typography id="capacity-people-heading" variant="h5" component="h2" sx={{ fontWeight: 600, mb: 1.5 }}>
           People and load
         </Typography>
-        <ExpandableTable
-          columns={columns}
-          rows={sorted}
-          getRowId={(row) => row.user_id}
-          renderDetail={(row) => <EmployeeCapacityDetail employee={row} projectNames={projects.nameById} />}
-          toggleLabel={(row) => `Show conflict windows and load for ${row.user_name}`}
-          loading={capacity.loading}
-          error={capacity.error}
-          onRetry={capacity.reload}
-          ariaLabel="Capacity by person"
-          emptyTitle={filtered ? 'Nobody is allocated in this selection' : 'No allocations yet'}
-          emptyMessage={
-            filtered
-              ? 'Try another department or period, or clear the filters.'
-              : 'Create allocations below to see each person’s load.'
-          }
-        />
+        <Box sx={stale ? STALE_SX : undefined}>
+          <ExpandableTable
+            columns={columns}
+            rows={sorted}
+            getRowId={(row) => row.user_id}
+            renderDetail={(row) => <EmployeeCapacityDetail employee={row} projectNames={projects.nameById} />}
+            detailLabel={(row) => `conflict windows and load for ${row.user_name}`}
+            loading={capacity.loading}
+            error={capacity.error}
+            onRetry={capacity.reload}
+            ariaLabel="Capacity by person"
+            emptyTitle={empty.title}
+            emptyMessage={empty.message}
+          />
+        </Box>
       </Box>
 
       <AllocationsSection
@@ -271,3 +307,6 @@ export default function CapacityPage() {
     </>
   );
 }
+
+/** Takes no props. */
+CapacityPage.propTypes = {};

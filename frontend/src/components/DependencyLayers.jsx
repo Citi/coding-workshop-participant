@@ -196,7 +196,9 @@ export default function DependencyLayers({ graph, emptyMessage = 'Add deliverabl
         />
         <Chip size="small" color={IMPACTED_COLOR} icon={<WarningAmberIcon />} label={`Impacted (${impactedCount})`} />
         <Typography variant="body2" color="text.secondary">
-          Columns run left to right in dependency order; each card lists what it depends on.
+          {isMobile
+            ? 'Levels run top to bottom in dependency order; each card lists what it depends on.'
+            : 'Columns run left to right in dependency order; each card lists what it depends on.'}
         </Typography>
       </Stack>
       <Box

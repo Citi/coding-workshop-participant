@@ -3,24 +3,22 @@ import Box from '@mui/material/Box';
 import LinearProgress from '@mui/material/LinearProgress';
 import Typography from '@mui/material/Typography';
 
-/** Colours a bar may take; the printed value always carries the meaning as well. */
-const TONES = ['primary', 'secondary', 'success', 'warning', 'error', 'info'];
-
 /**
- * A percentage printed as text with a thin bar beside it. The bar is decorative
- * (hidden from screen readers) and stops at 100%; the text shows the real value, so
- * 120% reads as "120%" with a full bar in the error colour.
+ * A value out of 100 printed as text with a thin bar beside it (a meter). The bar is
+ * decorative (hidden from screen readers) and stops at 100; the text shows the real value,
+ * so a 120% load reads "120%" next to a full bar in the error colour.
  * @param {object} props - Component props.
- * @param {number|null} props.value - Percentage; null shows a dash and an empty bar.
- * @param {string} [props.suffix] - Text after the number, e.g. "allocated".
- * @param {'primary'|'secondary'|'success'|'warning'|'error'|'info'} [props.tone] - Bar colour.
+ * @param {number|null} props.value - Value out of 100; null shows a dash and an empty bar.
+ * @param {string} [props.unit] - Printed right after the number ("%" by default; "" for scores).
+ * @param {string} [props.suffix] - Text after the value, e.g. "of 100".
+ * @param {string} [props.tone] - Bar colour: a theme palette key such as primary, error or riskHigh.
  * @param {number} [props.digits] - Decimal places of the printed value.
  * @param {number|string} [props.barWidth] - Width of the bar.
  * @returns {JSX.Element} The bar.
  */
-export default function PercentBar({ value, suffix, tone = 'primary', digits = 0, barWidth = 96 }) {
+export default function PercentBar({ value, unit = '%', suffix, tone = 'primary', digits = 0, barWidth = 96 }) {
   const known = typeof value === 'number' && Number.isFinite(value);
-  const text = known ? `${value.toFixed(digits)}%` : '—';
+  const text = known ? `${value.toFixed(digits)}${unit}` : '—';
   return (
     <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, minWidth: 0 }}>
       <LinearProgress
@@ -40,8 +38,9 @@ export default function PercentBar({ value, suffix, tone = 'primary', digits = 0
 
 PercentBar.propTypes = {
   value: PropTypes.number,
+  unit: PropTypes.string,
   suffix: PropTypes.string,
-  tone: PropTypes.oneOf(TONES),
+  tone: PropTypes.string,
   digits: PropTypes.number,
   barWidth: PropTypes.oneOfType([PropTypes.number, PropTypes.string]),
 };

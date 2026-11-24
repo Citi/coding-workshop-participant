@@ -1,10 +1,18 @@
 /**
  * Helpers for the capacity page: load colours and readable date windows.
  */
-import { formatDate } from '../../utils/format.js';
+import { LOCALE, formatDate } from '../../utils/format.js';
 
 /** Load above which a person is over-allocated (spec section 9.2). */
 export const FULL_LOAD = 100;
+
+const ISO_DATE = /^(\d{4})-(\d{2})-(\d{2})/;
+const monthDayFormatter = new Intl.DateTimeFormat(LOCALE, { month: 'short', day: 'numeric', timeZone: 'UTC' });
+
+function utcDate(value) {
+  const match = ISO_DATE.exec(String(value ?? ''));
+  return match ? new Date(Date.UTC(Number(match[1]), Number(match[2]) - 1, Number(match[3]))) : null;
+}
 
 /**
  * Colour of a person's load bar: error above 100%, warning at exactly 100%.
@@ -30,6 +38,27 @@ export function formatWindow(start, end) {
     return formatDate(start);
   }
   return `${formatDate(start)} to ${formatDate(end)}`;
+}
+
+/**
+ * Describe an inclusive date window compactly for table cells: "Nov 22 – Dec 6, 2026", with
+ * the year written once when both days share it. A no-break space keeps the dash on the first
+ * line when the cell wraps.
+ * @param {string} start - First day (ISO date).
+ * @param {string} end - Last day (ISO date).
+ * @returns {string} Compact window; a single day when both dates match.
+ */
+export function formatShortWindow(start, end) {
+  const first = utcDate(start);
+  const last = utcDate(end);
+  if (!first || !last) {
+    return formatWindow(start, end);
+  }
+  if (first.getTime() === last.getTime()) {
+    return formatDate(start);
+  }
+  const from = first.getUTCFullYear() === last.getUTCFullYear() ? monthDayFormatter.format(first) : formatDate(start);
+  return `${from}\u00a0– ${formatDate(end)}`;
 }
 
 /**

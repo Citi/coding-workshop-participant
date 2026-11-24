@@ -6,12 +6,13 @@ import IconButton from '@mui/material/IconButton';
 import Tooltip from '@mui/material/Tooltip';
 import Typography from '@mui/material/Typography';
 import AddIcon from '@mui/icons-material/Add';
-import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
+import DeleteOutlinedIcon from '@mui/icons-material/DeleteOutlined';
 import EditOutlinedIcon from '@mui/icons-material/EditOutlined';
 import AllocationDialog from './AllocationDialog.jsx';
 import CapacityWarningAlert from './CapacityWarningAlert.jsx';
 import { allocationTarget, formatWindow } from './capacityUtils.js';
 import { parseId } from './formUtils.js';
+import { optionShape } from './shapes.js';
 import ConfirmDialog from '../ConfirmDialog.jsx';
 import DataTable from '../DataTable.jsx';
 import FilterBar from '../FilterBar.jsx';
@@ -25,8 +26,6 @@ import {
   listAllocations,
   updateAllocation,
 } from '../../services/allocations.js';
-
-const optionShape = PropTypes.shape({ value: PropTypes.string.isRequired, label: PropTypes.string.isRequired });
 
 const COLUMNS = [
   { field: 'user_name', header: 'Person', primary: true },
@@ -43,7 +42,8 @@ function describeAllocation(allocation) {
 /**
  * Allocations list on the capacity page, filtered by person and project, with create, edit
  * and delete for ADMIN and PM. After a save that leaves someone above 100%, the API's
- * `capacity_warning` is shown as a warning alert (and a snackbar) with every conflict window.
+ * `capacity_warning` is shown as a warning alert (and a snackbar) with every conflict window;
+ * the alert goes away once one of that person's allocations is deleted (it would be stale).
  * @param {object} props - Component props.
  * @param {{value: string, label: string}[]} props.userOptions - People for filters and the dialog.
  * @param {{value: string, label: string}[]} props.projectOptions - Projects for filters and the dialog.
@@ -116,6 +116,10 @@ export default function AllocationsSection({ userOptions, projectOptions, defaul
     try {
       await deleteAllocation(toDelete.id);
       notify.success('Allocation deleted.');
+      // The warning described this person's load before the delete; it no longer holds.
+      setWarning((current) =>
+        current && (!current.user_id || current.user_id === toDelete.user_id) ? null : current,
+      );
       reload();
       onChanged?.();
     } catch (deleteError) {
@@ -148,7 +152,7 @@ export default function AllocationsSection({ userOptions, projectOptions, defaul
                   aria-label={`Delete allocation: ${describeAllocation(row)}`}
                   onClick={() => setToDelete(row)}
                 >
-                  <DeleteOutlineIcon fontSize="small" />
+                  <DeleteOutlinedIcon fontSize="small" />
                 </IconButton>
               </Tooltip>
             ) : null}

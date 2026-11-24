@@ -29,15 +29,27 @@ OverdueFlag.propTypes = {
 };
 
 /**
+ * On phones (stacked cards, below `md` like useIsMobile) a chip's label wraps onto a second
+ * line instead of being cut off; in desktop tables it stays on one line.
+ */
+const WRAPPING_CHIP_SX = {
+  maxWidth: '100%',
+  height: 'auto',
+  minHeight: 24,
+  '& .MuiChip-label': { whiteSpace: { xs: 'normal', md: 'nowrap' }, py: 0.25 },
+};
+
+/**
  * "Compound bottleneck" chip: an over-allocated person who also owns, or is allocated to,
- * a blocked, overdue or impacted deliverable (spec section 9.2).
+ * a blocked, overdue or impacted deliverable (spec section 9.2). The label wraps rather
+ * than truncates, so it stays readable in phone-width cards.
  * @param {object} props - Component props.
  * @param {'small'|'medium'} [props.size] - Chip size.
  * @returns {JSX.Element} The chip.
  */
 export function BottleneckFlag({ size = 'small' }) {
   return (
-    <Chip size={size} color="warning" icon={<PriorityHighIcon />} label="Compound bottleneck" />
+    <Chip size={size} color="warning" icon={<PriorityHighIcon />} label="Compound bottleneck" sx={WRAPPING_CHIP_SX} />
   );
 }
 

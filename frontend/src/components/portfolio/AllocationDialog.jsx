@@ -4,16 +4,16 @@ import Grid from '@mui/material/Grid';
 import MenuItem from '@mui/material/MenuItem';
 import TextField from '@mui/material/TextField';
 import FormDialog from './FormDialog.jsx';
+import { allocationShape, optionShape } from './shapes.js';
 import { fieldProps, isBlank, isDateRangeValid, parseId, parseIntegerInRange, useFormState } from './formUtils.js';
 import { LOOKUP_LIMIT } from './lookups.js';
 import useApi from '../../hooks/useApi.js';
+import { useNotify } from '../../notifications/useNotify.js';
 import { listDeliverables } from '../../services/deliverables.js';
 import { describeFormError } from '../../utils/validation.js';
 
 const FIELDS = ['user_id', 'project_id', 'deliverable_id', 'allocation_percentage', 'start_date', 'end_date'];
 const NO_ITEMS = Object.freeze([]);
-
-const optionShape = PropTypes.shape({ value: PropTypes.string.isRequired, label: PropTypes.string.isRequired });
 
 function initialValues(allocation, defaultStartDate) {
   if (!allocation) {
@@ -66,6 +66,7 @@ function validate(values) {
 /**
  * Create or edit a resource allocation (ADMIN, PM). Saving is never blocked by
  * over-allocation: the parent receives the API response, including `capacity_warning`.
+ * A failed save keeps the dialog open with field errors and also shows the snackbar.
  * @param {object} props - Component props.
  * @param {object|null} [props.allocation] - `AllocationOut` to edit; omit to create.
  * @param {{value: string, label: string}[]} props.userOptions - People to choose from.
@@ -76,6 +77,7 @@ function validate(values) {
  * @returns {JSX.Element} The dialog.
  */
 export default function AllocationDialog({ allocation = null, userOptions, projectOptions, defaultStartDate, onSave, onClose }) {
+  const notify = useNotify();
   const form = useFormState(() => initialValues(allocation, defaultStartDate));
   const { values, setValues, setErrors } = form;
   const [submitting, setSubmitting] = useState(false);
@@ -129,6 +131,7 @@ export default function AllocationDialog({ allocation = null, userOptions, proje
       setErrors(described.fieldErrors);
       setFormError(described.message);
       setSubmitting(false);
+      notify.error(described.message);
     }
   };
 
@@ -143,7 +146,7 @@ export default function AllocationDialog({ allocation = null, userOptions, proje
       onSubmit={handleSubmit}
       onClose={onClose}
     >
-      <Grid container columnSpacing={2}>
+      <Grid container columnSpacing={2} rowSpacing={1.5} sx={{ pt: 1 }}>
         <Grid size={{ xs: 12, sm: 6 }}>
           <TextField select required label="Person" {...fieldProps(form, 'user_id', { disabled: submitting })}>
             {userOptions.map((option) => (
@@ -218,16 +221,7 @@ export default function AllocationDialog({ allocation = null, userOptions, proje
 }
 
 AllocationDialog.propTypes = {
-  allocation: PropTypes.shape({
-    id: PropTypes.number.isRequired,
-    user_id: PropTypes.number.isRequired,
-    project_id: PropTypes.number.isRequired,
-    deliverable_id: PropTypes.number,
-    deliverable_title: PropTypes.string,
-    allocation_percentage: PropTypes.number.isRequired,
-    start_date: PropTypes.string.isRequired,
-    end_date: PropTypes.string.isRequired,
-  }),
+  allocation: allocationShape,
   userOptions: PropTypes.arrayOf(optionShape).isRequired,
   projectOptions: PropTypes.arrayOf(optionShape).isRequired,
   defaultStartDate: PropTypes.string,

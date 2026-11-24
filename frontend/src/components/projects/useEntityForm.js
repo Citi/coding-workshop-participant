@@ -22,14 +22,27 @@ import { describeFormError } from '../../utils/validation.js';
  * @param {(values: Record<string, string>) => Record<string, string>} options.validate - Client checks.
  * @param {(values: Record<string, string>) => Promise<any>} options.submit - Sends the request.
  * @param {(result: any) => void} options.onSaved - Called with the submit result on success.
- * @param {string} [options.failureMessage] - Snackbar text when the server rejects the form.
+ * @param {string|((error: Error) => string)} [options.failureMessage] - Snackbar text when the
+ *   server rejects the form (or a function of the error); the server's message when omitted.
+ * @param {boolean} [options.clearSummaryOnChange] - Clear the summary error as soon as a field
+ *   changes (for inline forms whose rejection should not outlive the values that caused it).
  * @returns {{values: Record<string, string>, errors: Record<string, string>, formError: string,
- *   submitting: boolean, setValue: (name: string, value: string) => void,
+ *   submitError: Error|null, submitting: boolean, setValue: (name: string, value: string) => void,
  *   handleChange: (event: {target: {name: string, value: string}}) => void,
  *   handleSubmit: (event?: {preventDefault: () => void}) => Promise<void>,
- *   fieldProps: (name: string, helperText?: string) => object}} Form state and handlers.
+ *   fieldProps: (name: string, helperText?: string) => object,
+ *   reset: (values?: Record<string, string>) => void}} Form state and handlers; `submitError` is the
+ *   last error the server returned (an ApiError), for forms that react to its code.
  */
-export function useEntityForm({ initialValues, fields, validate, submit, onSaved, failureMessage }) {
+export function useEntityForm({
+  initialValues,
+  fields,
+  validate,
+  submit,
+  onSaved,
+  failureMessage,
+  clearSummaryOnChange = false,
+}) {
   const formId = useId();
   const notify = useNotify();
   const inputs = useRef({});
@@ -37,19 +50,37 @@ export function useEntityForm({ initialValues, fields, validate, submit, onSaved
   const [values, setValues] = useState(initialValues);
   const [errors, setErrors] = useState({});
   const [formError, setFormError] = useState('');
+  const [submitError, setSubmitError] = useState(null);
   const [submitting, setSubmitting] = useState(false);
 
-  const setValue = useCallback((name, value) => {
-    setValues((previous) => ({ ...previous, [name]: value }));
-    setErrors((previous) => {
-      if (!previous[name]) {
-        return previous;
+  const setValue = useCallback(
+    (name, value) => {
+      setValues((previous) => ({ ...previous, [name]: value }));
+      if (clearSummaryOnChange) {
+        setFormError('');
+        setSubmitError(null);
       }
-      const next = { ...previous };
-      delete next[name];
-      return next;
-    });
-  }, []);
+      setErrors((previous) => {
+        if (!previous[name]) {
+          return previous;
+        }
+        const next = { ...previous };
+        delete next[name];
+        return next;
+      });
+    },
+    [clearSummaryOnChange],
+  );
+
+  const reset = useCallback(
+    (nextValues) => {
+      setValues(nextValues ?? initialValues);
+      setErrors({});
+      setFormError('');
+      setSubmitError(null);
+    },
+    [initialValues],
+  );
 
   const handleChange = useCallback((event) => setValue(event.target.name, event.target.value), [setValue]);
 
@@ -71,6 +102,7 @@ export function useEntityForm({ initialValues, fields, validate, submit, onSaved
     const found = validate(values);
     setErrors(found);
     setFormError('');
+    setSubmitError(null);
     if (Object.keys(found).length > 0) {
       focusFirstError(found);
       return;
@@ -85,8 +117,10 @@ export function useEntityForm({ initialValues, fields, validate, submit, onSaved
       const described = describeFormError(error, [...fields]);
       setErrors(described.fieldErrors);
       setFormError(described.message);
+      setSubmitError(error);
       setSubmitting(false);
-      notify.error(failureMessage || described.message);
+      const summary = typeof failureMessage === 'function' ? failureMessage(error) : failureMessage;
+      notify.error(summary || described.message);
       focusFirstError(described.fieldErrors);
       return;
     }
@@ -115,7 +149,18 @@ export function useEntityForm({ initialValues, fields, validate, submit, onSaved
     fullWidth: true,
   });
 
-  return { values, errors, formError, submitting, setValue, handleChange, handleSubmit, fieldProps };
+  return {
+    values,
+    errors,
+    formError,
+    submitError,
+    submitting,
+    setValue,
+    handleChange,
+    handleSubmit,
+    fieldProps,
+    reset,
+  };
 }
 
 export default useEntityForm;

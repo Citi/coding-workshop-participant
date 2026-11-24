@@ -80,8 +80,11 @@ describe('AuthProvider', () => {
     expect(await screen.findByText('user=Vikram Shah/PM')).toBeInTheDocument();
     expect(fetchMock.mock.calls[0][0]).toBe(`${API_BASE_URL}/auth/me`);
     expect(getStoredUser().role).toBe('PM');
-    expect(captured.auth.can('create', 'projects')).toBe(true);
-    expect(captured.auth.isAuthenticated).toBe(true);
+    // captured.auth is stored in a passive effect, which can run just after the text appears.
+    await waitFor(() => {
+      expect(captured.auth.can('create', 'projects')).toBe(true);
+      expect(captured.auth.isAuthenticated).toBe(true);
+    });
   });
 
   it('waits for /auth/me when a token exists without a cached profile', async () => {

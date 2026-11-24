@@ -45,16 +45,30 @@ function cellContent(column, row) {
   return value === null || value === undefined || value === '' ? EMPTY_VALUE : value;
 }
 
+// Pixel strings on purpose: MUI's sx reads width/height values from 0 to 1 as fractions (1 = 100%).
 const visuallyHidden = {
-  position: 'absolute',
-  width: 1,
-  height: 1,
-  overflow: 'hidden',
+  border: 0,
   clip: 'rect(0 0 0 0)',
+  height: '1px',
+  margin: '-1px',
+  overflow: 'hidden',
+  padding: 0,
+  position: 'absolute',
   whiteSpace: 'nowrap',
+  width: '1px',
 };
 
-function ExpandableRow({ row, columns, renderDetail, toggleLabel }) {
+/**
+ * Accessible name of a row's toggle, naming the action it will take.
+ * @param {boolean} open - Whether the detail is showing.
+ * @param {string} detail - What the detail holds, e.g. "conflict windows and load for Priya Nair".
+ * @returns {string} "Show …" or "Hide …".
+ */
+function toggleName(open, detail) {
+  return `${open ? 'Hide' : 'Show'} ${detail}`;
+}
+
+function ExpandableRow({ row, columns, renderDetail, detailLabel }) {
   const [open, setOpen] = useState(false);
   const detailId = useId();
   return (
@@ -63,7 +77,7 @@ function ExpandableRow({ row, columns, renderDetail, toggleLabel }) {
         <TableCell padding="checkbox">
           <IconButton
             size="small"
-            aria-label={toggleLabel(row)}
+            aria-label={toggleName(open, detailLabel(row))}
             aria-expanded={open}
             aria-controls={open ? detailId : undefined}
             onClick={() => setOpen((value) => !value)}
@@ -94,12 +108,13 @@ ExpandableRow.propTypes = {
   row: PropTypes.object.isRequired,
   columns: PropTypes.arrayOf(columnShape).isRequired,
   renderDetail: PropTypes.func.isRequired,
-  toggleLabel: PropTypes.func.isRequired,
+  detailLabel: PropTypes.func.isRequired,
 };
 
-function ExpandableCard({ row, primaryColumn, detailColumns, renderDetail, toggleLabel }) {
+function ExpandableCard({ row, primaryColumn, detailColumns, renderDetail, detailLabel }) {
   const [open, setOpen] = useState(false);
   const detailId = useId();
+  const visibleText = open ? 'Hide details' : 'Show details';
   return (
     <Card component="li" variant="outlined">
       <CardContent sx={{ pb: 1 }}>
@@ -125,15 +140,17 @@ function ExpandableCard({ row, primaryColumn, detailColumns, renderDetail, toggl
         ) : null}
       </CardContent>
       <CardActions sx={{ pt: 0 }}>
+        {/* The accessible name starts with the visible words (WCAG 2.5.3 label in name) and
+            then says which row it is. */}
         <Button
           size="small"
-          aria-label={toggleLabel(row)}
+          aria-label={`${visibleText}: ${detailLabel(row)}`}
           aria-expanded={open}
           aria-controls={open ? detailId : undefined}
           endIcon={open ? <KeyboardArrowUpIcon /> : <KeyboardArrowDownIcon />}
           onClick={() => setOpen((value) => !value)}
         >
-          {open ? 'Hide details' : 'Show details'}
+          {visibleText}
         </Button>
       </CardActions>
       <Collapse in={open} timeout="auto" unmountOnExit>
@@ -150,10 +167,10 @@ ExpandableCard.propTypes = {
   primaryColumn: columnShape.isRequired,
   detailColumns: PropTypes.arrayOf(columnShape).isRequired,
   renderDetail: PropTypes.func.isRequired,
-  toggleLabel: PropTypes.func.isRequired,
+  detailLabel: PropTypes.func.isRequired,
 };
 
-function DesktopRows({ columns, rows, getRowId, showSkeleton, skeletonRows, renderDetail, toggleLabel, ariaLabel }) {
+function DesktopRows({ columns, rows, getRowId, showSkeleton, skeletonRows, renderDetail, detailLabel, ariaLabel }) {
   return (
     <TableContainer component={Paper} variant="outlined">
       <Table size="small" aria-label={ariaLabel}>
@@ -189,7 +206,7 @@ function DesktopRows({ columns, rows, getRowId, showSkeleton, skeletonRows, rend
                   row={row}
                   columns={columns}
                   renderDetail={renderDetail}
-                  toggleLabel={toggleLabel}
+                  detailLabel={detailLabel}
                 />
               ))}
         </TableBody>
@@ -205,11 +222,11 @@ DesktopRows.propTypes = {
   showSkeleton: PropTypes.bool.isRequired,
   skeletonRows: PropTypes.number.isRequired,
   renderDetail: PropTypes.func.isRequired,
-  toggleLabel: PropTypes.func.isRequired,
+  detailLabel: PropTypes.func.isRequired,
   ariaLabel: PropTypes.string,
 };
 
-function MobileCards({ columns, rows, getRowId, showSkeleton, skeletonRows, renderDetail, toggleLabel, ariaLabel }) {
+function MobileCards({ columns, rows, getRowId, showSkeleton, skeletonRows, renderDetail, detailLabel, ariaLabel }) {
   const primaryColumn = columns.find((column) => column.primary) ?? columns[0];
   const detailColumns = columns.filter((column) => column !== primaryColumn && !column.hideOnMobile);
   if (showSkeleton) {
@@ -230,7 +247,7 @@ function MobileCards({ columns, rows, getRowId, showSkeleton, skeletonRows, rend
           primaryColumn={primaryColumn}
           detailColumns={detailColumns}
           renderDetail={renderDetail}
-          toggleLabel={toggleLabel}
+          detailLabel={detailLabel}
         />
       ))}
     </Stack>
@@ -254,7 +271,10 @@ function defaultRowId(row) {
  * @param {object[]} [props.rows] - Rows to show.
  * @param {(row: object) => string|number} [props.getRowId] - Unique key per row (default `row.id`).
  * @param {(row: object) => import('react').ReactNode} props.renderDetail - Content of an opened row.
- * @param {(row: object) => string} props.toggleLabel - Accessible name of a row's expand button.
+ * @param {(row: object) => string} props.detailLabel - What an opened row shows, in lower case,
+ *   e.g. "conflict windows and load for Priya Nair". The desktop toggle is named "Show …" or
+ *   "Hide …" from it; the mobile button is named "Show details: …" or "Hide details: …", so
+ *   its name starts with its visible words.
  * @param {boolean} [props.loading] - Skeletons when there are no rows yet, a progress bar otherwise.
  * @param {Error|null} [props.error] - Shows an error state.
  * @param {() => void} [props.onRetry] - Retry handler for the error state.
@@ -272,7 +292,7 @@ export default function ExpandableTable({
   rows,
   getRowId = defaultRowId,
   renderDetail,
-  toggleLabel,
+  detailLabel,
   loading = false,
   error = null,
   onRetry,
@@ -312,7 +332,7 @@ export default function ExpandableTable({
           showSkeleton={showSkeleton}
           skeletonRows={skeletonRows}
           renderDetail={renderDetail}
-          toggleLabel={toggleLabel}
+          detailLabel={detailLabel}
           ariaLabel={ariaLabel}
         />
       )}
@@ -337,7 +357,7 @@ ExpandableTable.propTypes = {
   rows: PropTypes.arrayOf(PropTypes.object),
   getRowId: PropTypes.func,
   renderDetail: PropTypes.func.isRequired,
-  toggleLabel: PropTypes.func.isRequired,
+  detailLabel: PropTypes.func.isRequired,
   loading: PropTypes.bool,
   error: PropTypes.oneOfType([PropTypes.instanceOf(Error), PropTypes.object]),
   onRetry: PropTypes.func,

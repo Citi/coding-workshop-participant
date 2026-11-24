@@ -67,7 +67,8 @@ function withoutError(errors, name) {
 
 /**
  * Values plus per-field errors for a dialog form. Editing a field clears its error.
- * @param {Record<string, any>} initialValues - Starting values (read once, on mount).
+ * @param {Record<string, any>|(() => Record<string, any>)} initialValues - Starting values, or a
+ *   function returning them (read once, on mount, like useState).
  * @returns {{values: Record<string, any>, errors: Record<string, string>,
  *   setField: (name: string, value: any) => void, setValues: Function, setErrors: Function}}
  *   Form state and setters.
