@@ -17,3 +17,6 @@ export default function ProjectsPage() {
     </>
   );
 }
+
+/** Takes no props. */
+ProjectsPage.propTypes = {};

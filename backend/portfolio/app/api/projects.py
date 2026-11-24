@@ -19,8 +19,15 @@ from app.api.deps import PageParams, page_params, today_utc
 from app.db.models import User
 from app.db.session import get_db
 from app.schemas.common import Page
-from app.schemas.departments import MAX_ID
-from app.schemas.projects import ProjectCreate, ProjectOut, ProjectStatus, ProjectUpdate, RiskLevel
+from app.schemas.departments import MAX_ID, SearchText
+from app.schemas.projects import (
+    PROJECT_NAME_MAX_LENGTH,
+    ProjectCreate,
+    ProjectOut,
+    ProjectStatus,
+    ProjectUpdate,
+    RiskLevel,
+)
 from app.security import MANAGERS, get_current_user, require_roles
 from app.services import projects as service
 from app.services.projects import ProjectMetrics
@@ -31,6 +38,12 @@ ProjectId = Annotated[int, Path(ge=1, le=MAX_ID, description="Project id.")]
 AsOf = Annotated[
     date | None, Query(description="Date the metrics and risk are computed for (YYYY-MM-DD); default today (UTC).")
 ]
+# Control characters (NUL above all, which PostgreSQL cannot compare) are a 400 naming q, as on /users and
+# /departments. Project names never contain them, so such a term could not match anything anyway.
+ProjectSearch = Annotated[
+    SearchText | None,
+    Query(max_length=PROJECT_NAME_MAX_LENGTH, description="Name contains (ignoring case)."),
+]
 
 
 def _out(metrics: ProjectMetrics) -> ProjectOut:
@@ -40,7 +53,7 @@ def _out(metrics: ProjectMetrics) -> ProjectOut:
 
 @router.get("", response_model=Page[ProjectOut])
 def list_projects(
-    q: Annotated[str | None, Query(max_length=200, description="Name contains (ignoring case).")] = None,
+    q: ProjectSearch = None,
     department_id: Annotated[int | None, Query(ge=1, le=MAX_ID, description="Only this department.")] = None,
     status: Annotated[ProjectStatus | None, Query(description="Only projects with this status.")] = None,
     risk_level: Annotated[RiskLevel | None, Query(description="Only projects at this computed risk level.")] = None,

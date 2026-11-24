@@ -19,7 +19,7 @@ from app.schemas.deliverables import (
     DeliverableStatus,
     DeliverableUpdate,
 )
-from app.schemas.departments import MAX_ID
+from app.schemas.departments import MAX_ID, SearchText
 from app.security import CONTRIBUTORS, MANAGERS, get_current_user, require_roles
 from app.services import deliverables as service
 
@@ -27,12 +27,17 @@ router = APIRouter(prefix="/deliverables", tags=["deliverables"])
 
 DeliverableId = Annotated[int, Path(ge=1, le=MAX_ID, description="Deliverable id.")]
 
+# Control characters (NUL above all, which PostgreSQL cannot compare) are a 400 on q,
+# refused before any query runs. Titles never hold one, so no possible match is lost.
+TitleSearch = Annotated[
+    SearchText | None,
+    Query(max_length=TITLE_MAX_LENGTH, description="Title contains (ignoring case)."),
+]
+
 
 @router.get("", response_model=Page[DeliverableOut])
 def list_deliverables(
-    q: Annotated[
-        str | None, Query(max_length=TITLE_MAX_LENGTH, description="Title contains (ignoring case).")
-    ] = None,
+    q: TitleSearch = None,
     project_id: Annotated[int | None, Query(ge=1, le=MAX_ID, description="Only this project's deliverables.")] = None,
     status: Annotated[DeliverableStatus | None, Query(description="Only deliverables with this status.")] = None,
     assigned_user_id: Annotated[

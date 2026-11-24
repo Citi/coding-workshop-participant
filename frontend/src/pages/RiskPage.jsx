@@ -17,3 +17,6 @@ export default function RiskPage() {
     </>
   );
 }
+
+/** Takes no props. */
+RiskPage.propTypes = {};

@@ -15,10 +15,11 @@ const TITLES = {
  * @param {Error|string} [props.error] - What went wrong.
  * @param {string} [props.title] - Heading; derived from the error status when omitted.
  * @param {() => void} [props.onRetry] - Shows a Retry button when given.
+ * @param {string} [props.retryLabel] - Text of the Retry button.
  * @param {import('react').ReactNode} [props.action] - Extra action next to Retry.
  * @returns {JSX.Element} The error alert.
  */
-export default function ErrorState({ error, title, onRetry, action }) {
+export default function ErrorState({ error, title, onRetry, retryLabel = 'Retry', action }) {
   const message =
     typeof error === 'string' ? error : error?.message || 'Something went wrong. Please try again.';
   const heading = title ?? TITLES[error?.status] ?? 'Could not load this data';
@@ -32,7 +33,7 @@ export default function ErrorState({ error, title, onRetry, action }) {
             {action}
             {onRetry ? (
               <Button color="inherit" size="small" startIcon={<RefreshIcon />} onClick={onRetry}>
-                Retry
+                {retryLabel}
               </Button>
             ) : null}
           </>
@@ -49,5 +50,6 @@ ErrorState.propTypes = {
   error: PropTypes.oneOfType([PropTypes.string, PropTypes.instanceOf(Error), PropTypes.object]),
   title: PropTypes.string,
   onRetry: PropTypes.func,
+  retryLabel: PropTypes.string,
   action: PropTypes.node,
 };

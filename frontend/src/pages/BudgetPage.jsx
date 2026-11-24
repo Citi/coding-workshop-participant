@@ -17,3 +17,6 @@ export default function BudgetPage() {
     </>
   );
 }
+
+/** Takes no props. */
+BudgetPage.propTypes = {};

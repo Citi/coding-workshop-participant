@@ -17,3 +17,6 @@ export default function DashboardPage() {
     </>
   );
 }
+
+/** Takes no props. */
+DashboardPage.propTypes = {};

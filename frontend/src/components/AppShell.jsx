@@ -246,3 +246,6 @@ export default function AppShell() {
     </Box>
   );
 }
+
+/** Takes no props. */
+AppShell.propTypes = {};

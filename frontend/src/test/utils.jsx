@@ -55,6 +55,8 @@ export function makeUser(role = 'PM') {
 
 /**
  * Render inside theme, router, notifications and either a fake or the real auth provider.
+ * The snackbar replaces a message as soon as another is queued (`minVisibleMs={0}`), so a
+ * test that triggers two messages can find the second one within the default timeout.
  * @param {import('react').ReactElement} ui - Element to render.
  * @param {object} [options] - Options.
  * @param {string} [options.route] - Initial URL.
@@ -76,7 +78,7 @@ export function renderWithProviders(ui, { route = '/', routeState, width, auth, 
       <ResponsiveContext.Provider value={width ? { width } : undefined}>
         <ThemeProvider theme={theme}>
           <MemoryRouter initialEntries={[{ pathname: route.split('?')[0], search: route.includes('?') ? `?${route.split('?')[1]}` : '', state: routeState }]}>
-            <NotificationProvider>{content}</NotificationProvider>
+            <NotificationProvider minVisibleMs={0}>{content}</NotificationProvider>
           </MemoryRouter>
         </ThemeProvider>
       </ResponsiveContext.Provider>

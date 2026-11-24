@@ -17,3 +17,6 @@ export default function AuditPage() {
     </>
   );
 }
+
+/** Takes no props. */
+AuditPage.propTypes = {};

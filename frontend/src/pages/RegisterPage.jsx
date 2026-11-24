@@ -163,3 +163,6 @@ export default function RegisterPage() {
     </AuthLayout>
   );
 }
+
+/** Takes no props. */
+RegisterPage.propTypes = {};

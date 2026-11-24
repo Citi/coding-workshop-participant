@@ -16,3 +16,6 @@ export default function ProjectDetailPage() {
     </>
   );
 }
+
+/** Takes no props. */
+ProjectDetailPage.propTypes = {};

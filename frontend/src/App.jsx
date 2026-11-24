@@ -24,3 +24,6 @@ export default function App() {
     </ThemeProvider>
   );
 }
+
+/** Takes no props. */
+App.propTypes = {};

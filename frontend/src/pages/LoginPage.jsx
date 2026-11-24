@@ -164,3 +164,6 @@ export default function LoginPage() {
     </AuthLayout>
   );
 }
+
+/** Takes no props. */
+LoginPage.propTypes = {};

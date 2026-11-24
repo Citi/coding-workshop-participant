@@ -17,3 +17,6 @@ export default function DeliverablesPage() {
     </>
   );
 }
+
+/** Takes no props. */
+DeliverablesPage.propTypes = {};

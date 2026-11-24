@@ -17,3 +17,6 @@ export default function UsersPage() {
     </>
   );
 }
+
+/** Takes no props. */
+UsersPage.propTypes = {};

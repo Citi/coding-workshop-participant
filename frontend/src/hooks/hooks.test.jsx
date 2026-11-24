@@ -1,6 +1,7 @@
+import { useCallback } from 'react';
 import { act, renderHook, waitFor } from '@testing-library/react';
 import { Context as ResponsiveContext } from 'react-responsive';
-import useApi from './useApi.js';
+import useApi, { dependencyKey } from './useApi.js';
 import useDebouncedValue from './useDebouncedValue.js';
 import useIsMobile, { MOBILE_MAX_WIDTH } from './useIsMobile.js';
 import usePagination from './usePagination.js';
@@ -135,6 +136,105 @@ describe('useApi', () => {
 
     await waitFor(() => expect(result.current.data).toBe('ok'));
     expect(loader).toHaveBeenCalledTimes(1);
+  });
+
+  // JSON.stringify used to turn every function into null, so a memoised loader listed as the
+  // dependency never triggered a new request and filter pages kept showing stale data.
+  it('refetches when a useCallback loader listed as the dependency changes', async () => {
+    const listProjects = vi.fn(async (params) => `status=${params.status}`);
+    const { result, rerender } = renderHook(
+      ({ status }) => {
+        const load = useCallback((signal) => listProjects({ status }, { signal }), [status]);
+        return useApi(load, [load]);
+      },
+      { initialProps: { status: '' } },
+    );
+    await waitFor(() => expect(result.current.data).toBe('status='));
+
+    rerender({ status: '' });
+    await act(async () => {});
+    expect(listProjects).toHaveBeenCalledTimes(1);
+
+    rerender({ status: 'ACTIVE' });
+    await waitFor(() => expect(result.current.data).toBe('status=ACTIVE'));
+    expect(listProjects.mock.calls.map(([params]) => params.status)).toEqual(['', 'ACTIVE']);
+  });
+
+  it('refetches when an inline loader wraps a memoised function listed as the dependency', async () => {
+    const listProjects = vi.fn(async (params) => `status=${params.status}`);
+    const { result, rerender } = renderHook(
+      ({ status }) => {
+        const loadProjects = useCallback((signal) => listProjects({ status }, { signal }), [status]);
+        return useApi((signal) => loadProjects(signal), [loadProjects]);
+      },
+      { initialProps: { status: '' } },
+    );
+    await waitFor(() => expect(result.current.data).toBe('status='));
+
+    rerender({ status: 'ACTIVE' });
+    await waitFor(() => expect(result.current.data).toBe('status=ACTIVE'));
+    expect(listProjects).toHaveBeenCalledTimes(2);
+  });
+});
+
+describe('dependencyKey', () => {
+  it('compares plain data by content', () => {
+    expect(dependencyKey([{ status: 'ACTIVE', ids: [1, 2] }, 'q', 3, true, null])).toBe(
+      dependencyKey([{ status: 'ACTIVE', ids: [1, 2] }, 'q', 3, true, null]),
+    );
+    expect(dependencyKey([{ status: 'ACTIVE' }])).not.toBe(dependencyKey([{ status: 'ON_HOLD' }]));
+    expect(dependencyKey([new Date('2026-11-25')])).toBe(dependencyKey([new Date('2026-11-25')]));
+    expect(dependencyKey([new Date('2026-11-25')])).not.toBe(dependencyKey([new Date('2026-11-26')]));
+    expect(dependencyKey([Object.create(null)])).toBe(dependencyKey([{}]));
+  });
+
+  it('compares functions by identity, wherever they appear', () => {
+    const first = () => 'same source';
+    const second = () => 'same source';
+    expect(dependencyKey([first])).toBe(dependencyKey([first]));
+    expect(dependencyKey([first])).not.toBe(dependencyKey([second]));
+    expect(dependencyKey([{ onLoad: first }])).not.toBe(dependencyKey([{ onLoad: second }]));
+    expect(dependencyKey([first])).not.toBe(dependencyKey([null]));
+  });
+
+  it('compares Maps, Sets and class instances by identity', () => {
+    const map = new Map([['a', 1]]);
+    const params = new URLSearchParams('status=ACTIVE');
+    class Filter {
+      constructor(status) {
+        this.status = status;
+      }
+    }
+    const filter = new Filter('ACTIVE');
+    expect(dependencyKey([map])).toBe(dependencyKey([map]));
+    expect(dependencyKey([map])).not.toBe(dependencyKey([new Map([['a', 1]])]));
+    expect(dependencyKey([new Set([1])])).not.toBe(dependencyKey([new Set([1])]));
+    expect(dependencyKey([params])).toBe(dependencyKey([params]));
+    expect(dependencyKey([params])).not.toBe(dependencyKey([new URLSearchParams('status=ACTIVE')]));
+    expect(dependencyKey([filter])).not.toBe(dependencyKey([new Filter('ACTIVE')]));
+    expect(dependencyKey([map])).not.toBe(dependencyKey([{}]));
+  });
+
+  it('tells apart values JSON would merge', () => {
+    expect(dependencyKey([undefined])).not.toBe(dependencyKey([null]));
+    expect(dependencyKey([Number.NaN])).not.toBe(dependencyKey([null]));
+    expect(dependencyKey([Infinity])).not.toBe(dependencyKey([-Infinity]));
+    expect(dependencyKey([10n])).toBe(dependencyKey([10n]));
+    expect(dependencyKey([10n])).not.toBe(dependencyKey([11n]));
+    expect(dependencyKey([10n])).not.toBe(dependencyKey(['10']));
+    expect(dependencyKey(['a', 'b'])).not.toBe(dependencyKey(['a,b']));
+    const token = Symbol('token');
+    expect(dependencyKey([token])).toBe(dependencyKey([token]));
+    expect(dependencyKey([token])).not.toBe(dependencyKey([Symbol('token')]));
+  });
+
+  it('compares circular objects by identity instead of throwing', () => {
+    const node = { id: 1 };
+    node.self = node;
+    const twin = { id: 1 };
+    twin.self = twin;
+    expect(dependencyKey([node])).toBe(dependencyKey([node]));
+    expect(dependencyKey([node])).not.toBe(dependencyKey([twin]));
   });
 });
 

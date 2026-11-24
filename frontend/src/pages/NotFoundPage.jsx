@@ -28,3 +28,6 @@ export default function NotFoundPage() {
     </>
   );
 }
+
+/** Takes no props. */
+NotFoundPage.propTypes = {};

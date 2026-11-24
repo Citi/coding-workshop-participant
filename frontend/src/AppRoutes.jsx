@@ -1,4 +1,3 @@
-import { lazy } from 'react';
 import { Route, Routes } from 'react-router-dom';
 import AppShell from './components/AppShell.jsx';
 import ProtectedRoute from './auth/ProtectedRoute.jsx';
@@ -6,17 +5,19 @@ import { AUDIT_PAGE_ROLES, USERS_PAGE_ROLES } from './auth/permissions.js';
 import LoginPage from './pages/LoginPage.jsx';
 import NotFoundPage from './pages/NotFoundPage.jsx';
 import RegisterPage from './pages/RegisterPage.jsx';
+import { lazyPage } from './utils/lazyPage.js';
 
-// Signed-in pages load on demand to keep the first download small.
-const DashboardPage = lazy(() => import('./pages/DashboardPage.jsx'));
-const ProjectsPage = lazy(() => import('./pages/ProjectsPage.jsx'));
-const ProjectDetailPage = lazy(() => import('./pages/ProjectDetailPage.jsx'));
-const DeliverablesPage = lazy(() => import('./pages/DeliverablesPage.jsx'));
-const CapacityPage = lazy(() => import('./pages/CapacityPage.jsx'));
-const BudgetPage = lazy(() => import('./pages/BudgetPage.jsx'));
-const RiskPage = lazy(() => import('./pages/RiskPage.jsx'));
-const AuditPage = lazy(() => import('./pages/AuditPage.jsx'));
-const UsersPage = lazy(() => import('./pages/UsersPage.jsx'));
+// Signed-in pages load on demand to keep the first download small. lazyPage marks a failed
+// download so the page's ErrorBoundary offers a reload (see utils/lazyPage.js).
+const DashboardPage = lazyPage(() => import('./pages/DashboardPage.jsx'));
+const ProjectsPage = lazyPage(() => import('./pages/ProjectsPage.jsx'));
+const ProjectDetailPage = lazyPage(() => import('./pages/ProjectDetailPage.jsx'));
+const DeliverablesPage = lazyPage(() => import('./pages/DeliverablesPage.jsx'));
+const CapacityPage = lazyPage(() => import('./pages/CapacityPage.jsx'));
+const BudgetPage = lazyPage(() => import('./pages/BudgetPage.jsx'));
+const RiskPage = lazyPage(() => import('./pages/RiskPage.jsx'));
+const AuditPage = lazyPage(() => import('./pages/AuditPage.jsx'));
+const UsersPage = lazyPage(() => import('./pages/UsersPage.jsx'));
 
 /**
  * Route table (spec 12.3). Everything except /login and /register needs a signed-in user;
@@ -64,3 +65,6 @@ export default function AppRoutes() {
     </Routes>
   );
 }
+
+/** Takes no props. */
+AppRoutes.propTypes = {};

@@ -295,13 +295,60 @@ def test_list_without_projects_is_empty(client: TestClient, auth_headers: Callab
         {"limit": 0},
         {"offset": -1},
         {"q": "x" * 201},
+        {"q": "a\x00"},
+        {"q": "line\nbreak"},
     ],
 )
 def test_list_rejects_bad_query_parameters(client: TestClient, seeded: Seeded, params: dict[str, Any]) -> None:
-    """Bad filters, dates and paging are 400 VALIDATION_ERROR naming the parameter, never 422."""
+    """Bad filters, dates, paging and search text are 400 VALIDATION_ERROR naming the parameter, never 422."""
     response = client.get("/projects", params=params, headers=seeded.headers["PM"])
     assert error_of(response) == (400, "VALIDATION_ERROR")
     assert fields_of(response) == list(params)
+
+
+def bound_texts(parameters: Any) -> list[str]:
+    """Every string bound to one SQL statement (a dict, or a sequence of them for executemany)."""
+    rows = parameters if isinstance(parameters, (list, tuple)) else [parameters]
+    texts: list[str] = []
+    for row in rows:
+        values = row.values() if isinstance(row, dict) else [row]
+        texts.extend(value for value in values if isinstance(value, str))
+    return texts
+
+
+@pytest.mark.parametrize("term", ["\x00", "a\x00b"])
+def test_search_with_nul_is_refused_before_any_sql(
+    client: TestClient, seeded: Seeded, db_session: Session, term: str
+) -> None:
+    """q goes through the shared SearchText guard, as on /users and /departments: 400 on q, never sent to SQL.
+
+    PostgreSQL cannot compare NUL. Unguarded, the term reached the database, psycopg
+    raised DataError and the generic backstop answered 400 without naming the field.
+    """
+    engine = db_session.get_bind()
+
+    def search(text: str) -> tuple[httpx.Response, list[str]]:
+        """GET /projects?q=text; return the response and every string bound to SQL meanwhile."""
+        sent: list[str] = []
+
+        def record(conn: Any, cursor: Any, statement: str, parameters: Any, *args: Any) -> None:
+            sent.extend(bound_texts(parameters))
+
+        event.listen(engine, "before_cursor_execute", record)
+        try:
+            response = client.get("/projects", params={"q": text}, headers=seeded.headers["PM"])
+        finally:
+            event.remove(engine, "before_cursor_execute", record)
+        return response, sent
+
+    control, control_sent = search("alpha")
+    assert control.status_code == 200 and [text for text in control_sent if "alpha" in text]
+    response, sent = search(term)
+    assert error_of(response) == (400, "VALIDATION_ERROR")
+    details = response.json()["details"]
+    assert [detail["field"] for detail in details] == ["q"]
+    assert "control characters" in details[0]["issue"]
+    assert not [text for text in sent if "\x00" in text]
 
 
 def test_reads_run_a_fixed_number_of_queries(client: TestClient, seeded: Seeded, db_session: Session) -> None:

@@ -67,6 +67,8 @@ OVERDUE_TITLES = {
     "Warehouse Staff Training",
 }
 MISSING_ID = 999_999
+# The issue text request validation gives for a control character in a search term.
+CONTROL_CHARACTERS = "Must not contain control characters such as tabs or line breaks."
 
 
 @dataclass(frozen=True)
@@ -324,12 +326,31 @@ def test_list_filters_by_project_assignee_and_combinations(client: TestClient, w
         {"limit": 201},
         {"offset": -1},
         {"q": "x" * 201},
+        {"q": "\x00"},
     ],
 )
 def test_list_rejects_bad_query_parameters(client: TestClient, world: World, params: dict[str, Any]) -> None:
-    """Invalid filters give 400 VALIDATION_ERROR, not FastAPI's 422."""
+    """Invalid filters give 400 VALIDATION_ERROR naming the parameter, not FastAPI's 422.
+
+    Naming the parameter shows request validation refused it: the database
+    ``DataError`` backstop also answers 400, but with no details.
+    """
     response = client.get("/deliverables", params=params, headers=world.headers("VIEWER"))
     assert error_of(response) == (400, "VALIDATION_ERROR")
+    assert fields_of(response) == set(params)
+
+
+@pytest.mark.parametrize("q", ["\x00", "API\x00Schema", "\x01", "\x7f", "\t", "API\tSchema", "a\nb"])
+def test_q_with_control_characters_is_400_before_any_query(client: TestClient, world: World, q: str) -> None:
+    """A control character in q is refused as a 400 on ``q``, like ``GET /users``.
+
+    A NUL used to reach psycopg, which cannot send it to PostgreSQL (a 500, then
+    the generic database 400). No title holds a control character (titles refuse
+    them), so refusing them all loses no possible match.
+    """
+    response = client.get("/deliverables", params={"q": q}, headers=world.headers("VIEWER"))
+    assert error_of(response) == (400, "VALIDATION_ERROR")
+    assert response.json()["details"] == [{"field": "q", "issue": CONTROL_CHARACTERS}]
 
 
 # --- Service rules ------------------------------------------------------------------------------------
