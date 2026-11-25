@@ -256,3 +256,18 @@ tfplan
 
 # Snyk Security Extension - AI Rules (auto-generated)
 .github/instructions/snyk_rules.instructions.md
+
+# pm-service: start-dev.sh installs Python libraries into the service folder
+# (pip install --target) for LocalStack hot-reload. Commit only our own code.
+backend/pm-service/*
+!backend/pm-service/function.py
+!backend/pm-service/requirements.txt
+!backend/pm-service/app/
+
+# Cypress artifacts
+e2e/cypress/screenshots/
+e2e/cypress/videos/
+e2e/reports/
+
+# Python lint cache
+.ruff_cache/

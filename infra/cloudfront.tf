@@ -35,16 +35,16 @@ resource "aws_cloudfront_distribution" "this" {
         https_port             = 443
         origin_protocol_policy = "https-only"
         origin_ssl_protocols   = ["TLSv1.2"]
+        # The first request after Aurora pauses waits ~15-20 s for it to resume (plus one reconnect);
+        # 60 s (the maximum without a quota increase) instead of the 30 s default avoids a 504 on slow resumes.
+        origin_read_timeout = 60
       }
     }
   }
 
-  custom_error_response {
-    error_code            = 404
-    error_caching_min_ttl = 300
-    response_code         = 200
-    response_page_path    = "/index.html"
-  }
+  # No custom_error_response: it applies to every origin, so it would turn the API's
+  # JSON "404 Not Found" into "200 + index.html". The React app uses hash-based routes
+  # (/#/projects), so deep links never need an S3 fallback.
 
   # logging_config {
   #   include_cookies = false

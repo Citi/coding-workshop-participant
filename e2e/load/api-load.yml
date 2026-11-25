@@ -1,0 +1,78 @@
+# Load test for the read-heavy API endpoints (Artillery 2).
+#   Local:  npx artillery run load/api-load.yml
+#   AWS:    npx artillery run -t https://<cloudfront-domain> load/api-load.yml
+# Each virtual user logs in once, then browses the main screens like a project manager would.
+config:
+  target: "http://localhost:3001"
+  # Up to 5 new users/second, each making 6 requests (~30 requests/second at peak).
+  # Sized for a workshop account (login is deliberately CPU-heavy: bcrypt on a 512 MB Lambda).
+  # Wait as long as CloudFront does (origin_read_timeout = 60 s): the first requests after the
+  # database pauses wait ~15-20 s for Aurora to resume, which browsers wait for too.
+  http:
+    timeout: 60
+  phases:
+    - name: warm-up
+      duration: 30
+      arrivalRate: 2
+    - name: ramp-up
+      duration: 60
+      arrivalRate: 2
+      rampTo: 5
+    - name: sustained
+      duration: 60
+      arrivalRate: 5
+  defaults:
+    headers:
+      Content-Type: application/json
+  ensure:
+    thresholds:
+      - http.response_time.p95: 1500
+    conditions:
+      - expression: "vusers.failed == 0"
+  plugins:
+    expect: {}
+    ensure: {} # turns the thresholds/conditions above into a pass/fail exit code
+
+scenarios:
+  - name: Project manager browsing
+    flow:
+      - post:
+          url: "/api/pm-service/auth/login"
+          json:
+            email: "viewer@acme.com"
+            password: "Viewer@123"
+          capture:
+            - json: "$.access_token"
+              as: token
+          expect:
+            - statusCode: 200
+      - get:
+          url: "/api/pm-service/dashboard"
+          headers:
+            Authorization: "Bearer {{ token }}"
+          expect:
+            - statusCode: 200
+      - get:
+          url: "/api/pm-service/projects?status=active"
+          headers:
+            Authorization: "Bearer {{ token }}"
+          expect:
+            - statusCode: 200
+      - get:
+          url: "/api/pm-service/deliverables?is_key=true"
+          headers:
+            Authorization: "Bearer {{ token }}"
+          expect:
+            - statusCode: 200
+      - get:
+          url: "/api/pm-service/resources?over_allocated=true"
+          headers:
+            Authorization: "Bearer {{ token }}"
+          expect:
+            - statusCode: 200
+      - get:
+          url: "/api/pm-service/expenses"
+          headers:
+            Authorization: "Bearer {{ token }}"
+          expect:
+            - statusCode: 200

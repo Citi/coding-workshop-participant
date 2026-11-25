@@ -1,0 +1,4 @@
+psycopg[binary]==3.2.3
+pydantic==2.14.4
+PyJWT==2.15.1
+bcrypt==5.0.0

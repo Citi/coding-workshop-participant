@@ -1,0 +1,6 @@
+# Local development & test dependencies (not deployed). Install into backend/.venv:
+#   python3 -m venv backend/.venv && backend/.venv/bin/pip install -r backend/requirements-dev.txt
+-r pm-service/requirements.txt
+pytest==9.2.0
+pytest-cov==7.1.0
+bandit==1.9.4

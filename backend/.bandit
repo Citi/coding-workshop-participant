@@ -1,0 +1,11 @@
+# Bandit settings for the GitHub "Security Check - Python" job, which runs `bandit -r ./backend`
+# from the repository root; bandit finds this file inside the scanned folder by itself (keep only one).
+#
+# The pytest suite is not scanned: plain `assert` (B101) and fake passwords (B105/B106) are how
+# tests work. The entries are globs matched against the paths as bandit lists them, which depend on
+# how the folder is named: ./backend/tests/... and /abs/.../backend/tests/... (first entry),
+# `bandit -r backend` (second) and `bandit -r .` run inside backend/ (third). An entry that names an
+# existing folder would be matched differently, so keep the wildcards.
+# Application findings are reviewed one by one and annotated in place with `# nosec <id> # reason`.
+[bandit]
+exclude = */backend/tests/*,backend/tests/*,./tests/*
